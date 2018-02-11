@@ -1,0 +1,27 @@
+{
+  "name": "nodecoin",
+  "version": "1.0.0",
+  "description": "Implementation of Bitcoin / cryptocurrency using NodeJS",
+  "main": "index.js",
+  "dependencies": {
+    "dotenv": "^5.0.0",
+    "express": "^4.16.2",
+    "pusher": "^1.5.1",
+    "pusher-js": "^4.2.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tgoldenberg/NodeCoin.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tgoldenberg/NodeCoin/issues"
+  },
+  "homepage": "https://github.com/tgoldenberg/NodeCoin#readme"
+}
