@@ -78,9 +78,10 @@ app.listen(3000, function() {
 
   channel.bind('blocks:request_blocks', function(data) {
     console.log('> Request for blocks: ', data);
-    // ip address
-    // last block
-    // timestamp
+    if (data.ip_addr !== ipAddr) {
+      // check if has block after last block
+      console.log('> Find missing blocks...');
+    }
   })
 
 })
