@@ -4,13 +4,20 @@ const Socket = require('pusher');
 const Client = require('pusher-js');
 const express = require('express');
 const ip = require('ip');
+const flatfile = require('flat-file-db');
 const app = express();
+const Blockchain = require('./blockchain');
 const bodyParser = require('body-parser');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 var ipAddr = ip.address();
+
+var db = flatfile.sync('/tmp/node-coin.db');
+var lastBlock = db.get('last_block');
+var firstBlock = db.get('first_block')
+var wholeChain = db.get('whole_chain');
 
 var socketOptions = {
   appId: process.env.PUSHER_APP_ID,
@@ -34,7 +41,14 @@ app.post('/pusher/auth', function(req, res) {
 app.listen(3000, function() {
   console.log('> Server listening on port 3000...', ipAddr);
 
-  console.log('> Initializing Pusher...');
+  // initialize blockchain
+  var blockchain = typeof wholeChain === 'object' ? wholeChain : new Blockchain();
+
+  db.put('firstBlock', null);
+  db.put('lastBlock', null);
+  db.put('wholeChain', blockchain);
+
+  console.log('> Initializing Pusher...', blockchain);
 
   var client = new Client(process.env.PUSHER_APP_KEY, {
     cluster: 'us2',
@@ -45,16 +59,28 @@ app.listen(3000, function() {
   console.log('> Subscribing to changes...');
   var channel = client.subscribe('presence-node-coin');
 
-  channel.bind("pusher:subscription_succeeded", function (members) {
+  channel.bind('pusher:subscription_succeeded', function (members) {
     console.log('> Members: ', members);
+    socket.trigger('presence-node-coin', 'blocks:request_blocks', {
+      ip_addr: ipAddr,
+      last_block: blockchain.tail,
+      timestamp: new Date().valueOf(),
+    });
   });
 
-  channel.bind("pusher:member_added", function(member){
+  channel.bind('pusher:member_added', function(member){
     console.log('> Member added: ', member);
   });
 
-  channel.bind("pusher:member_removed", function(member){
+  channel.bind('pusher:member_removed', function(member){
     console.log('> Member removed: ', member);
   });
+
+  channel.bind('blocks:request_blocks', function(data) {
+    console.log('> Request for blocks: ', data);
+    // ip address
+    // last block
+    // timestamp
+  })
 
 })
