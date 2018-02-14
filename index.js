@@ -28,6 +28,12 @@ var socketOptions = {
   encrypted: true
 };
 
+const netServer = net.createServer(function(socket) {
+  socket.write('> next block: 1234');
+  socket.pipe(socket);
+});
+netServer.listen(1337, ipAddr);
+
 var socket = new Socket(socketOptions);
 
 app.post('/pusher/auth', function(req, res) {
@@ -61,19 +67,12 @@ app.listen(3000, function() {
   var channel = client.subscribe('presence-node-coin');
 
   channel.bind('pusher:subscription_succeeded', function (members) {
-    console.log('> Members: ', members);
+    console.log('> Subscription succeeded: ', members);
     let hitMe = false;
     channel.members.each(function(member) {
       if (hitMe) {
+
         // found next IP address - set up server to listen and send messages
-        const netClient = new net.Socket();
-        netClient.connect(1337, member.id, function() {
-          console.log('> Connected');
-          netClient.write(blockchain.tail.hash);
-        });
-        netClient.on('data', function(data) {
-          console.log('> Received: ', data.toString());
-        })
       }
       if (member.id === ipAddr) {
         hitMe = true;
@@ -94,11 +93,14 @@ app.listen(3000, function() {
     channel.members.each(function(member) {
       if (hitMe) {
         // found next IP address - set up server to listen and send messages
-        const netServer = net.createServer(function(socket) {
-          socket.write('> next block: 1234');
-          socket.pipe(socket);
+        const netClient = new net.Socket();
+        netClient.connect(1337, member.id, function() {
+          console.log('> Connected');
+          netClient.write(blockchain.tail.hash);
         });
-        netServer.listen(1337, member.id);
+        netClient.on('data', function(data) {
+          console.log('> Received: ', data.toString());
+        })
       }
       if (member.id === ipAddr) {
         hitMe = true;
