@@ -24,8 +24,8 @@ const db = flatfile.sync('/tmp/node-coin.db');
 const wholeChain = db.get('whole_chain');
 const coinAddress = db.get('public_address');
 
-app.listen(3000, function() {
-  console.log('> Server listening on port 3000...', ipAddr);
+app.listen(process.env.PORT || 3000, function() {
+  console.log('> Server listening on port ', process.env.PORT, ipAddr);
   // create a TCP/IP server on current IP address
   const netServer = net.createServer(function(socket) {
     socket.pipe(socket);
@@ -49,6 +49,11 @@ app.listen(3000, function() {
 
   // initialize presence channel via Pusher
   var client = new Client(PUSHER_APP_KEY, {
+    auth: {
+      params: {
+        ip_addr: ipAddr,
+      }
+    },
     cluster: 'us2',
     authEndpoint: 'https://pusher-presence-auth.herokuapp.com/pusher/auth',
     encrypted: true
