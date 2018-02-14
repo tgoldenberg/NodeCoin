@@ -21,28 +21,23 @@ const PUSHER_APP_KEY = '86e36fb6cb404d67a108';
 
 // pull most recent version of blockchain saved
 const db = flatfile.sync('/tmp/node-coin.db');
-const lastBlock = db.get('last_block');
-const firstBlock = db.get('first_block')
 const wholeChain = db.get('whole_chain');
 const coinAddress = db.get('public_address');
 
-// create a TCP/IP server on current IP address
-const netServer = net.createServer(function(socket) {
-  socket.pipe(socket);
-});
-
-netServer.listen(1337, ipAddr);
-
 app.listen(3000, function() {
   console.log('> Server listening on port 3000...', ipAddr);
+  // create a TCP/IP server on current IP address
+  const netServer = net.createServer(function(socket) {
+    socket.pipe(socket);
+  });
+
+  netServer.listen(1337, ipAddr);
 
   // initialize blockchain if not saved locally
-  var blockchain = typeof wholeChain === 'object' ? new Blockchain(wholeChain) : new Blockchain();
-  db.put('firstBlock', null);
-  db.put('lastBlock', null);
+  var blockchain = new Blockchain(wholeChain);
   db.put('wholeChain', blockchain);
 
-  console.log('> Initializing blockchain...', blockchain.tail.hash);
+  console.log('> Initializing blockchain...', blockchain.transactions[blockchain.transactions.length - 1].hash);
 
   // initialize presence channel via Pusher
   var client = new Client(PUSHER_APP_KEY, {
@@ -67,7 +62,9 @@ app.listen(3000, function() {
         });
         netClient.on('data', function(data) {
           console.log('> Received: ', data.toString());
-        })
+          // TODO: take last 50 blocks and add to blockchain
+        });
+        hitMe = false;
       }
       if (member.id === ipAddr) {
         hitMe = true;
@@ -92,20 +89,23 @@ app.listen(3000, function() {
       } else {
         // generate new address and confirm in blockchain
         let address = createAddress('BTC');
-        console.log('> New address: ', address);
         let block = blockchain.registerAddress(address.publicAddress);
         // save address to Blockchain
         blockchain.me = address.publicAddress;
         // broadcast new block
         channel.members.each(function(member) {
           // found next IP address - set up server to listen and send messages
-          const netClient = new net.Socket();
-          netClient.connect(1337, member.id, function() {
-            netClient.write('> New block: ' + JSON.stringify(block));
-          });
-          netClient.on('data', function(data) {
-            console.log('> Received: ', data.toString());
-          });
+          if (member.id !== ipAddr) {
+            const netClient = new net.Socket();
+            netClient.connect(1337, member.id, function() {
+              console.log('> Connected to: ', member.id);
+              netClient.write('> New block: ' + JSON.stringify(block));
+            });
+            netClient.on('data', function(data) {
+              console.log('> Received: ', data.toString());
+              // compare with current blockchain and set whichever is longest
+            });
+          }
         });
       }
     }
@@ -124,8 +124,9 @@ app.listen(3000, function() {
         });
         netClient.on('data', function(data) {
           console.log('> Received: ', data.toString());
-        })
-        netClient.write();
+          netClient.write('> Latest chain: ' + blockchain.tail.hash);
+        });
+        hitMe = false;
       }
       if (member.id === ipAddr) {
         hitMe = true;

@@ -40,21 +40,19 @@ const genesisBlock = new Block(index, previousHash, timestamp, data, hash);
 
 class Blockchain {
   constructor(wholeChain) {
-    if (wholeChain) {
-      this.head = wholeChain.head;
-      this.tail = wholeChain.tail;
+    if (wholeChain && typeof wholeChain.transactions === 'object' && typeof wholeChain.addresses === 'object') {
+      this.transactions = wholeChain.transactions;
       this.addresses = wholeChain.addresses;
     } else {
-      this.head = genesisBlock;
-      this.tail = genesisBlock;
+      this.transactions = [ genesisBlock ];
       this.addresses = { };
     }
     this.me = null;
   }
   addTransaction(block) {
-    if (block.previousHash === this.tail.hash) {
-      this.tail = block;
-      db.put('last_block', this.tail);
+    if (block.previousHash === this.transactions[this.transactions.length - 1 ].hash) {
+      this.transactions.push(block);
+      db.put('transactions', this.transactions);
     }
   }
   registerAddress(address) {
@@ -68,16 +66,14 @@ class Blockchain {
       amount: 0,
       type: 'register_address',
     };
-    const hash = calculateHash(index, previousHash, timestamp, data)
-    let block = new Block(this.tail.index + 1, this.tail.hash, new Date().valueOf(), data, hash);
-    this.addTransaction(block);
-    this.saveBlockchain();
+    const hash = calculateHash(index, previousHash, timestamp, data);
+    const tail = this.transactions[this.transactions.length - 1];
+    let block = new Block(tail.index + 1, tail.hash, new Date().valueOf(), data, hash);
     return block;
   }
   saveBlockchain() {
     let chain = {
-      head: this.head,
-      tail: this.tail,
+      transactions: this.transactions,
       addresses: this.addresses,
     };
     db.put('whole_chain', chain);
