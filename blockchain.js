@@ -1,7 +1,9 @@
 const CryptoJS = require('crypto-js');
+const EC = require('elliptic').ec;
 const flatfile = require('flat-file-db');
 
 const db = flatfile.sync('/tmp/node-coin.db');
+var ec = new EC('secp256k1');
 // const lastBlock = db.get('last_block');
 // const firstBlock = db.get('first_block')
 // const wholeChain = db.get('whole_chain');
@@ -17,12 +19,13 @@ function calculateHash(index, previousHash, timestamp, data) {
 }
 
 class Block {
-  constructor(index, previousHash, timestamp, data, hash) {
+  constructor(index, previousHash, timestamp, data, hash, signature) {
     this.index = index;
     this.previousHash = previousHash.toString();
     this.timestamp = timestamp;
     this.data = data;
     this.hash = hash.toString();
+    this.signature = signature;
   }
 }
 
@@ -34,8 +37,9 @@ const data = {
   toAddr: 'to_addr',
   amount: 0,
   type: 'payment',
+  txId: CryptoJS.SHA256('from_addr' + 'payment'),
 };
-const hash = calculateHash(index, previousHash, timestamp, data)
+const hash = calculateHash(index, previousHash, timestamp, data, 'abc')
 const genesisBlock = new Block(index, previousHash, timestamp, data, hash);
 
 class Blockchain {
@@ -56,19 +60,23 @@ class Blockchain {
     }
   }
   registerAddress(address) {
-    if (this.addresses[address] !== undefined) {
+    const { publicAddress, privateKeyWif } = address;
+    if (this.addresses[publicAddress] !== undefined) {
       throw new Error('Address already taken.');
     }
-    this.addresses[address] = 0;
+    const key = ec.keyFromPrivate(address.privateKeyWif, 'hex');
     const data = {
-      fromAddr: address,
-      toAddr: address,
+      fromAddr: address.publicAddress,
+      toAddr: address.publicAddress,
       amount: 0,
       type: 'register_address',
+      txId: CryptoJS.SHA256(address.publicAddress + 'register_address').toString(),
     };
+    const signature = key.sign(address.publicAddress).toDER().toString('hex');
     const hash = calculateHash(index, previousHash, timestamp, data);
     const tail = this.transactions[this.transactions.length - 1];
-    let block = new Block(tail.index + 1, tail.hash, new Date().valueOf(), data, hash);
+    let block = new Block(tail.index + 1, tail.hash, new Date().valueOf(), data, hash, signature);
+    console.log('> Sending out proposed block... ', block);
     return block;
   }
   saveBlockchain() {

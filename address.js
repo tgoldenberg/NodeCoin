@@ -70,15 +70,18 @@ function getWallet(currency) {
   * Array of Cryptographically secure random numbres
   */
 function createRandomUint8(size = 32) {
-  // let byteArr = new Uint8Array(32); // Creates an empty typed array of 32 bytes
+  let byteArr = new Uint8Array(32); // Creates an empty typed array of 32 bytes
+  for (let i = 0; i < byteArr.length; i++) {
+    byteArr[i] = Math.random() > 0.5 ? 1 : 0;
+  }
   // crypto.randomFill(byteArr, (err, buf) => {
   //   if(err) {
   //     console.warn(`Error while random filling typed array\n ${err.message}`);
   //   }
   //   /* Success */
   // });
-  // return byteArr;
-  return crypto.randomBytes(size / 2).toString('hex').split('');
+  return byteArr;
+  // return crypto.randomBytes(size).toString('hex').split('');
 
 }
 

@@ -102,7 +102,7 @@ app.listen(process.env.PORT || 3000, function() {
       } else {
         // generate new address and confirm in blockchain
         let address = createAddress('BTC');
-        let block = blockchain.registerAddress(address.publicAddress);
+        let block = blockchain.registerAddress(address);
         // save address to Blockchain
         blockchain.me = address.publicAddress;
         // broadcast new block
