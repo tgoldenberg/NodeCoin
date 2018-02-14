@@ -7,6 +7,8 @@ Implementation of Bitcoin / cryptocurrency using NodeJS
 
 * [Naivecoin: tutorial to build blockchain](https://lhartikk.github.io/) - actually pretty good
 
+* [Pycoin - Bitcoin implementation in Python](https://github.com/ricmoo/pycoind/blob/master/README.md#node-management-pycoind-node)
+
 #### Getting Started
 
 Simply run the start-up script:
