@@ -1,10 +1,12 @@
 require('dotenv').config();
 
 const Client = require('pusher-js');
+const _ = require('lodash');
 const express = require('express');
 const ip = require('ip');
 const flatfile = require('flat-file-db');
 const app = express();
+const createAddress = require('./address');
 const net = require('net');
 const Blockchain = require('./blockchain');
 const bodyParser = require('body-parser');
@@ -22,6 +24,7 @@ const db = flatfile.sync('/tmp/node-coin.db');
 const lastBlock = db.get('last_block');
 const firstBlock = db.get('first_block')
 const wholeChain = db.get('whole_chain');
+const coinAddress = db.get('public_address');
 
 // create a TCP/IP server on current IP address
 const netServer = net.createServer(function(socket) {
@@ -34,7 +37,7 @@ app.listen(3000, function() {
   console.log('> Server listening on port 3000...', ipAddr);
 
   // initialize blockchain if not saved locally
-  var blockchain = typeof wholeChain === 'object' ? wholeChain : new Blockchain();
+  var blockchain = typeof wholeChain === 'object' ? new Blockchain(wholeChain) : new Blockchain();
   db.put('firstBlock', null);
   db.put('lastBlock', null);
   db.put('wholeChain', blockchain);
@@ -70,6 +73,43 @@ app.listen(3000, function() {
         hitMe = true;
       }
     });
+
+    let publicAddress = process.argv[2];
+    console.log('> Current addresses: ', blockchain.addresses);
+    if (publicAddress) {
+      if (_.has(blockchain.addresses, publicAddress)) {
+        blockchain.me = publicAddress;
+      } else {
+        throw new Error('Provided address is not registered.');
+      }
+    } else {
+      if (coinAddress) {
+        if (_.has(blockchain.addresses, coinAddress)) {
+          blockchain.me = coinAddress;
+        } else {
+          throw new Error('Provided address is not registered.');
+        }
+      } else {
+        // generate new address and confirm in blockchain
+        let address = createAddress('BTC');
+        console.log('> New address: ', address);
+        let block = blockchain.registerAddress(address.publicAddress);
+        // save address to Blockchain
+        blockchain.me = address.publicAddress;
+        // broadcast new block
+        channel.members.each(function(member) {
+          // found next IP address - set up server to listen and send messages
+          const netClient = new net.Socket();
+          netClient.connect(1337, member.id, function() {
+            netClient.write('> New block: ' + JSON.stringify(block));
+          });
+          netClient.on('data', function(data) {
+            console.log('> Received: ', data.toString());
+          });
+        });
+      }
+    }
+    console.log('> My address: ', blockchain.me);
   });
 
   channel.bind('pusher:member_added', function(member){
@@ -85,6 +125,7 @@ app.listen(3000, function() {
         netClient.on('data', function(data) {
           console.log('> Received: ', data.toString());
         })
+        netClient.write();
       }
       if (member.id === ipAddr) {
         hitMe = true;

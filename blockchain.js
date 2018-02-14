@@ -39,10 +39,17 @@ const hash = calculateHash(index, previousHash, timestamp, data)
 const genesisBlock = new Block(index, previousHash, timestamp, data, hash);
 
 class Blockchain {
-  constructor() {
-    this.head = genesisBlock;
-    this.tail = genesisBlock;
-    this.addresses = { };
+  constructor(wholeChain) {
+    if (wholeChain) {
+      this.head = wholeChain.head;
+      this.tail = wholeChain.tail;
+      this.addresses = wholeChain.addresses;
+    } else {
+      this.head = genesisBlock;
+      this.tail = genesisBlock;
+      this.addresses = { };
+    }
+    this.me = null;
   }
   addTransaction(block) {
     if (block.previousHash === this.tail.hash) {
@@ -50,11 +57,30 @@ class Blockchain {
       db.put('last_block', this.tail);
     }
   }
-  addAddress(address) {
+  registerAddress(address) {
     if (this.addresses[address] !== undefined) {
       throw new Error('Address already taken.');
     }
     this.addresses[address] = 0;
+    const data = {
+      fromAddr: address,
+      toAddr: address,
+      amount: 0,
+      type: 'register_address',
+    };
+    const hash = calculateHash(index, previousHash, timestamp, data)
+    let block = new Block(this.tail.index + 1, this.tail.hash, new Date().valueOf(), data, hash);
+    this.addTransaction(block);
+    this.saveBlockchain();
+    return block;
+  }
+  saveBlockchain() {
+    let chain = {
+      head: this.head,
+      tail: this.tail,
+      addresses: this.addresses,
+    };
+    db.put('whole_chain', chain);
   }
 }
 

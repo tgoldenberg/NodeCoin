@@ -23,7 +23,7 @@ function getWallet(currency) {
   let privateKeyWif;
   let publicAddress;
 
-  console.log('> Creating random Private key hex for wallet...');
+  // console.log('> Creating random Private key hex for wallet...');
   // Creates and fill empty byte array with random
   privateKeyArr = createRandomUint8(32);
 
@@ -33,8 +33,8 @@ function getWallet(currency) {
   // Transform byte array to a Hex
   privateKeyHex = byteToHexString(privateKeyArr);
 
-  console.log('> Private key hex created')
-  console.log('> Creating new private WIF and public key depending on encryption');
+  // console.log('> Private key hex created')
+  // console.log('> Creating new private WIF and public key depending on encryption');
 
   switch (currency) {
     case 'BTC':
@@ -55,8 +55,11 @@ function getWallet(currency) {
   }
 
 
-  console.log(`~~~~~ ${currency} Private key: ${key.privateWif}`);
-  console.log(`~~~~~ ${currency} Public key: ${key.publicAddress}`);
+  console.log('~~~~~ Here is your new NodeCoin wallet ~~~~~~~');
+  console.log(`~~~~~ Private key: ${key.privateWif}`);
+  console.log(`~~~~~ Public key: ${key.publicAddress}`);
+  const result = { privateKeyWif, publicAddress };
+  return result;
 }
 
 
@@ -105,6 +108,6 @@ function byteToHexString(byteArray) {
   }).join('')
 }
 
-getWallet('BTC');
+// getWallet('BTC');
 
 module.exports = getWallet;
