@@ -31,7 +31,15 @@ app.listen(3000, function() {
     socket.pipe(socket);
   });
 
-  netServer.listen(1337, ipAddr);
+  netServer.listen(1337, '127.0.0.1');
+
+  // check every 10 minutes if IP address has changes
+  setInterval(function() {
+    let newIpAddr = ip.address();
+    if (newIpAddr !== ipAddr) {
+      console.log('> Update IP address: ', newIpAddr);
+    }
+  }, 10 * 1000 * 60);
 
   // initialize blockchain if not saved locally
   var blockchain = new Blockchain(wholeChain);
