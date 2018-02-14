@@ -6,6 +6,7 @@ const express = require('express');
 const ip = require('ip');
 const flatfile = require('flat-file-db');
 const app = express();
+const net = require('net');
 const Blockchain = require('./blockchain');
 const bodyParser = require('body-parser');
 
@@ -61,15 +62,48 @@ app.listen(3000, function() {
 
   channel.bind('pusher:subscription_succeeded', function (members) {
     console.log('> Members: ', members);
-    socket.trigger('presence-node-coin', 'blocks:request_blocks', {
-      ip_addr: ipAddr,
-      last_block: blockchain.tail,
-      timestamp: new Date().valueOf(),
+    let hitMe = false;
+    channel.members.each(function(member) {
+      if (hitMe) {
+        // found next IP address - set up server to listen and send messages
+        const netClient = new net.Socket();
+        netClient.connect(1337, member.id, function() {
+          console.log('> Connected');
+          netClient.write(blockchain.tail.hash);
+        });
+        netClient.on('data', function(data) {
+          console.log('> Received: ', data.toString());
+        })
+      }
+      if (member.id === ipAddr) {
+        hitMe = true;
+      }
     });
+    // pick an IP address to connect to
+
+    // socket.trigger('presence-node-coin', 'blocks:request_blocks', {
+    //   ip_addr: ipAddr,
+    //   last_block: blockchain.tail,
+    //   timestamp: new Date().valueOf(),
+    // });
   });
 
   channel.bind('pusher:member_added', function(member){
     console.log('> Member added: ', member);
+    let hitMe = false;
+    channel.members.each(function(member) {
+      if (hitMe) {
+        // found next IP address - set up server to listen and send messages
+        const netServer = net.createServer(function(socket) {
+          socket.write('> next block: 1234');
+          socket.pipe(socket);
+        });
+        netServer.listen(1337, member.id);
+      }
+      if (member.id === ipAddr) {
+        hitMe = true;
+      }
+    });
   });
 
   channel.bind('pusher:member_removed', function(member){
@@ -83,5 +117,4 @@ app.listen(3000, function() {
       console.log('> Find missing blocks...');
     }
   })
-
-})
+});
