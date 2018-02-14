@@ -1,4 +1,10 @@
 const CryptoJS = require('crypto-js');
+const flatfile = require('flat-file-db');
+
+const db = flatfile.sync('/tmp/node-coin.db');
+// const lastBlock = db.get('last_block');
+// const firstBlock = db.get('first_block')
+// const wholeChain = db.get('whole_chain');
 /*
   keep a pointer to the "head", or Genesis block at all times. This will help re-create if need be
   also keep a point to the tail. we add on new transactions to the tail at all time.
@@ -41,6 +47,7 @@ class Blockchain {
   addTransaction(block) {
     if (block.previousHash === this.tail.hash) {
       this.tail = block;
+      db.put('last_block', this.tail);
     }
   }
   addAddress(address) {
