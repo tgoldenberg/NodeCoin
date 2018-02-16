@@ -31,7 +31,7 @@ app.listen(process.env.PORT || 3000, function() {
     socket.pipe(socket);
   });
 
-  netServer.listen(1337, '127.0.0.1');
+  netServer.listen(1337, ipAddr);
 
   // check every 10 minutes if IP address has changes
   setInterval(function() {
@@ -67,21 +67,21 @@ app.listen(process.env.PORT || 3000, function() {
     console.log('> Subscription succeeded: ', members);
     let hitMe = false;
     channel.members.each(function(member) {
-      if (hitMe) {
-        // found next IP address - set up server to listen and send messages
-        const netClient = new net.Socket();
-        netClient.connect(1337, member.id, function() {
-          netClient.write(blockchain.tail.hash);
-        });
-        netClient.on('data', function(data) {
-          console.log('> Received: ', data.toString());
-          // TODO: take last 50 blocks and add to blockchain
-        });
-        hitMe = false;
-      }
-      if (member.id === ipAddr) {
-        hitMe = true;
-      }
+      // if (hitMe) {
+      //   // found next IP address - set up server to listen and send messages
+      //   const netClient = new net.Socket();
+      //   netClient.connect(1337, member.id, function() {
+      //     netClient.write(blockchain.tail.hash);
+      //   });
+      //   netClient.on('data', function(data) {
+      //     console.log('> Received: ', data.toString());
+      //     // TODO: take last 50 blocks and add to blockchain
+      //   });
+      //   hitMe = false;
+      // }
+      // if (member.id === ipAddr) {
+      //   hitMe = true;
+      // }
     });
 
     let publicAddress = process.argv[2];
@@ -109,15 +109,15 @@ app.listen(process.env.PORT || 3000, function() {
         channel.members.each(function(member) {
           // found next IP address - set up server to listen and send messages
           if (member.id !== ipAddr) {
-            const netClient = new net.Socket();
-            netClient.connect(1337, member.id, function() {
-              console.log('> Connected to: ', member.id);
-              netClient.write('> New block: ' + JSON.stringify(block));
-            });
-            netClient.on('data', function(data) {
-              console.log('> Received: ', data.toString());
-              // compare with current blockchain and set whichever is longest
-            });
+            // const netClient = new net.Socket();
+            // netClient.connect(1337, member.id, function() {
+            //   console.log('> Connected to: ', member.id);
+            //   netClient.write('> New block: ' + JSON.stringify(block));
+            // });
+            // netClient.on('data', function(data) {
+            //   console.log('> Received: ', data.toString());
+            //   // compare with current blockchain and set whichever is longest
+            // });
           }
         });
       }
@@ -129,21 +129,21 @@ app.listen(process.env.PORT || 3000, function() {
     console.log('> Member added: ', member);
     let hitMe = false;
     channel.members.each(function(member) {
-      if (hitMe) {
+      // if (hitMe) {
         // found next IP address - set up server to listen and send messages
-        const netClient = new net.Socket();
-        netClient.connect(1337, member.id, function() {
-          console.log('> connected to new member: ', member.id);
-        });
-        netClient.on('data', function(data) {
-          console.log('> Received: ', data.toString());
-          netClient.write('> Latest chain: ' + blockchain.tail.hash);
-        });
-        hitMe = false;
-      }
-      if (member.id === ipAddr) {
-        hitMe = true;
-      }
+      //   const netClient = new net.Socket();
+      //   netClient.connect(1337, member.id, function() {
+      //     console.log('> connected to new member: ', member.id);
+      //   });
+      //   netClient.on('data', function(data) {
+      //     console.log('> Received: ', data.toString());
+      //     netClient.write('> Latest chain: ' + blockchain.tail.hash);
+      //   });
+      //   hitMe = false;
+      // }
+      // if (member.id === ipAddr) {
+      //   hitMe = true;
+      // }
     });
   });
 
