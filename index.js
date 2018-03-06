@@ -4,11 +4,8 @@ const Client = require('pusher-js');
 const _ = require('lodash');
 const express = require('express');
 const ip = require('ip');
-const flatfile = require('flat-file-db');
 const app = express();
-const createAddress = require('./address');
 const net = require('net');
-const Blockchain = require('./blockchain');
 const bodyParser = require('body-parser');
 
 app.use(bodyParser.json());
@@ -19,15 +16,11 @@ const ipAddr = ip.address();
 
 const PUSHER_APP_KEY = '86e36fb6cb404d67a108';
 
-// pull most recent version of blockchain saved
-const db = flatfile.sync('/tmp/node-coin.db');
-const wholeChain = db.get('whole_chain');
-const coinAddress = db.get('public_address');
-
 function handleConnection(conn) {
   const remoteAddr = `${conn.remoteAddress}:${conn.remotePort}`;
   console.log(`> new client connection from ${remoteAddr}`);
 
+  conn.setEncoding('utf8');
   conn.on('data', onConnData);
   conn.on('close', onConnClose);
   conn.on('error', onConnError);
@@ -63,16 +56,19 @@ app.listen(process.env.PORT || 3000, function() {
     encrypted: true
   });
 
+  // initialize blockchain (MongoDB local)
+  // if no blocks, create genesis block
+  // else, find last block hash
+
   console.log('> Subscribing to changes...');
   var channel = client.subscribe('presence-node-coin');
 
   // called when the client successfully joins group
   channel.bind('pusher:subscription_succeeded', function (members) {
     console.log('> Subscription succeeded: ', members);
-    let hitMe = false;
     channel.members.each(function(member) {
       // pick member and ask for block headers
-      console.log('> Member: ', member);
+      console.log('> Member iter: ', member);
     });
   });
 

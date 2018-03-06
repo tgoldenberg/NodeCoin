@@ -17,3 +17,18 @@ Simply run the start-up script:
 npm start [public-address]
 ```
 The *public-address* argument will set your NodeCoin public address. Otherwise, the program will create a new address and add it to the blockchain.
+
+
+#### Redux
+
+Use redux for local variable storage (get/set behavior)
+
+#### MongoDB
+
+Use local MongoDB to store blocks. We can also keep track of UTXO (unspent transaction outputs).
+
+Transactions that are not yet added to the block can be added to the mempool.
+
+Orphan transactions can be added to the orphan transaction pool.
+
+Further, we can create balances for users (by wallet address)
