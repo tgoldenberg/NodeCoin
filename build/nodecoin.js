@@ -163,13 +163,12 @@ function handleConnection(conn) {
   conn.on('error', onConnError);
 
   function onConnData(d) {
-    console.log('> Connection data from: ' + remoteAddr, d);
-
     var _d$split = d.split(' '),
         _d$split2 = _toArray(_d$split),
         type = _d$split2[0],
         args = _d$split2.slice(1);
 
+    console.log('> Connection data from: ' + remoteAddr, d, type);
     var version = void 0,
         lastBlockHash = void 0,
         state = void 0,
@@ -180,6 +179,7 @@ function handleConnection(conn) {
         lastBlockHash = args[1];
         state = _store2.default.getState();
         lastBlock = state.lastBlock;
+        console.log('> Responding to VERSION request');
         conn.write(['VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash()].join(' '));
     }
   }
@@ -1321,7 +1321,7 @@ var connectWithPeer = function () {
         switch (_context.prev = _context.next) {
           case 0:
             console.log('> Connecting with peer: ', peer, lastBlockHash, version);
-            port = peer.port || 8334;
+            port = DEFAULT_PORT;
             client = new _net2.default.Socket();
 
             client.connect(port, peer.ip, function () {
@@ -1358,6 +1358,8 @@ var _net2 = _interopRequireDefault(_net);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+var DEFAULT_PORT = 8334;
 
 exports.default = connectWithPeer;
 

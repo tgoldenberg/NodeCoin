@@ -37,8 +37,8 @@ function handleConnection(conn) {
   conn.on('error', onConnError);
 
   function onConnData(d) {
-    console.log(`> Connection data from: ${remoteAddr}`, d);
     let [ type, ...args ] = d.split(' ');
+    console.log(`> Connection data from: ${remoteAddr}`, d, type);
     let version, lastBlockHash, state, lastBlock;
     switch(type) {
       case 'VERSION':
@@ -46,6 +46,7 @@ function handleConnection(conn) {
         lastBlockHash = args[1];
         state = store.getState();
         lastBlock = state.lastBlock;
+        console.log('> Responding to VERSION request');
         conn.write([ 'VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash() ].join(' '));
     }
   }
