@@ -3,11 +3,13 @@ import { lockTransaction, unlockTransaction } from 'utils/validateSignature';
 import BlockClass from 'classes/Block';
 import BlockModel from 'models/Block';
 import SHA256 from 'js-sha256';
+import { formatBlock } from 'db/syncBlocksWithStore';
 import uuid from 'uuid';
 
 const COIN = 100000000;
+const COINBASE_REWARD = 50 * COIN;
 
-const myWallet = {
+export const myWallet = {
   privateKey: '0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347',
   publicKey:'044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba',
   publicKeyHash:'ed2f84f67943321bf73747936db3e7273ada7f6c',
@@ -25,39 +27,67 @@ const friendWallet = {
 
 
 export async function seedBlocks() {
+  // BLOCK 1
   await BlockModel.find({ }).remove({ });
   let genesisBlock = new BlockClass({ }, [ ], true); // gives "myWallet" 50 COIN
   let savedGenesisBlock = new BlockModel(genesisBlock.getDBFormat());
+  console.log('> New block 1: '.blue, savedGenesisBlock.hash);
   await savedGenesisBlock.save();
 
-  let prev = genesisBlock;
   let remaining = 50 * COIN;
-  for (let i = 0; i < 3; i++) {
-    // 3 blocks (single transaction) sending money to friend wallet
-    let amount = Math.floor(Math.random() * 16);
-    let header = {
-      version: 1,
-      previousHash: prev.getBlockHeaderHash(),
-      merkleHash: uuid(),
-      timestamp: new Date().getTime(),
-      difficulty: prev.header.difficulty,
-      nonce: prev.header.nonce,
-    };
-    let block = new BlockClass(header, [ ]);
-    let txId = SHA256(block.getBlockHeaderHash() + '0');
-    let transaction = {
-      vin: [ { n: 0, prevout: prev.txs[0].hash, scriptSig: unlockTransaction(prev.txs[0].hash, myWallet.publicKeyHash, myWallet.privateKey) } ],
+
+  // BLOCK 2
+  let prev = genesisBlock;
+  let amount = Math.floor(Math.random() * 16);
+  let header = { version: 1, previousHash: prev.getBlockHeaderHash(), merkleHash: uuid(), timestamp: new Date().getTime(), difficulty: prev.header.difficulty, nonce: prev.header.nonce };
+  let block = new BlockClass(header, [ ]);
+  let txId = SHA256(block.getBlockHeaderHash() + '0');
+  remaining -= (amount * COIN);
+  let transactions = [
+    {
+      vin: [ { n: 'COINBASE', prevout: null } ],
+      vout: [ { nValue: COINBASE_REWARD, scriptPubKey: lockTransaction(txId, myWallet.publicKey) } ]
+    },
+    {
+      vin: [ { n: 0, prevout: prev.txs[0].hash, scriptSig: unlockTransaction(prev.txs[0].hash, myWallet.publicKey, myWallet.privateKey) } ],
       vout: [
         { nValue: amount * COIN, scriptPubKey: lockTransaction(txId, friendWallet.pulicKey) } ,
-        { nValue: remaining - (amount * COIN), scriptPubKey: lockTransaction(txId, myWallet.publicKey) }
+        { nValue: remaining, scriptPubKey: lockTransaction(txId, myWallet.publicKey) }
       ]
-    };
-    block.addTransaction(transaction);
-    let newBlock = new BlockModel(block.getDBFormat());
-    console.log('> New block: '.blue, newBlock.hash);
-    await newBlock.save();
-    prev = new BlockClass(header, [ transaction ]);
-  }
+    },
+  ]
+  transactions.forEach(tx => block.addTransaction(tx));
+  let newBlock = new BlockModel(block.getDBFormat());
+  console.log('> New block 2: '.blue, newBlock.hash);
+  await newBlock.save();
+
+  // BLOCK 3
+  prev = formatBlock(newBlock);
+  amount = Math.floor(Math.random() * 16);
+  header = { version: 1, previousHash: prev.getBlockHeaderHash(), merkleHash: uuid(), timestamp: new Date().getTime(), difficulty: prev.header.difficulty, nonce: prev.header.nonce };
+  block = new BlockClass(header, [ ]);
+  txId = SHA256(block.getBlockHeaderHash() + '0');
+  remaining -= (amount * COIN);
+  transactions = [
+    {
+      vin: [ { n: 'COINBASE', prevout: null } ],
+      vout: [ { nValue: COINBASE_REWARD, scriptPubKey: lockTransaction(txId, myWallet.publicKey) } ]
+    },
+    {
+      vin: [
+        { n: 1, prevout: prev.txs[1].hash, scriptSig: unlockTransaction(prev.txs[0].hash, myWallet.publicKey, myWallet.privateKey) }
+      ],
+      vout: [
+        { nValue: amount * COIN, scriptPubKey: lockTransaction(txId, friendWallet.pulicKey) } ,
+        { nValue: remaining, scriptPubKey: lockTransaction(txId, myWallet.publicKey) }
+      ]
+    },
+  ];
+  transactions.forEach(tx => block.addTransaction(tx));
+  let newBlock2 = new BlockModel(block.getDBFormat());
+  console.log('> New block 3: '.blue, newBlock2.hash);
+  await newBlock2.save();
+
   return savedGenesisBlock;
 }
 

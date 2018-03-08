@@ -22,10 +22,6 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// get current IP address in use
-// const ipAddr = ip.address();
-// const ipAddr = '192.168.1.150';
-
 const PUSHER_APP_KEY = '86e36fb6cb404d67a108'; // connect via public key
 const DEFAULT_PORT = 8334; // default port for net connections
 const MAX_PEERS = 25;
