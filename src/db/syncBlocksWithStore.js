@@ -8,17 +8,7 @@ async function syncBlocksWithStore() {
 
   if (numBlocks <= 0) {
     let block = new BlockClass({ }, [ ], true);
-    let newBlock = new BlockModel({
-      hash: block.getBlockHeaderHash(),
-      version: block.header.version,
-      previousHash: block.header.previousHash,
-      merkleHash: block.header.merkleHash,
-      timestamp: block.header.timestamp,
-      difficulty: block.header.difficulty,
-      nonce: block.header.nonce,
-      txs: block.txs,
-      blocksize: block.blocksize,
-    });
+    let newBlock = new BlockModel(block.getDBFormat());
     await newBlock.save();
     lastBlock = newBlock;
   }

@@ -1,8 +1,8 @@
-const RIPEMD160 = require('ripemd160');
-const EC = require('elliptic').ec;
-const sha256 = require('js-sha256');
+import RIPEMD160 from 'ripemd160';
+import SHA256 from 'js-sha256';
+import elliptic from 'elliptic';
 
-const ec = new EC('secp256k1');
+const ec = new elliptic.ec('secp256k1');
 
 let message = 'I want to send this money';
 let publicKeyHash = 'bc6852feffa506e9bd20ab874f591488c94452b0';
@@ -15,23 +15,23 @@ let input = { message, publicKey }; // we want to verify that this transaction b
 
 // hash message - this method hashes the transaction header (# bytes, publicAddress, amount of money)
 function Hash(msg) {
-  let result = sha256(msg);
+  let result = SHA256(msg);
   return new RIPEMD160().update(msg).digest('hex');
 }
 
-function lockTransaction(message, publicKey) {
+export function lockTransaction(message, publicKey) {
   const publicKeyScript = [ encodeURIComponent(message), publicKey ].join(' ');
   return publicKeyScript;
 }
 
-function unlockTransaction(message, publicAddress, privateKey) {
+export function unlockTransaction(message, publicAddress, privateKey) {
   const messageHash = Hash(decodeURIComponent(message));
   const privateKeyPair = ec.keyFromPrivate(privateKey);
   const signature = ec.sign(messageHash, privateKeyPair);
-  return signature;
+  return signature.toDER('hex');
 }
 
-function verifyUnlock(message, publicAddress, signature) {
+export function verifyUnlock(message, publicAddress, signature) {
   const messageHash = Hash(decodeURIComponent(message));
   const publicKeyPair = ec.keyFromPublic(publicAddress, 'hex');
   const isVerified = publicKeyPair.verify(messageHash, signature);
@@ -41,13 +41,13 @@ function verifyUnlock(message, publicAddress, signature) {
 function testVerification(publicKeyScript, privateKey) {
   const [ message, publicKey ] = publicKeyScript.split(' ');
   const signature = unlockTransaction(message, publicKey, privateKey);
-  console.log('> Signature: ', signature.toDER('hex'));
+  // console.log('> Signature: ', signature);
   const isVerified = verifyUnlock(message, publicKey, signature);
-  console.log('> Is verified: ', isVerified);
+  // console.log('> Is verified: ', isVerified);
 }
 
 let publicKeyScript = lockTransaction(input.message, input.publicKey);
-testVerification(publicKeyScript, privateKey);
+// testVerification(publicKeyScript, privateKey);
 
 publicKeyScript = lockTransaction(input.message, '04487bd002b2b61a1bbc89b3c05cebf73039d4722c96877308ee4905c10f155d71f03dca22650a2aea193416dd5071260b3fca82ab5a254163371e5929fb28c0f2');
-testVerification(publicKeyScript, privateKey); // different address
+// testVerification(publicKeyScript, privateKey); // different address

@@ -1,6 +1,7 @@
 const store = require('store/store');
 
 import SHA256 from 'js-sha256';
+import uuid from 'uuid';
 
 const COIN = 100000000;
 const genesisPreviousHash = '0000000000000000000000000000000000000000000000000000000000000000';
@@ -32,9 +33,22 @@ class Block {
     }
     this.blocksize = JSON.stringify(this).length;
   }
+  getDBFormat() {
+    return {
+      hash: this.getBlockHeaderHash(),
+      version: this.header.version,
+      previousHash: this.header.previousHash,
+      merkleHash: this.header.merkleHash,
+      timestamp: this.header.timestamp,
+      difficulty: this.header.difficulty,
+      nonce: this.header.nonce,
+      txs: this.txs,
+      blocksize: this.blocksize,
+    };
+  }
   getBlockHeaderHash() {
     const { version, previousHash, merkleHash, timestamp, difficulty, nonce } = this.header;
-    return SHA256([ version, previousHash, merkleHash, timestamp, difficulty, nonce, JSON.stringify(this.txs) ].join(' '));
+    return SHA256([ version, previousHash, merkleHash, timestamp, difficulty, nonce ].join(' '));
   }
   setHeader(header) {
     this.header = {
@@ -48,7 +62,8 @@ class Block {
     return this.header;
   }
   addTransaction(transaction) {
-    this.txs.push(transaction);
+    let idx = this.txs.length;
+    this.txs.push({ ...transaction, hash: SHA256(this.getBlockHeaderHash() + idx) });
     return this.txs;
   }
 };

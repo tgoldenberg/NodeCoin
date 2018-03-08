@@ -184,6 +184,8 @@ var _network = __webpack_require__(4);
 
 var _network2 = _interopRequireDefault(_network);
 
+var _blocks = __webpack_require__(24);
+
 var _store = __webpack_require__(1);
 
 var _store2 = _interopRequireDefault(_store);
@@ -227,7 +229,7 @@ function handleConnection(conn) {
         type = _d$split2[0],
         args = _d$split2.slice(1);
 
-    console.log('> Connection data from: ' + remoteAddr, d, type);
+    console.log('> Connection data from: ' + remoteAddr, d);
     var version = void 0,
         lastBlockHash = void 0,
         state = void 0,
@@ -240,6 +242,9 @@ function handleConnection(conn) {
         lastBlock = state.lastBlock;
         console.log('> Responding to VERSION request');
         conn.write(['VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash()].join(' '));
+        break;
+      case 'GETBLOCKS':
+        console.log('> Get Blocks: ', d);
     }
   }
   function onConnClose() {
@@ -279,6 +284,12 @@ function startup() {
 
             console.log('> Connected to local MongoDB'.gray);
 
+            // seed blocks
+            _context2.next = 10;
+            return (0, _blocks.seedBlocks)();
+
+          case 10:
+
             // create a TCP/IP server on current IP address
             server = _net2.default.createServer();
 
@@ -298,10 +309,10 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context2.next = 14;
+            _context2.next = 16;
             return (0, _syncBlocksWithStore2.default)();
 
-          case 14:
+          case 16:
             _ref2 = _context2.sent;
             numBlocks = _ref2.numBlocks;
             lastBlock = _ref2.lastBlock;
@@ -388,7 +399,7 @@ function startup() {
               // TODO: stop any ongoing requests with peer
             });
 
-          case 22:
+          case 24:
           case 'end':
             return _context2.stop();
         }
@@ -776,17 +787,7 @@ var syncBlocksWithStore = function () {
             }
 
             block = new _Block2.default({}, [], true);
-            newBlock = new _Block4.default({
-              hash: block.getBlockHeaderHash(),
-              version: block.header.version,
-              previousHash: block.header.previousHash,
-              merkleHash: block.header.merkleHash,
-              timestamp: block.header.timestamp,
-              difficulty: block.header.difficulty,
-              nonce: block.header.nonce,
-              txs: block.txs,
-              blocksize: block.blocksize
-            });
+            newBlock = new _Block4.default(block.getDBFormat());
             _context.next = 11;
             return newBlock.save();
 
@@ -846,11 +847,17 @@ exports.default = syncBlocksWithStore;
 "use strict";
 
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _jsSha = __webpack_require__(19);
 
 var _jsSha2 = _interopRequireDefault(_jsSha);
+
+var _uuid = __webpack_require__(23);
+
+var _uuid2 = _interopRequireDefault(_uuid);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -894,6 +901,21 @@ var Block = function () {
   }
 
   _createClass(Block, [{
+    key: 'getDBFormat',
+    value: function getDBFormat() {
+      return {
+        hash: this.getBlockHeaderHash(),
+        version: this.header.version,
+        previousHash: this.header.previousHash,
+        merkleHash: this.header.merkleHash,
+        timestamp: this.header.timestamp,
+        difficulty: this.header.difficulty,
+        nonce: this.header.nonce,
+        txs: this.txs,
+        blocksize: this.blocksize
+      };
+    }
+  }, {
     key: 'getBlockHeaderHash',
     value: function getBlockHeaderHash() {
       var _header = this.header,
@@ -904,7 +926,7 @@ var Block = function () {
           difficulty = _header.difficulty,
           nonce = _header.nonce;
 
-      return (0, _jsSha2.default)([version, previousHash, merkleHash, timestamp, difficulty, nonce, JSON.stringify(this.txs)].join(' '));
+      return (0, _jsSha2.default)([version, previousHash, merkleHash, timestamp, difficulty, nonce].join(' '));
     }
   }, {
     key: 'setHeader',
@@ -922,7 +944,8 @@ var Block = function () {
   }, {
     key: 'addTransaction',
     value: function addTransaction(transaction) {
-      this.txs.push(transaction);
+      var idx = this.txs.length;
+      this.txs.push(_extends({}, transaction, { hash: (0, _jsSha2.default)(this.getBlockHeaderHash() + idx) }));
       return this.txs;
     }
   }]);
@@ -991,6 +1014,240 @@ module.exports = require("bluebird");
 /***/ (function(module, exports) {
 
 module.exports = require("dotenv");
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports) {
+
+module.exports = require("uuid");
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.seedBlocks = undefined;
+
+var seedBlocks = exports.seedBlocks = function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+    var genesisBlock, savedGenesisBlock, prev, remaining, i, amount, header, block, txId, transaction, newBlock;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _context.next = 2;
+            return _Block4.default.find({}).remove({});
+
+          case 2:
+            genesisBlock = new _Block2.default({}, [], true); // gives "myWallet" 50 COIN
+
+            savedGenesisBlock = new _Block4.default(genesisBlock.getDBFormat());
+            _context.next = 6;
+            return savedGenesisBlock.save();
+
+          case 6:
+            prev = genesisBlock;
+            remaining = 50 * COIN;
+            i = 0;
+
+          case 9:
+            if (!(i < 3)) {
+              _context.next = 24;
+              break;
+            }
+
+            // 3 blocks (single transaction) sending money to friend wallet
+            amount = Math.floor(Math.random() * 16);
+            header = {
+              version: 1,
+              previousHash: prev.getBlockHeaderHash(),
+              merkleHash: (0, _uuid2.default)(),
+              timestamp: new Date().getTime(),
+              difficulty: prev.header.difficulty,
+              nonce: prev.header.nonce
+            };
+            block = new _Block2.default(header, []);
+            txId = (0, _jsSha2.default)(block.getBlockHeaderHash() + '0');
+            transaction = {
+              vin: [{ n: 0, prevout: prev.txs[0].hash, scriptSig: (0, _validateSignature.unlockTransaction)(prev.txs[0].hash, myWallet.publicKeyHash, myWallet.privateKey) }],
+              vout: [{ nValue: amount * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, friendWallet.pulicKey) }, { nValue: remaining - amount * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, myWallet.publicKey) }]
+            };
+
+            block.addTransaction(transaction);
+            newBlock = new _Block4.default(block.getDBFormat());
+
+            console.log('> New block: '.blue, newBlock.hash);
+            _context.next = 20;
+            return newBlock.save();
+
+          case 20:
+            prev = new _Block2.default(header, [transaction]);
+
+          case 21:
+            i++;
+            _context.next = 9;
+            break;
+
+          case 24:
+            return _context.abrupt('return', savedGenesisBlock);
+
+          case 25:
+          case 'end':
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+
+  return function seedBlocks() {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+// seedBlocks();
+
+
+var _validateSignature = __webpack_require__(25);
+
+var _Block = __webpack_require__(18);
+
+var _Block2 = _interopRequireDefault(_Block);
+
+var _Block3 = __webpack_require__(20);
+
+var _Block4 = _interopRequireDefault(_Block3);
+
+var _jsSha = __webpack_require__(19);
+
+var _jsSha2 = _interopRequireDefault(_jsSha);
+
+var _uuid = __webpack_require__(23);
+
+var _uuid2 = _interopRequireDefault(_uuid);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+var COIN = 100000000;
+
+var myWallet = {
+  privateKey: '0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347',
+  publicKey: '044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba',
+  publicKeyHash: 'ed2f84f67943321bf73747936db3e7273ada7f6c',
+  address: '1Nd85AnFYDtaQAG6vF9FVWXFWksG5HuA3M',
+  privateKeyWIF: '5HwF1jU38V8YhpBy9PuNC4hTYkKrDccLE28qV7tLxZ7u3pKXCy4'
+};
+
+var friendWallet = {
+  privateKey: '6128428978e30fc034c95b7b091b373b875bdd73a0acf83c09d37bff72361349',
+  publicKey: '04804a9ed2855fcea0f5b6e23e587a6c6f7159f15c84b9c82474231cfdac04827fac72a36bd0b463fc61c4d66a954aa7d5f95bde970804f81c8d6f712390516fbb',
+  publicKeyHash: 'f3a7ee518818e7adc56ed12e9f483712fc4dd0d5',
+  address: '1PDLNfJq5GAEn5StESZuBpaBe6B3134vmD',
+  privateKeyWIF: '5JZ5LHz7Kr3FXeU7asLfffasonpmxUX3smTQb8LtsD21UQqiYqo'
+};
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+exports.lockTransaction = lockTransaction;
+exports.unlockTransaction = unlockTransaction;
+exports.verifyUnlock = verifyUnlock;
+
+var _ripemd = __webpack_require__(26);
+
+var _ripemd2 = _interopRequireDefault(_ripemd);
+
+var _jsSha = __webpack_require__(19);
+
+var _jsSha2 = _interopRequireDefault(_jsSha);
+
+var _elliptic = __webpack_require__(27);
+
+var _elliptic2 = _interopRequireDefault(_elliptic);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var ec = new _elliptic2.default.ec('secp256k1');
+
+var message = 'I want to send this money';
+var publicKeyHash = 'bc6852feffa506e9bd20ab874f591488c94452b0';
+var publicKey = '040b6e5e8aefa89e4d70e7f74c70dfffe10d9bae4a846213e15e485c1f8d1e1635c62f3e341498f00de895b687cae2a2e43a4808f4c75dd68122e159de7f4a0d96';
+var publicAddress = '1JBD1dwNUAwVHXSPkpA3o27F6Qcv1yoc3u';
+var privateKeyWif = '5JzAwuNcBrh9nd5xaLbvjWdaMriFyysRs711JtbH2RJtbwwTrTh';
+var privateKey = '9a2481a0101b7d75062eea7d5e7689c3d8ec87209ae4c5f76dd5c0235a806fda';
+
+var input = { message: message, publicKey: publicKey }; // we want to verify that this transaction belongs to us
+
+// hash message - this method hashes the transaction header (# bytes, publicAddress, amount of money)
+function Hash(msg) {
+  var result = (0, _jsSha2.default)(msg);
+  return new _ripemd2.default().update(msg).digest('hex');
+}
+
+function lockTransaction(message, publicKey) {
+  var publicKeyScript = [encodeURIComponent(message), publicKey].join(' ');
+  return publicKeyScript;
+}
+
+function unlockTransaction(message, publicAddress, privateKey) {
+  var messageHash = Hash(decodeURIComponent(message));
+  var privateKeyPair = ec.keyFromPrivate(privateKey);
+  var signature = ec.sign(messageHash, privateKeyPair);
+  return signature.toDER('hex');
+}
+
+function verifyUnlock(message, publicAddress, signature) {
+  var messageHash = Hash(decodeURIComponent(message));
+  var publicKeyPair = ec.keyFromPublic(publicAddress, 'hex');
+  var isVerified = publicKeyPair.verify(messageHash, signature);
+  return isVerified;
+}
+
+function testVerification(publicKeyScript, privateKey) {
+  var _publicKeyScript$spli = publicKeyScript.split(' '),
+      _publicKeyScript$spli2 = _slicedToArray(_publicKeyScript$spli, 2),
+      message = _publicKeyScript$spli2[0],
+      publicKey = _publicKeyScript$spli2[1];
+
+  var signature = unlockTransaction(message, publicKey, privateKey);
+  // console.log('> Signature: ', signature);
+  var isVerified = verifyUnlock(message, publicKey, signature);
+  // console.log('> Is verified: ', isVerified);
+}
+
+var publicKeyScript = lockTransaction(input.message, input.publicKey);
+// testVerification(publicKeyScript, privateKey);
+
+publicKeyScript = lockTransaction(input.message, '04487bd002b2b61a1bbc89b3c05cebf73039d4722c96877308ee4905c10f155d71f03dca22650a2aea193416dd5071260b3fca82ab5a254163371e5929fb28c0f2');
+// testVerification(publicKeyScript, privateKey); // different address
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports) {
+
+module.exports = require("ripemd160");
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports) {
+
+module.exports = require("elliptic");
 
 /***/ })
 /******/ ]);

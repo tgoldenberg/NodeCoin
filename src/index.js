@@ -12,6 +12,7 @@ import ip from 'ip';
 import mongoose from 'mongoose';
 import net from 'net';
 import network from 'network';
+import { seedBlocks } from '__mocks__/blocks';
 import store from 'store/store';
 import syncBlocksWithStore from 'db/syncBlocksWithStore';
 
@@ -40,7 +41,7 @@ function handleConnection(conn) {
 
   function onConnData(d) {
     let [ type, ...args ] = d.split(' ');
-    console.log(`> Connection data from: ${remoteAddr}`, d, type);
+    console.log(`> Connection data from: ${remoteAddr}`, d);
     let version, lastBlockHash, state, lastBlock;
     switch(type) {
       case 'VERSION':
@@ -50,6 +51,9 @@ function handleConnection(conn) {
         lastBlock = state.lastBlock;
         console.log('> Responding to VERSION request');
         conn.write([ 'VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash() ].join(' '));
+        break;
+      case 'GETBLOCKS':
+        console.log('> Get Blocks: ', d);
     }
   }
   function onConnClose() {
@@ -71,6 +75,9 @@ function startup() {
     // connect to local instance of MongoDB
     const dbConnection = await connectToDB();
     console.log('> Connected to local MongoDB'.gray);
+
+    // seed blocks
+    await seedBlocks();
 
     // create a TCP/IP server on current IP address
     const server = net.createServer();
