@@ -10,7 +10,7 @@ const genesisNonce = 2083236893;
 const genesisTimestamp = 1231006505000; // Jan 3, 2009
 const genesisTransaction = {
   vin: [ { n: 'COINBASE', prevout: null } ],
-  vout: [ { nValue: 50 * COIN, scriptPubKey: '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f' } ]
+  vout: [ { nValue: 50 * COIN, scriptPubKey: '1Nd85AnFYDtaQAG6vF9FVWXFWksG5HuA3M' } ]
 };
 
 class Block {
@@ -32,7 +32,7 @@ class Block {
   }
   getBlockHeaderHash() {
     const { version, previousHash, merkleHash, timestamp, difficulty, nonce } = this.header;
-    return SHA256([ version, previousHash, merkleHash, timestamp, difficulty, nonce ].join(' '));
+    return SHA256([ version, previousHash, merkleHash, timestamp, difficulty, nonce, JSON.stringify(this.txs) ].join(' '));
   }
   setHeader(header) {
     this.header = {
