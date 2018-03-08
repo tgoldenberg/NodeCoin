@@ -48,7 +48,7 @@
     "testEnvironment": "node"
   },
   "scripts": {
-    "start": "node index.js",
+    "start": "node build/nodecoin.js",
     "start-dev": "brew services start mongodb && node build/nodecoin.js",
     "dev": "WEBPACK_ENV=dev webpack --progress --colors --watch",
     "build": "jest && WEBPACK_ENV=build webpack",
