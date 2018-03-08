@@ -14,19 +14,21 @@ const genesisTransaction = {
 };
 
 class Block {
-  constructor(previousHash, isGenesis = false, timestamp = Date.now()) {
+  constructor(header, txs, isGenesis = false) {
     let state = store.getState();
     this.header = {
-      version: state.version,
-      previousHash: isGenesis ? genesisPreviousHash : previousHash,
-      merkleHash: isGenesis ? genesisMerkleRoot : null,
-      timestamp: isGenesis ? genesisTimestamp : timestamp,
-      difficulty: isGenesis ? genesisDifficulty : state.difficulty,
-      nonce: isGenesis ? genesisNonce : state.nonce,
+      version: isGenesis ? 1 : header.version,
+      previousHash: isGenesis ? genesisPreviousHash : header.previousHash,
+      merkleHash: isGenesis ? genesisMerkleRoot : header.merkleHash,
+      timestamp: isGenesis ? genesisTimestamp : header.timestamp,
+      difficulty: isGenesis ? genesisDifficulty : header.difficulty,
+      nonce: isGenesis ? genesisNonce : header.nonce,
     };
     this.txs = [ ];
     if (isGenesis) {
       this.addTransaction(genesisTransaction);
+    } else {
+      this.txs = txs;
     }
     this.blocksize = JSON.stringify(this).length;
   }

@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 mongoose.Promise = require('bluebird');
 
 const schema = {
+  hash: { type: String, required: true },
   version: { default: 1, type: Number },
   previousHash: { type: String, required: true },
   merkleHash: { type: String, required: true },

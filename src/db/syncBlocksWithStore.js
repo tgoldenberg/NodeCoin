@@ -7,8 +7,9 @@ async function syncBlocksWithStore() {
   let lastBlock = await BlockModel.findOne().sort({ timestamp: -1 }).limit(1);
 
   if (numBlocks <= 0) {
-    let block = new BlockClass(null, true);
+    let block = new BlockClass({ }, [ ], true);
     let newBlock = new BlockModel({
+      hash: block.getBlockHeaderHash(),
       version: block.header.version,
       previousHash: block.header.previousHash,
       merkleHash: block.header.merkleHash,
@@ -30,7 +31,8 @@ async function syncBlocksWithStore() {
 }
 
 function formatBlock(block) {
-  let newBlock = new BlockClass(block.previousHash, false, block.timestamp);
+
+  let newBlock = new BlockClass(block, block.txs);
   newBlock.setHeader(block);
   return newBlock;
 }

@@ -22,8 +22,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 // get current IP address in use
-const ipAddr = ip.address();
-// const ipAddr = '108.30.188.4';
+// const ipAddr = ip.address();
+// const ipAddr = '192.168.1.150';
 
 const PUSHER_APP_KEY = '86e36fb6cb404d67a108'; // connect via public key
 const DEFAULT_PORT = 8334; // default port for net connections
@@ -65,7 +65,7 @@ let allPeers = [ ];
 
 function startup() {
   app.listen(process.env.PORT || 3000, async function() {
-    // const ipAddr = await findIPAddress();
+    const ipAddr = await findIPAddress();
     console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
     // connect to local instance of MongoDB

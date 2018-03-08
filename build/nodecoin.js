@@ -100,7 +100,7 @@ function addLoggingToDispatch(store) {
   var rawDispatch = store.dispatch;
   return function (action) {
     console.log(('> Action: ' + action.type).yellow);
-    // console.log('> prev state'.gray, store.getState());
+    console.log('> prev state'.gray, store.getState().lastBlock);
     console.log(('> Keys: ' + Object.keys(action).join(', ')).green);
     var returnValue = rawDispatch(action);
     // console.log('> next state'.green, store.getState());
@@ -205,8 +205,8 @@ app.use(_bodyParser2.default.json());
 app.use(_bodyParser2.default.urlencoded({ extended: false }));
 
 // get current IP address in use
-var ipAddr = _ip2.default.address();
-// const ipAddr = '108.30.188.4';
+// const ipAddr = ip.address();
+// const ipAddr = '192.168.1.150';
 
 var PUSHER_APP_KEY = '86e36fb6cb404d67a108'; // connect via public key
 var DEFAULT_PORT = 8334; // default port for net connections
@@ -256,20 +256,25 @@ function startup() {
   app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
     var _this = this;
 
-    var dbConnection, server, client, _ref2, numBlocks, lastBlock, channel;
+    var ipAddr, dbConnection, server, client, _ref2, numBlocks, lastBlock, channel;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
-            // const ipAddr = await findIPAddress();
+            _context2.next = 2;
+            return (0, _findIPAddress2.default)();
+
+          case 2:
+            ipAddr = _context2.sent;
+
             console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
             // connect to local instance of MongoDB
-            _context2.next = 3;
+            _context2.next = 6;
             return (0, _connectToDB2.default)();
 
-          case 3:
+          case 6:
             dbConnection = _context2.sent;
 
             console.log('> Connected to local MongoDB'.gray);
@@ -293,10 +298,10 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context2.next = 11;
+            _context2.next = 14;
             return (0, _syncBlocksWithStore2.default)();
 
-          case 11:
+          case 14:
             _ref2 = _context2.sent;
             numBlocks = _ref2.numBlocks;
             lastBlock = _ref2.lastBlock;
@@ -383,7 +388,7 @@ function startup() {
               // TODO: stop any ongoing requests with peer
             });
 
-          case 19:
+          case 22:
           case 'end':
             return _context2.stop();
         }
@@ -482,36 +487,100 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 var connectWithPeer = function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(peer, lastBlockHash, version) {
-    var port, client;
-    return regeneratorRuntime.wrap(function _callee$(_context) {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(peer, lastBlockHash, version) {
+    var _this = this;
+
+    var IS_CONNECTED, IS_VERSION_COMPATIBLE, HAS_MORE_BLOCKS, port, client;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
-        switch (_context.prev = _context.next) {
+        switch (_context2.prev = _context2.next) {
           case 0:
-            console.log('> Connecting with peer: ', peer, lastBlockHash, version);
+            IS_CONNECTED = false;
+            IS_VERSION_COMPATIBLE = false;
+            HAS_MORE_BLOCKS = false;
+            // console.log('> Connecting with peer: ', peer, lastBlockHash, version);
+
             port = DEFAULT_PORT;
             client = new _net2.default.Socket();
 
             client.connect(port, peer.ip, function () {
               console.log('> Connected to peer: ', peer);
+              IS_CONNECTED = true;
               var type = 'VERSION';
               client.write([type, version, lastBlockHash].join(' '));
             });
 
-            client.on('data', function (data) {
-              console.log('> Received: ', data.toString());
-            });
+            client.on('data', function () {
+              var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(data) {
+                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash;
+
+                return regeneratorRuntime.wrap(function _callee$(_context) {
+                  while (1) {
+                    switch (_context.prev = _context.next) {
+                      case 0:
+                        _data$toString$split = data.toString().split(' '), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
+                        // console.log('> Received: ', data.toString());
+
+                        version = void 0, blockHeaderHash = void 0;
+                        _context.t0 = type;
+                        _context.next = _context.t0 === 'VERSION' ? 5 : _context.t0 === 'GETBLOCKS' ? 16 : 16;
+                        break;
+
+                      case 5:
+                        version = args[0];
+                        blockHeaderHash = args[1];
+
+                        if (!(version !== '1')) {
+                          _context.next = 9;
+                          break;
+                        }
+
+                        return _context.abrupt('break', 16);
+
+                      case 9:
+                        IS_VERSION_COMPATIBLE = true;
+                        console.log('> Received block hash: ', blockHeaderHash);
+                        // check db for what block height received block hash is
+                        _context.next = 13;
+                        return _Block2.default.findOne({ hash: blockHeaderHash });
+
+                      case 13:
+                        lastBlock = _context.sent;
+
+                        if (!lastBlock) {
+                          // send getblocks message
+                          savedLastBlock = _store2.default.getState().lastBlock;
+                          savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
+
+                          client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
+                        }
+                        return _context.abrupt('break', 16);
+
+                      case 16:
+                      case 'end':
+                        return _context.stop();
+                    }
+                  }
+                }, _callee, _this);
+              }));
+
+              return function (_x4) {
+                return _ref2.apply(this, arguments);
+              };
+            }()
+            // find next 50 blocks
+            );
 
             client.on('close', function () {
               console.log('> Connection closed');
             });
 
-          case 6:
+          case 8:
           case 'end':
-            return _context.stop();
+            return _context2.stop();
         }
       }
-    }, _callee, this);
+    }, _callee2, this);
   }));
 
   return function connectWithPeer(_x, _x2, _x3) {
@@ -519,11 +588,21 @@ var connectWithPeer = function () {
   };
 }();
 
+var _Block = __webpack_require__(20);
+
+var _Block2 = _interopRequireDefault(_Block);
+
 var _net = __webpack_require__(3);
 
 var _net2 = _interopRequireDefault(_net);
 
+var _store = __webpack_require__(1);
+
+var _store2 = _interopRequireDefault(_store);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
@@ -687,8 +766,9 @@ var syncBlocksWithStore = function () {
               break;
             }
 
-            block = new _Block2.default(null, true);
+            block = new _Block2.default({}, [], true);
             newBlock = new _Block4.default({
+              hash: block.getBlockHeaderHash(),
               version: block.header.version,
               previousHash: block.header.previousHash,
               merkleHash: block.header.merkleHash,
@@ -742,7 +822,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 function formatBlock(block) {
-  var newBlock = new _Block2.default(block.previousHash, false, block.timestamp);
+
+  var newBlock = new _Block2.default(block, block.txs);
   newBlock.setHeader(block);
   return newBlock;
 }
@@ -780,24 +861,25 @@ var genesisTransaction = {
 };
 
 var Block = function () {
-  function Block(previousHash) {
-    var isGenesis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-    var timestamp = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : Date.now();
+  function Block(header, txs) {
+    var isGenesis = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
     _classCallCheck(this, Block);
 
     var state = store.getState();
     this.header = {
-      version: state.version,
-      previousHash: isGenesis ? genesisPreviousHash : previousHash,
-      merkleHash: isGenesis ? genesisMerkleRoot : null,
-      timestamp: isGenesis ? genesisTimestamp : timestamp,
-      difficulty: isGenesis ? genesisDifficulty : state.difficulty,
-      nonce: isGenesis ? genesisNonce : state.nonce
+      version: isGenesis ? 1 : header.version,
+      previousHash: isGenesis ? genesisPreviousHash : header.previousHash,
+      merkleHash: isGenesis ? genesisMerkleRoot : header.merkleHash,
+      timestamp: isGenesis ? genesisTimestamp : header.timestamp,
+      difficulty: isGenesis ? genesisDifficulty : header.difficulty,
+      nonce: isGenesis ? genesisNonce : header.nonce
     };
     this.txs = [];
     if (isGenesis) {
       this.addTransaction(genesisTransaction);
+    } else {
+      this.txs = txs;
     }
     this.blocksize = JSON.stringify(this).length;
   }
@@ -872,6 +954,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 _mongoose2.default.Promise = __webpack_require__(21);
 
 var schema = {
+  hash: { type: String, required: true },
   version: { default: 1, type: Number },
   previousHash: { type: String, required: true },
   merkleHash: { type: String, required: true },
