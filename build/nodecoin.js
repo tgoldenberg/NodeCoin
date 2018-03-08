@@ -523,7 +523,7 @@ var connectWithPeer = function () {
 
                         version = void 0, blockHeaderHash = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 5 : _context.t0 === 'GETBLOCKS' ? 16 : 16;
+                        _context.next = _context.t0 === 'VERSION' ? 5 : _context.t0 === 'GETBLOCKS' ? 21 : 21;
                         break;
 
                       case 5:
@@ -535,7 +535,7 @@ var connectWithPeer = function () {
                           break;
                         }
 
-                        return _context.abrupt('break', 16);
+                        return _context.abrupt('break', 21);
 
                       case 9:
                         IS_VERSION_COMPATIBLE = true;
@@ -547,16 +547,23 @@ var connectWithPeer = function () {
                       case 13:
                         lastBlock = _context.sent;
 
-                        if (!lastBlock) {
-                          // send getblocks message
-                          savedLastBlock = _store2.default.getState().lastBlock;
-                          savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
-
-                          client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
+                        if (lastBlock) {
+                          _context.next = 19;
+                          break;
                         }
-                        return _context.abrupt('break', 16);
 
-                      case 16:
+                        // send getblocks message
+                        savedLastBlock = _store2.default.getState().lastBlock;
+                        savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
+
+                        client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
+                        return _context.abrupt('break', 21);
+
+                      case 19:
+                        console.log('> Synced with peer'.blue);
+                        return _context.abrupt('break', 21);
+
+                      case 21:
                       case 'end':
                         return _context.stop();
                     }
@@ -587,6 +594,8 @@ var connectWithPeer = function () {
     return _ref.apply(this, arguments);
   };
 }();
+
+__webpack_require__(2);
 
 var _Block = __webpack_require__(20);
 

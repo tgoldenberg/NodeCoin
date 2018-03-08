@@ -1,3 +1,5 @@
+import 'colors';
+
 import Block from 'models/Block';
 import net from 'net';
 import store from 'store/store';
@@ -38,7 +40,9 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           let savedLastBlock = store.getState().lastBlock;
           let savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
           client.write([ 'GETBLOCKS', savedLastBlockHash ].join(' '));
+          break;
         }
+        console.log('> Synced with peer'.blue);
         break;
       case 'GETBLOCKS':
         // find next 50 blocks
