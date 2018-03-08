@@ -220,7 +220,7 @@ function startup() {
             console.log('> Subscribing to broadcast changes...'.gray);
             channel = client.subscribe('presence-node-coin');
 
-            // called when the client successfully joins group
+            // SUCCESSFULLY JOINED
 
             channel.bind('pusher:subscription_succeeded', function (members) {
               console.log('> Subscription succeeded: ', members);
@@ -234,36 +234,33 @@ function startup() {
               // send version message to all peers, w/ version and last block hash
               var lastBlock = _store2.default.getState().lastBlock;
               var lastBlockHash = lastBlock.getBlockHeaderHash();
-              var version = lastBlock.version;
+              var version = lastBlock.header.version;
               console.log('> Last block hash: ', version, lastBlockHash);
             });
 
+            // MEMBER ADDED
             channel.bind('pusher:member_added', function (member) {
-              console.log('> Member added: ', member);
-              // send ping to new member to exchange headers
+              var allPeers = _store2.default.getState().allPeers;
               allPeers.push({ ip: member.id });
+              _store2.default.dispatch({ type: 'SET_PEERS', allPeers: allPeers });
+              // TODO: send ping to new member to exchange headers
             });
 
+            // MEMBER REMOVED
             channel.bind('pusher:member_removed', function (member) {
               console.log('> Member removed: ', member);
+              var allPeers = _store2.default.getState().allPeers;
               var newAllPeers = [];
               allPeers.forEach(function (peer) {
                 if (peer.ip !== member.id) {
                   newAllPeers.push(peer);
                 }
               });
-              allPeers = newAllPeers;
+              _store2.default.dispatch({ type: 'SET_PEERS', allPeers: newAllPeers });
+              // TODO: stop any ongoing requests with peer
             });
 
-            channel.bind('blocks:request_blocks', function (data) {
-              console.log('> Request for blocks: ', data);
-              if (data.ip_addr !== ipAddr) {
-                // check if has block after last block
-                console.log('> Find missing blocks...');
-              }
-            });
-
-          case 20:
+          case 19:
           case 'end':
             return _context.stop();
         }
