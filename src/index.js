@@ -73,7 +73,7 @@ function startup() {
     const server = net.createServer();
     server.on('connection', handleConnection);
 
-    server.listen(8334, function() {
+    server.listen(DEFAULT_PORT, ipAddr, function() {
       console.log(`> TCP/IP server listening on:`.gray, JSON.stringify(server.address()));
     });
 
