@@ -7,14 +7,15 @@ import bodyParser from 'body-parser';
 import connectToDB from './connectToDB';
 import connectWithPeer from './connectWithPeer';
 import express from 'express';
+import findIPAddress from 'utils/findIPAddress';
 import ip from 'ip';
 import mongoose from 'mongoose';
 import net from 'net';
+import network from 'network';
 import store from 'store/store';
 import syncBlocksWithStore from 'db/syncBlocksWithStore';
 
 require('dotenv').config();
-
 
 const app = express();
 app.use(bodyParser.json());
@@ -22,6 +23,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // get current IP address in use
 const ipAddr = ip.address();
+// const ipAddr = '108.30.188.4';
 
 const PUSHER_APP_KEY = '86e36fb6cb404d67a108'; // connect via public key
 const DEFAULT_PORT = 8334; // default port for net connections
@@ -63,6 +65,7 @@ let allPeers = [ ];
 
 function startup() {
   app.listen(process.env.PORT || 3000, async function() {
+    // const ipAddr = await findIPAddress();
     console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
     // connect to local instance of MongoDB
@@ -73,7 +76,7 @@ function startup() {
     const server = net.createServer();
     server.on('connection', handleConnection);
 
-    server.listen(DEFAULT_PORT, ipAddr, function() {
+    server.listen(DEFAULT_PORT, '0.0.0.0', function() {
       console.log(`> TCP/IP server listening on:`.gray, JSON.stringify(server.address()));
     });
 
