@@ -5,6 +5,7 @@ import Client from 'pusher-js';
 import _ from 'lodash';
 import bodyParser from 'body-parser';
 import connectToDB from './connectToDB';
+import connectWithPeer from './connectWithPeer';
 import express from 'express';
 import ip from 'ip';
 import mongoose from 'mongoose';
@@ -37,7 +38,16 @@ function handleConnection(conn) {
 
   function onConnData(d) {
     console.log(`> Connection data from: ${remoteAddr}`, d);
-    conn.write(d);
+    let [ type, ...args ] = d.split(' ');
+    let version, lastBlockHash, state, lastBlock;
+    switch(type) {
+      case 'VERSION':
+        version = args[0];
+        lastBlockHash = args[1];
+        state = store.getState();
+        lastBlock = state.lastBlock;
+        conn.write([ 'VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash() ].join(' '));
+    }
   }
   function onConnClose() {
     console.log('connection from %s closed', remoteAddr);
@@ -81,20 +91,27 @@ function startup() {
     const channel = client.subscribe('presence-node-coin');
 
     // SUCCESSFULLY JOINED
-    channel.bind('pusher:subscription_succeeded', function (members) {
+    channel.bind('pusher:subscription_succeeded', async (members) => {
       console.log('> Subscription succeeded: ', members);
       allPeers = [ ];
-      channel.members.each(function(member) {
-        allPeers.push({ ip: member.id });
+      channel.members.each(member => {
+        if (member.id !== ipAddr) {
+          allPeers.push({ ip: member.id });
+        }
       });
       allPeers = allPeers.slice(0, MAX_PEERS);
-      console.log('> All peers: ', allPeers);
+      // console.log('> All peers: ', allPeers);
       store.dispatch({ type: 'SET_PEERS', allPeers });
-      // send version message to all peers, w/ version and last block hash
       let lastBlock = store.getState().lastBlock;
       let lastBlockHash = lastBlock.getBlockHeaderHash();
       let version = lastBlock.header.version;
-      console.log('> Last block hash: ', version, lastBlockHash);
+      // console.log('> Last block hash: ', version, lastBlockHash);
+
+      // send version message to all peers, w/ version and last block hash
+      for (let i = 0; i < allPeers.length; i++) {
+        const peer = allPeers[i];
+        await connectWithPeer(peer, lastBlockHash, version);
+      }
     });
 
     // MEMBER ADDED

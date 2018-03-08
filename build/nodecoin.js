@@ -106,6 +106,10 @@ var _connectToDB = __webpack_require__(6);
 
 var _connectToDB2 = _interopRequireDefault(_connectToDB);
 
+var _connectWithPeer = __webpack_require__(21);
+
+var _connectWithPeer2 = _interopRequireDefault(_connectWithPeer);
+
 var _express = __webpack_require__(7);
 
 var _express2 = _interopRequireDefault(_express);
@@ -134,6 +138,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
+
 __webpack_require__(11).config();
 
 var app = (0, _express2.default)();
@@ -158,7 +164,24 @@ function handleConnection(conn) {
 
   function onConnData(d) {
     console.log('> Connection data from: ' + remoteAddr, d);
-    conn.write(d);
+
+    var _d$split = d.split(' '),
+        _d$split2 = _toArray(_d$split),
+        type = _d$split2[0],
+        args = _d$split2.slice(1);
+
+    var version = void 0,
+        lastBlockHash = void 0,
+        state = void 0,
+        lastBlock = void 0;
+    switch (type) {
+      case 'VERSION':
+        version = args[0];
+        lastBlockHash = args[1];
+        state = _store2.default.getState();
+        lastBlock = state.lastBlock;
+        conn.write(['VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash()].join(' '));
+    }
   }
   function onConnClose() {
     console.log('connection from %s closed', remoteAddr);
@@ -171,21 +194,23 @@ function handleConnection(conn) {
 var allPeers = [];
 
 function startup() {
-  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+    var _this = this;
+
     var dbConnection, server, client, _ref2, numBlocks, lastBlock, channel;
 
-    return regeneratorRuntime.wrap(function _callee$(_context) {
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
-        switch (_context.prev = _context.next) {
+        switch (_context2.prev = _context2.next) {
           case 0:
             console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
             // connect to local instance of MongoDB
-            _context.next = 3;
+            _context2.next = 3;
             return (0, _connectToDB2.default)();
 
           case 3:
-            dbConnection = _context.sent;
+            dbConnection = _context2.sent;
 
             console.log('> Connected to local MongoDB'.gray);
 
@@ -208,11 +233,11 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context.next = 11;
+            _context2.next = 11;
             return (0, _syncBlocksWithStore2.default)();
 
           case 11:
-            _ref2 = _context.sent;
+            _ref2 = _context2.sent;
             numBlocks = _ref2.numBlocks;
             lastBlock = _ref2.lastBlock;
 
@@ -222,21 +247,59 @@ function startup() {
 
             // SUCCESSFULLY JOINED
 
-            channel.bind('pusher:subscription_succeeded', function (members) {
-              console.log('> Subscription succeeded: ', members);
-              allPeers = [];
-              channel.members.each(function (member) {
-                allPeers.push({ ip: member.id });
-              });
-              allPeers = allPeers.slice(0, MAX_PEERS);
-              console.log('> All peers: ', allPeers);
-              _store2.default.dispatch({ type: 'SET_PEERS', allPeers: allPeers });
-              // send version message to all peers, w/ version and last block hash
-              var lastBlock = _store2.default.getState().lastBlock;
-              var lastBlockHash = lastBlock.getBlockHeaderHash();
-              var version = lastBlock.header.version;
-              console.log('> Last block hash: ', version, lastBlockHash);
-            });
+            channel.bind('pusher:subscription_succeeded', function () {
+              var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(members) {
+                var lastBlock, lastBlockHash, version, i, peer;
+                return regeneratorRuntime.wrap(function _callee$(_context) {
+                  while (1) {
+                    switch (_context.prev = _context.next) {
+                      case 0:
+                        console.log('> Subscription succeeded: ', members);
+                        allPeers = [];
+                        channel.members.each(function (member) {
+                          if (member.id !== ipAddr) {
+                            allPeers.push({ ip: member.id });
+                          }
+                        });
+                        allPeers = allPeers.slice(0, MAX_PEERS);
+                        // console.log('> All peers: ', allPeers);
+                        _store2.default.dispatch({ type: 'SET_PEERS', allPeers: allPeers });
+                        lastBlock = _store2.default.getState().lastBlock;
+                        lastBlockHash = lastBlock.getBlockHeaderHash();
+                        version = lastBlock.header.version;
+                        // console.log('> Last block hash: ', version, lastBlockHash);
+
+                        // send version message to all peers, w/ version and last block hash
+
+                        i = 0;
+
+                      case 9:
+                        if (!(i < allPeers.length)) {
+                          _context.next = 16;
+                          break;
+                        }
+
+                        peer = allPeers[i];
+                        _context.next = 13;
+                        return (0, _connectWithPeer2.default)(peer, lastBlockHash, version);
+
+                      case 13:
+                        i++;
+                        _context.next = 9;
+                        break;
+
+                      case 16:
+                      case 'end':
+                        return _context.stop();
+                    }
+                  }
+                }, _callee, _this);
+              }));
+
+              return function (_x) {
+                return _ref3.apply(this, arguments);
+              };
+            }());
 
             // MEMBER ADDED
             channel.bind('pusher:member_added', function (member) {
@@ -262,10 +325,10 @@ function startup() {
 
           case 19:
           case 'end':
-            return _context.stop();
+            return _context2.stop();
         }
       }
-    }, _callee, this);
+    }, _callee2, this);
   })));
 }
 
@@ -1238,6 +1301,65 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/**
 module.exports = __webpack_amd_options__;
 
 /* WEBPACK VAR INJECTION */}.call(exports, {}))
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var connectWithPeer = function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(peer, lastBlockHash, version) {
+    var port, client;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            console.log('> Connecting with peer: ', peer, lastBlockHash, version);
+            port = peer.port || 8334;
+            client = new _net2.default.Socket();
+
+            client.connect(port, peer.ip, function () {
+              console.log('> Connected to peer: ', peer);
+              var type = 'VERSION';
+              client.write([type, version, lastBlockHash].join(' '));
+            });
+
+            client.on('data', function (data) {
+              console.log('> Received: ', data.toString());
+            });
+
+            client.on('close', function () {
+              console.log('> Connection closed');
+            });
+
+          case 6:
+          case 'end':
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+
+  return function connectWithPeer(_x, _x2, _x3) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+var _net = __webpack_require__(9);
+
+var _net2 = _interopRequireDefault(_net);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+exports.default = connectWithPeer;
 
 /***/ })
 /******/ ]);
