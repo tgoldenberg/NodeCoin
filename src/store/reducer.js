@@ -9,11 +9,31 @@ const initialState = {
   */
   dbLoaded: false,
   numBlocks: 0,
-  peers: [ ], // list of { ip: String, port: Number }
+  allPeers: [ ], // list of { ip: String, port: Number }
+  lastBlock: null,
+  version: 1,
+  nonce: 0,
+  difficulty: 0,
+  numBlocks: 0,
 };
 
 const nodeCoin = (state = initialState, action) => {
   switch(action.type) {
+    case 'SET_INITIAL_BLOCK_COUNT':
+      return {
+        ...state,
+        dbLoaded: true,
+        lastBlock: action.lastBlock,
+        numBlocks: action.numBlocks,
+      };
+    case 'SET_NONCE':
+      return {
+        ...state,
+        difficulty: action.difficulty,
+        nonce: action.nonce,
+      };
+    case 'SET_PEERS':
+      return { ...state, allPeers: action.allPeers };
     default:
       return state;
   }
