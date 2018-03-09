@@ -2894,7 +2894,7 @@ var nodeCoin = function nodeCoin() {
       var newUnfetchedHeaders = state.unfetchedHeaders;
       newUnfetchedHeaders.delete(action.header);
       var newLoadingHeaders = state.loadingHeaders;
-      loadingHeaders.add(action.header);
+      newLoadingHeaders.add(action.header);
       return _extends({}, state, {
         unfetchedHeaders: newUnfetchedHeaders,
         loadingHeaders: newLoadingHeaders

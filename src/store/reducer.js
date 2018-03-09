@@ -61,7 +61,7 @@ const nodeCoin = (state = initialState, action) => {
       let newUnfetchedHeaders = state.unfetchedHeaders;
       newUnfetchedHeaders.delete(action.header);
       let newLoadingHeaders = state.loadingHeaders;
-      loadingHeaders.add(action.header);
+      newLoadingHeaders.add(action.header);
       return {
         ...state,
         unfetchedHeaders: newUnfetchedHeaders,
