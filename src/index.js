@@ -3,12 +3,13 @@ import 'babel-polyfill';
 
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
-import _ from 'lodash';
 import bodyParser from 'body-parser';
 import connectToDB from './connectToDB';
 import connectWithPeer from './connectWithPeer';
 import express from 'express';
+import find from 'lodash/find';
 import findIPAddress from 'utils/findIPAddress';
+import { getAddress } from './address';
 import ip from 'ip';
 import mongoose from 'mongoose';
 import net from 'net';
@@ -115,6 +116,76 @@ let allPeers = [ ];
 
 
 function startup() {
+
+  app.get('/wallets', async function (req, res) {
+    // go through all block transactions (txin that is not Coinbase)
+    let wallets = { };
+    let blocks = await BlockModel.find({ }).sort({ timestamp: 1 });
+    for (let i = 0; i < blocks.length; i++) {
+      let block = blocks[i];
+      for (let j = 0; j < block.txs.length; j++) {
+        let tx = block.txs[j];
+        for (let k = 0; k < tx.vin.length; k++) {
+          let txin = tx.vin[k];
+          if (txin.prevout != 'COINBASE') {
+            // find amount from previout tx and subtract from address
+            let prevTxBlock = await BlockModel.findOne({ "txs.hash": txin.prevout });
+            if (prevTxBlock) {
+              let prevTx = find(prevTxBlock.txs, ({ hash }) => hash === txin.prevout);
+              let prevTxOut = prevTx.vout[txin.n];
+              let address = getAddress(prevTxOut.scriptPubKey.split(' ')[1]);
+              if (wallets[address]) {
+                wallets[address] += prevTxOut.nValue;
+              } else {
+                wallets[address] = prevTxOut.nValue;
+              }
+            }
+          }
+        }
+        for (let k = 0; k < tx.vout.length; k++) {
+          let txout = tx.vout[k];
+          let address = getAddress(txout.scriptPubKey.split(' ')[1]);
+          if (wallets[address]) {
+            wallets[address] += txout.nValue;
+          } else {
+            wallets[address] = txout.nValue;
+          }
+        }
+      }
+    }
+    // convert publicKey to publicKeyHash => address
+    // keep map of balances
+    // for each txin, subtract from the address
+    // for each txout, add to the address balance
+    res.status(200).send({ wallets });
+  });
+
+  app.post('/send/:to_address', function (req, res) {
+    const { amount, privateKey, publicKey } = req.body;
+    // go through all block transactions to find UXTO
+    // get best match for UTXO
+    // send money to public address and change to self, with MIN_FEES
+    // broadcast transaction to Pusher for everyone
+    // add transaction to mempool
+    // all nodes should try to mine the new transaction
+    res.status(200).send({ transaction: { amount: amount } });
+  });
+
+  app.post('/wallets/new', function(req, res) {
+    // generate new wallet and provide to user
+    res.status(200).send({ wallet: { privateKey: 'abc' } });
+  });
+
+  app.get('/wallets/:address', function (req, res) {
+    // go through all block transactions (txin that is not Coinbase)
+    // convert publicKey to publicKeyHash => address
+    // keep map of balances
+    // for each txin, subtract from the address
+    // for each txout, add to the address balance
+    // return specific address
+    res.status(200).send({ wallet: { balance: 100 } });
+  });
+
   app.listen(process.env.PORT || 3000, async function() {
     const ipAddr = await findIPAddress();
     console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);

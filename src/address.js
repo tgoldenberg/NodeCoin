@@ -9,12 +9,17 @@ const ec = new EC('secp256k1');
 
 const DEFAULT_VERSIONS = { public: 0x0, private: 0x80 };
 
-function Hash(msg) {
+export function Hash(msg) {
   let result = crypto.createHash('sha256').update(msg).digest();
   return new RIPEMD160().update(result).digest();
 }
 
-function makeWallet() {
+export function getAddress(publicKey) {
+  let publicKeyHash = Hash(publicKey);
+  return coinstring.encode(publicKeyHash, DEFAULT_VERSIONS.public);
+}
+
+export function makeWallet() {
   let privateKey, privateKeyHex, publicKey, publicKeyHex, publicKeyHash, key, privateKeyWIF, publicAddress;
   privateKey = secureRandom.randomBuffer(32); // start with random 32 bit hex string
   console.log('> Private key created: ', privateKey.toString('hex'))
@@ -47,4 +52,4 @@ function makeWallet() {
 }
 
 // makeWallet();
-module.exports = makeWallet;
+// module.exports = makeWallet;

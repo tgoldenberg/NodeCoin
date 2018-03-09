@@ -2197,10 +2197,6 @@ var _pusherJs = __webpack_require__(50);
 
 var _pusherJs2 = _interopRequireDefault(_pusherJs);
 
-var _lodash = __webpack_require__(51);
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
 var _bodyParser = __webpack_require__(52);
 
 var _bodyParser2 = _interopRequireDefault(_bodyParser);
@@ -2217,9 +2213,15 @@ var _express = __webpack_require__(58);
 
 var _express2 = _interopRequireDefault(_express);
 
+var _find = __webpack_require__(63);
+
+var _find2 = _interopRequireDefault(_find);
+
 var _findIPAddress = __webpack_require__(59);
 
 var _findIPAddress2 = _interopRequireDefault(_findIPAddress);
+
+var _address2 = __webpack_require__(151);
 
 var _ip = __webpack_require__(60);
 
@@ -2423,29 +2425,194 @@ function handleConnection(conn) {
 var allPeers = [];
 
 function startup() {
-  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
-    var _this = this;
 
-    var ipAddr, dbConnection, server, client, _ref3, numBlocks, lastBlock, channel;
+  app.get('/wallets', function () {
+    var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(req, res) {
+      var _this = this;
 
-    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+      var wallets, blocks, i, block, j, tx, _loop, k, txout, address;
+
+      return regeneratorRuntime.wrap(function _callee2$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              // go through all block transactions (txin that is not Coinbase)
+              wallets = {};
+              _context3.next = 3;
+              return _Block2.default.find({}).sort({ timestamp: 1 });
+
+            case 3:
+              blocks = _context3.sent;
+              i = 0;
+
+            case 5:
+              if (!(i < blocks.length)) {
+                _context3.next = 24;
+                break;
+              }
+
+              block = blocks[i];
+              j = 0;
+
+            case 8:
+              if (!(j < block.txs.length)) {
+                _context3.next = 21;
+                break;
+              }
+
+              tx = block.txs[j];
+              _loop = /*#__PURE__*/regeneratorRuntime.mark(function _loop(k) {
+                var txin, prevTxBlock, prevTx, prevTxOut, _address;
+
+                return regeneratorRuntime.wrap(function _loop$(_context2) {
+                  while (1) {
+                    switch (_context2.prev = _context2.next) {
+                      case 0:
+                        txin = tx.vin[k];
+
+                        if (!(txin.prevout != 'COINBASE')) {
+                          _context2.next = 6;
+                          break;
+                        }
+
+                        _context2.next = 4;
+                        return _Block2.default.findOne({ "txs.hash": txin.prevout });
+
+                      case 4:
+                        prevTxBlock = _context2.sent;
+
+                        if (prevTxBlock) {
+                          prevTx = (0, _find2.default)(prevTxBlock.txs, function (_ref3) {
+                            var hash = _ref3.hash;
+                            return hash === txin.prevout;
+                          });
+                          prevTxOut = prevTx.vout[txin.n];
+                          _address = (0, _address2.getAddress)(prevTxOut.scriptPubKey.split(' ')[1]);
+
+                          if (wallets[_address]) {
+                            wallets[_address] += prevTxOut.nValue;
+                          } else {
+                            wallets[_address] = prevTxOut.nValue;
+                          }
+                        }
+
+                      case 6:
+                      case 'end':
+                        return _context2.stop();
+                    }
+                  }
+                }, _loop, _this);
+              });
+              k = 0;
+
+            case 12:
+              if (!(k < tx.vin.length)) {
+                _context3.next = 17;
+                break;
+              }
+
+              return _context3.delegateYield(_loop(k), 't0', 14);
+
+            case 14:
+              k++;
+              _context3.next = 12;
+              break;
+
+            case 17:
+              for (k = 0; k < tx.vout.length; k++) {
+                txout = tx.vout[k];
+                address = (0, _address2.getAddress)(txout.scriptPubKey.split(' ')[1]);
+
+                if (wallets[address]) {
+                  wallets[address] += txout.nValue;
+                } else {
+                  wallets[address] = txout.nValue;
+                }
+              }
+
+            case 18:
+              j++;
+              _context3.next = 8;
+              break;
+
+            case 21:
+              i++;
+              _context3.next = 5;
+              break;
+
+            case 24:
+              // convert publicKey to publicKeyHash => address
+              // keep map of balances
+              // for each txin, subtract from the address
+              // for each txout, add to the address balance
+              res.status(200).send({ wallets: wallets });
+
+            case 25:
+            case 'end':
+              return _context3.stop();
+          }
+        }
+      }, _callee2, this);
+    }));
+
+    return function (_x2, _x3) {
+      return _ref2.apply(this, arguments);
+    };
+  }());
+
+  app.post('/send/:to_address', function (req, res) {
+    var _req$body = req.body,
+        amount = _req$body.amount,
+        privateKey = _req$body.privateKey,
+        publicKey = _req$body.publicKey;
+    // go through all block transactions to find UXTO
+    // get best match for UTXO
+    // send money to public address and change to self, with MIN_FEES
+    // broadcast transaction to Pusher for everyone
+    // add transaction to mempool
+    // all nodes should try to mine the new transaction
+
+    res.status(200).send({ transaction: { amount: amount } });
+  });
+
+  app.post('/wallets/new', function (req, res) {
+    // generate new wallet and provide to user
+    res.status(200).send({ wallet: { privateKey: 'abc' } });
+  });
+
+  app.get('/wallets/:address', function (req, res) {
+    // go through all block transactions (txin that is not Coinbase)
+    // convert publicKey to publicKeyHash => address
+    // keep map of balances
+    // for each txin, subtract from the address
+    // for each txout, add to the address balance
+    // return specific address
+    res.status(200).send({ wallet: { balance: 100 } });
+  });
+
+  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
+    var _this2 = this;
+
+    var ipAddr, dbConnection, server, client, _ref5, numBlocks, lastBlock, channel;
+
+    return regeneratorRuntime.wrap(function _callee5$(_context6) {
       while (1) {
-        switch (_context4.prev = _context4.next) {
+        switch (_context6.prev = _context6.next) {
           case 0:
-            _context4.next = 2;
+            _context6.next = 2;
             return (0, _findIPAddress2.default)();
 
           case 2:
-            ipAddr = _context4.sent;
+            ipAddr = _context6.sent;
 
             console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
             // connect to local instance of MongoDB
-            _context4.next = 6;
+            _context6.next = 6;
             return (0, _connectToDB2.default)();
 
           case 6:
-            dbConnection = _context4.sent;
+            dbConnection = _context6.sent;
 
             console.log('> Connected to local MongoDB'.gray);
 
@@ -2471,13 +2638,13 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context4.next = 14;
+            _context6.next = 14;
             return (0, _syncBlocksWithStore2.default)();
 
           case 14:
-            _ref3 = _context4.sent;
-            numBlocks = _ref3.numBlocks;
-            lastBlock = _ref3.lastBlock;
+            _ref5 = _context6.sent;
+            numBlocks = _ref5.numBlocks;
+            lastBlock = _ref5.lastBlock;
 
 
             console.log('> Subscribing to broadcast changes...'.gray);
@@ -2486,11 +2653,11 @@ function startup() {
             // SUCCESSFULLY JOINED
 
             channel.bind('pusher:subscription_succeeded', function () {
-              var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(members) {
+              var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(members) {
                 var lastBlock, lastBlockHash, version, i, peer;
-                return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                return regeneratorRuntime.wrap(function _callee3$(_context4) {
                   while (1) {
-                    switch (_context2.prev = _context2.next) {
+                    switch (_context4.prev = _context4.next) {
                       case 0:
                         console.log('> Subscription succeeded: ', members);
                         allPeers = [];
@@ -2513,39 +2680,39 @@ function startup() {
 
                       case 9:
                         if (!(i < allPeers.length)) {
-                          _context2.next = 16;
+                          _context4.next = 16;
                           break;
                         }
 
                         peer = allPeers[i];
-                        _context2.next = 13;
+                        _context4.next = 13;
                         return (0, _connectWithPeer2.default)(peer, lastBlockHash, version);
 
                       case 13:
                         i++;
-                        _context2.next = 9;
+                        _context4.next = 9;
                         break;
 
                       case 16:
                       case 'end':
-                        return _context2.stop();
+                        return _context4.stop();
                     }
                   }
-                }, _callee2, _this);
+                }, _callee3, _this2);
               }));
 
-              return function (_x2) {
-                return _ref4.apply(this, arguments);
+              return function (_x4) {
+                return _ref6.apply(this, arguments);
               };
             }());
 
             // MEMBER ADDED
             channel.bind('pusher:member_added', function () {
-              var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(member) {
+              var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(member) {
                 var allPeers, lastBlock, lastBlockHash, version;
-                return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                return regeneratorRuntime.wrap(function _callee4$(_context5) {
                   while (1) {
-                    switch (_context3.prev = _context3.next) {
+                    switch (_context5.prev = _context5.next) {
                       case 0:
                         console.log('> Member added: '.gray, member);
                         allPeers = _store2.default.getState().allPeers;
@@ -2561,14 +2728,14 @@ function startup() {
 
                       case 7:
                       case 'end':
-                        return _context3.stop();
+                        return _context5.stop();
                     }
                   }
-                }, _callee3, this);
+                }, _callee4, this);
               }));
 
-              return function (_x3) {
-                return _ref5.apply(this, arguments);
+              return function (_x5) {
+                return _ref7.apply(this, arguments);
               };
             }());
 
@@ -2588,10 +2755,10 @@ function startup() {
 
           case 22:
           case 'end':
-            return _context4.stop();
+            return _context6.stop();
         }
       }
-    }, _callee4, this);
+    }, _callee5, this);
   })));
 }
 
@@ -2610,12 +2777,7 @@ module.exports = require("babel-polyfill");
 module.exports = require("pusher-js");
 
 /***/ }),
-/* 51 */
-/***/ (function(module, exports) {
-
-module.exports = require("lodash");
-
-/***/ }),
+/* 51 */,
 /* 52 */
 /***/ (function(module, exports) {
 
@@ -6066,6 +6228,106 @@ var wait = exports.wait = function () {
 }();
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+/***/ }),
+/* 151 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Hash = Hash;
+exports.getAddress = getAddress;
+exports.makeWallet = makeWallet;
+var EC = __webpack_require__(62).ec;
+var secureRandom = __webpack_require__(152);
+var coinstring = __webpack_require__(153);
+var RIPEMD160 = __webpack_require__(61);
+var secp256k1 = __webpack_require__(154);
+var crypto = __webpack_require__(155);
+
+var ec = new EC('secp256k1');
+
+var DEFAULT_VERSIONS = { public: 0x0, private: 0x80 };
+
+function Hash(msg) {
+  var result = crypto.createHash('sha256').update(msg).digest();
+  return new RIPEMD160().update(result).digest();
+}
+
+function getAddress(publicKey) {
+  var publicKeyHash = Hash(publicKey);
+  return coinstring.encode(publicKeyHash, DEFAULT_VERSIONS.public);
+}
+
+function makeWallet() {
+  var privateKey = void 0,
+      privateKeyHex = void 0,
+      publicKey = void 0,
+      publicKeyHex = void 0,
+      publicKeyHash = void 0,
+      key = void 0,
+      privateKeyWIF = void 0,
+      publicAddress = void 0;
+  privateKey = secureRandom.randomBuffer(32); // start with random 32 bit hex string
+  console.log('> Private key created: ', privateKey.toString('hex'));
+
+  // generate public key from private
+  var keys = ec.keyFromPrivate(privateKey);
+  publicKey = keys.getPublic('hex');
+  console.log('> Public key created: ', publicKey);
+
+  // generate public key hash
+  publicKeyHash = Hash(publicKey);
+  console.log('> Public key hash created: ', publicKeyHash.toString('hex'));
+
+  // generate public address
+  publicAddress = coinstring.encode(publicKeyHash, DEFAULT_VERSIONS.public);
+  console.log('> Public address created: ', publicAddress);
+
+  // generate private key WIF (wallet import format)
+  privateKeyWIF = coinstring.encode(privateKey, DEFAULT_VERSIONS.private);
+  console.log('> Private key WIF (wallet import format) created : ', privateKeyWIF);
+
+  key = {
+    privateKey: privateKey,
+    publicKey: publicKey,
+    publicKeyHash: publicKeyHash,
+    privateKeyWIF: privateKeyWIF,
+    publicAddress: publicAddress
+  };
+  return key;
+}
+
+// makeWallet();
+// module.exports = makeWallet;
+
+/***/ }),
+/* 152 */
+/***/ (function(module, exports) {
+
+module.exports = require("secure-random");
+
+/***/ }),
+/* 153 */
+/***/ (function(module, exports) {
+
+module.exports = require("coinstring");
+
+/***/ }),
+/* 154 */
+/***/ (function(module, exports) {
+
+module.exports = require("secp256k1");
+
+/***/ }),
+/* 155 */
+/***/ (function(module, exports) {
+
+module.exports = require("crypto");
 
 /***/ })
 /******/ ]);
