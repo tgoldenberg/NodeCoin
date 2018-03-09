@@ -55,6 +55,12 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           let message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
           client.write(message);
         }
+
+      // Receive block headers from peer
+      case 'BLOCKHEADERS':
+        let blockHeaders = args;
+        console.log('> New block headers: ', blockHeaders);
+        // iterate through peers and ask for specific block 
     }
   });
 

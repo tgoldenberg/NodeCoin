@@ -2183,6 +2183,8 @@ module.exports = castPath;
 "use strict";
 
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 __webpack_require__(5);
 
 __webpack_require__(49);
@@ -2264,7 +2266,7 @@ var MAX_PEERS = 25;
 function handleConnection(conn) {
   var onConnData = function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(d) {
-      var _d$split, _d$split2, type, args, version, lastBlockHash, state, lastBlock, blockHeaderHash, blocksToSend, message;
+      var _d$split, _d$split2, type, args, version, lastBlockHash, state, lastBlock, _args, peerLastBlock, blockHeaderHash, blocksToSend, message;
 
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -2275,37 +2277,48 @@ function handleConnection(conn) {
               console.log('> Connection data from: ' + remoteAddr, d);
               version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 13 : 25;
+              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 17 : 27;
               break;
 
             case 6:
-              version = args[0];
-              lastBlockHash = args[1];
-              state = _store2.default.getState();
-              lastBlock = state.lastBlock;
-              console.log('> Responding to VERSION request');
+              _args = _slicedToArray(args, 2);
+              version = _args[0];
+              lastBlockHash = _args[1];
+
+              lastBlock = _store2.default.getState().lastBlock;
               conn.write(['VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash()].join(' '));
-              return _context.abrupt('break', 25);
+
+              // Check if we have the last block header transmitted
+              _context.next = 13;
+              return _Block2.default.findOne({ hash: lastBlockHash });
 
             case 13:
-              console.log('> Get Blocks: ', d);
-              conn.write('BLOCKHEADERS abc xyz');
+              peerLastBlock = _context.sent;
+
+              console.log('> Check last block: ', peerLastBlock, lastBlockHash);
+              if (!peerLastBlock) {
+                // send getblocks message
+                conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(' '));
+              }
+              return _context.abrupt('break', 27);
+
+            case 17:
               blockHeaderHash = args[0];
-              _context.next = 18;
+              _context.next = 20;
               return _Block2.default.findOne({ hash: blockHeaderHash });
 
-            case 18:
+            case 20:
               lastBlock = _context.sent;
 
               if (!lastBlock) {
-                _context.next = 25;
+                _context.next = 27;
                 break;
               }
 
-              _context.next = 22;
+              _context.next = 24;
               return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
 
-            case 22:
+            case 24:
               blocksToSend = _context.sent;
               message = 'BLOCKHEADERS ' + blocksToSend.map(function (blk) {
                 return blk.hash;
@@ -2313,7 +2326,7 @@ function handleConnection(conn) {
 
               conn.write(message);
 
-            case 25:
+            case 27:
             case 'end':
               return _context.stop();
           }
@@ -2607,7 +2620,7 @@ var connectWithPeer = function () {
 
             client.on('data', function () {
               var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(data) {
-                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message;
+                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, blockHeaders;
 
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                   while (1) {
@@ -2618,7 +2631,7 @@ var connectWithPeer = function () {
                         console.log('> Received: ', data.toString());
                         version = void 0, blockHeaderHash = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 22 : 32;
+                        _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 22 : _context.t0 === 'BLOCKHEADERS' ? 32 : 34;
                         break;
 
                       case 6:
@@ -2630,7 +2643,7 @@ var connectWithPeer = function () {
                           break;
                         }
 
-                        return _context.abrupt('break', 32);
+                        return _context.abrupt('break', 34);
 
                       case 10:
                         IS_VERSION_COMPATIBLE = true;
@@ -2652,11 +2665,11 @@ var connectWithPeer = function () {
                         savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
 
                         client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
-                        return _context.abrupt('break', 32);
+                        return _context.abrupt('break', 34);
 
                       case 20:
                         console.log('> Synced with peer'.blue);
-                        return _context.abrupt('break', 32);
+                        return _context.abrupt('break', 34);
 
                       case 22:
                         blockHeaderHash = args[0];
@@ -2683,6 +2696,11 @@ var connectWithPeer = function () {
                         client.write(message);
 
                       case 32:
+                        blockHeaders = args;
+
+                        console.log('> New block headers: ', blockHeaders);
+
+                      case 34:
                       case 'end':
                         return _context.stop();
                     }
@@ -2693,7 +2711,8 @@ var connectWithPeer = function () {
               return function (_x4) {
                 return _ref2.apply(this, arguments);
               };
-            }());
+            }() // iterate through peers and ask for specific block 
+            );
 
             client.on('close', function () {
               console.log('> Connection closed');

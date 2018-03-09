@@ -41,17 +41,20 @@ function handleConnection(conn) {
     console.log(`> Connection data from: ${remoteAddr}`, d);
     let version, lastBlockHash, state, lastBlock;
     switch(type) {
+      // Initial message swapping version numbers and last block header hash
       case 'VERSION':
-        version = args[0];
-        lastBlockHash = args[1];
-        state = store.getState();
-        lastBlock = state.lastBlock;
-        console.log('> Responding to VERSION request');
+        [ version, lastBlockHash ] = args;
+        lastBlock = store.getState().lastBlock;
         conn.write([ 'VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash() ].join(' '));
+
+        // Check if we have the last block header transmitted
+        let peerLastBlock = await BlockModel.findOne({ hash: lastBlockHash });
+        console.log('> Check last block: ', peerLastBlock, lastBlockHash);
+        if (!peerLastBlock) { // send getblocks message
+          conn.write([ 'GETBLOCKS', lastBlock.getBlockHeaderHash() ].join(' '));
+        }
         break;
       case 'GETBLOCKS':
-        console.log('> Get Blocks: ', d);
-        conn.write('BLOCKHEADERS abc xyz');
         let blockHeaderHash = args[0];
         lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!!lastBlock) {
