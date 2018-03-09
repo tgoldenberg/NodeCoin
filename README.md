@@ -20,7 +20,7 @@ The following dependencies must be installed before running:
 Then install the JavaScript dependencies:
 
 ```
-npm insall
+npm install
 ```
 
 Simply run the start-up script:
