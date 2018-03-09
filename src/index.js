@@ -121,7 +121,7 @@ function startup() {
     console.log('> Connected to local MongoDB'.gray);
 
     // seed blocks
-    // await seedBlocks();
+    await seedBlocks();
 
     // create a TCP/IP server on current IP address
     const server = net.createServer();

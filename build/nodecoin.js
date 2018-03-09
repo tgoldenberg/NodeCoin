@@ -2445,7 +2445,10 @@ function startup() {
             console.log('> Connected to local MongoDB'.gray);
 
             // seed blocks
-            // await seedBlocks();
+            _context4.next = 10;
+            return (0, _blocks.seedBlocks)();
+
+          case 10:
 
             // create a TCP/IP server on current IP address
             server = _net2.default.createServer();
@@ -2466,10 +2469,10 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context4.next = 14;
+            _context4.next = 16;
             return (0, _syncBlocksWithStore2.default)();
 
-          case 14:
+          case 16:
             _ref3 = _context4.sent;
             numBlocks = _ref3.numBlocks;
             lastBlock = _ref3.lastBlock;
@@ -2581,7 +2584,7 @@ function startup() {
               // TODO: stop any ongoing requests with peer
             });
 
-          case 22:
+          case 24:
           case 'end':
             return _context4.stop();
         }
