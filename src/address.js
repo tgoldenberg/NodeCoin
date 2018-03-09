@@ -42,9 +42,9 @@ export function makeWallet() {
   console.log('> Private key WIF (wallet import format) created : ', privateKeyWIF);
 
   key = {
-    privateKey,
+    privateKey: privateKey.toString('hex'),
     publicKey,
-    publicKeyHash,
+    publicKeyHash: publicKeyHash.toString('hex'),
     privateKeyWIF,
     publicAddress
   };

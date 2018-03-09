@@ -1,6 +1,8 @@
 import 'colors';
 import 'babel-polyfill';
 
+import { getAddress, makeWallet } from './address';
+
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
 import bodyParser from 'body-parser';
@@ -9,8 +11,9 @@ import connectWithPeer from './connectWithPeer';
 import express from 'express';
 import find from 'lodash/find';
 import findIPAddress from 'utils/findIPAddress';
-import { getAddress } from './address';
+import { getWalletData } from 'utils/getWalletData';
 import ip from 'ip';
+import { lockTransaction } from 'utils/validateSignature';
 import mongoose from 'mongoose';
 import net from 'net';
 import network from 'network';
@@ -115,119 +118,49 @@ function handleConnection(conn) {
 
 let allPeers = [ ];
 
-
 function startup() {
 
   app.get('/wallets', async function (req, res) {
     // go through all block transactions (txin that is not Coinbase)
-    let wallets = { };
-    // keep map of balances
-    // for each txin, subtract from the address
-    // for each txout, add to the address balance
-    let blocks = await BlockModel.find({ }).sort({ timestamp: 1 });
-    for (let i = 0; i < blocks.length; i++) {
-      let block = blocks[i];
-      for (let j = 0; j < block.txs.length; j++) {
-        let tx = block.txs[j];
-        for (let k = 0; k < tx.vin.length; k++) {
-          let txin = tx.vin[k];
-          if (txin.prevout != 'COINBASE') {
-            // find amount from previout tx and subtract from address
-            let prevTxBlock = await BlockModel.findOne({ "txs.hash": txin.prevout });
-            if (prevTxBlock) {
-              let prevTx = find(prevTxBlock.txs, ({ hash }) => hash === txin.prevout);
-              let prevTxOut = prevTx.vout[txin.n];
-              let address = getAddress(prevTxOut.scriptPubKey.split(' ')[1]);
-              if (wallets[address]) {
-                wallets[address] -= prevTxOut.nValue / COIN;
-              } else {
-                wallets[address] = prevTxOut.nValue / COIN;
-              }
-            }
-          }
-        }
-        for (let k = 0; k < tx.vout.length; k++) {
-          let txout = tx.vout[k];
-          // convert publicKey to publicKeyHash => address
-          let address = getAddress(txout.scriptPubKey.split(' ')[1]);
-          if (wallets[address]) {
-            wallets[address] += txout.nValue / COIN;
-          } else {
-            wallets[address] = txout.nValue / COIN;
-          }
-        }
-      }
-    }
+    let wallets = await getWallets();
     res.status(200).send({ wallets });
   });
 
   app.post('/send/:to_address', async function (req, res) {
     const { amount, privateKey, publicKey } = req.body;
-    // go through all block transactions to find UXTO
-    // get best match for UTXO
-    // send money to public address and change to self, with MIN_FEES
-    // broadcast transaction to Pusher for everyone
-    // add transaction to mempool
-    // all nodes should try to mine the new transaction
+    let address = getAddress(publicKey);
+    let walletData = await getWalletData(address);
+    let { utxo, balance } = walletData;
+    utxo = utxo.sort((a, b) => a.nValue < b.nValue);
+    // is transaction less than balance?
+    let isLessThanBalance = balance > amount;
+    if (!isLessThanBalance) {
+      res.status(500).send({ error: 'Balance must be above amount to send.' });
+    }
+    let remaining = amount;
+    // get rid of spare change
+    for (let i = 0; i < utxo.length; i++) {
+      remaining -= utxo.nValue;
+    }
+    let vin = [ ]
+    let vout = [ { nValue: amount, scriptPubKey: lockTransaction() }]
+    // let txid = SHA256(amount + req.params.to_address + );
+    let transaction = {
+      vin: [ ],
+      vout: [ { scriptPubKey: `${req.params.to_address}`}],
+    }
     res.status(200).send({ transaction: { amount: amount } });
   });
 
   app.post('/wallets/new', async function(req, res) {
     // generate new wallet and provide to user
-    res.status(200).send({ wallet: { privateKey: 'abc' } });
+    let wallet = await makeWallet();
+    res.status(200).send({ wallet });
   });
 
   app.get('/wallets/:address', async function (req, res) {
-    // go through all block transactions (txin that is not Coinbase)
-    // convert publicKey to publicKeyHash => address
-    // keep map of balances
-    // for each txin, subtract from the address
-    // for each txout, add to the address balance
-    // return specific address
-    // go through all block transactions (txin that is not Coinbase)
-    let balance = 0;
-    let utxoMap = { };
-    // keep map of balances
-    // for each txin, subtract from the address
-    // for each txout, add to the address balance
-    let blocks = await BlockModel.find({ }).sort({ timestamp: 1 });
-    for (let i = 0; i < blocks.length; i++) {
-      let block = blocks[i];
-      for (let j = 0; j < block.txs.length; j++) {
-        let tx = block.txs[j];
-        for (let k = 0; k < tx.vin.length; k++) {
-          let txin = tx.vin[k];
-          if (txin.prevout != 'COINBASE') {
-            // find amount from previout tx and subtract from address
-            let prevTxBlock = await BlockModel.findOne({ "txs.hash": txin.prevout });
-            if (prevTxBlock) {
-              let prevTx = find(prevTxBlock.txs, ({ hash }) => hash === txin.prevout);
-              let prevTxOut = prevTx.vout[txin.n];
-              let address = getAddress(prevTxOut.scriptPubKey.split(' ')[1]);
-              if (address == req.params.address) {
-                balance -= prevTxOut.nValue / COIN;
-                delete utxoMap[txin.prevout];
-              }
-            }
-          }
-        }
-        for (let k = 0; k < tx.vout.length; k++) {
-          let txout = tx.vout[k];
-          // convert publicKey to publicKeyHash => address
-          let address = getAddress(txout.scriptPubKey.split(' ')[1]);
-          if (address == req.params.address) {
-            balance += txout.nValue / COIN;
-            utxoMap[tx.hash] = txout.nValue / COIN;
-          }
-        }
-      }
-    }
-    let utxo = Object.keys(utxoMap).map(txid => {
-      return {
-        txid: txid,
-        nValue: utxoMap[txid],
-      };
-    })
+    let walletData = await getWalletData(req.params.address);
+    let { utxo, balance } = walletData;
     res.status(200).send({ wallet: { balance }, utxo: utxo });
   });
 
@@ -240,7 +173,9 @@ function startup() {
     console.log('> Connected to local MongoDB'.gray);
 
     // seed blocks
-    // await seedBlocks();
+    if (process.env.SEED_BLOCKS === 'true') {
+      await seedBlocks();
+    }
 
     // create a TCP/IP server on current IP address
     const server = net.createServer();
