@@ -1,12 +1,15 @@
 import 'colors';
 
 import BlockModel from 'models/Block';
+import { formatBlock } from 'db/syncBlocksWithStore';
 import net from 'net';
 import store from 'store/store';
 import { wait } from 'utils';
 
 const DEFAULT_PORT = 8334;
 const DELIMITER = '~~~~~'
+
+let reg = new RegExp(DELIMITER, 'gi');
 
 async function connectWithPeer(peer, lastBlockHash, version) {
   let IS_CONNECTED = false;
@@ -27,7 +30,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
 
   client.on('data', async data => {
     let [ type, ...args ] = data.toString().split(DELIMITER);
-    console.log('> Received: '.yellow, data.toString().replace(DELIMITER, ' '));
+    console.log('> Received: '.yellow, data.toString().replace(reg, ' '));
     let version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash;
     let blocksToSend, message, allPeers, unfetchedHeaders;
     let headers, peerIdx, header, block, savedBlock, newBlock;
@@ -111,7 +114,8 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         if (!lastBlock) {
           break;
         }
-        if (block.previousHash === lastBlock.header.previousHash) {
+        console.log('> Prev hash : ', lastBlock.getBlockHeaderHash(), block.previousHash);
+        if (block.previousHash === lastBlock.getBlockHeaderHash()) {
           // add block to blockchain
           newBlock = new BlockModel(block);
           await newBlock.save();

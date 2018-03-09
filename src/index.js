@@ -27,7 +27,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 const PUSHER_APP_KEY = '86e36fb6cb404d67a108'; // connect via public key
 const DEFAULT_PORT = 8334; // default port for net connections
 const MAX_PEERS = 25;
-const DELIMITER = '~~~~~'
+const DELIMITER = '~~~~~';
+
+let reg = new RegExp(DELIMITER, 'gi');
 
 function handleConnection(conn) {
   const remoteAddr = `${conn.remoteAddress}:${conn.remotePort}`;
@@ -40,7 +42,7 @@ function handleConnection(conn) {
 
   async function onConnData(d) {
     let [ type, ...args ] = d.split(DELIMITER);
-    console.log(`> Received from: ${remoteAddr} `.yellow, d.replace(DELIMITER, ' '));
+    console.log(`> Received from: ${remoteAddr} `.yellow, d.replace(reg, ' '));
     let version, lastBlockHash, state, lastBlock, peerLastBlock;
     let blockHeaderHash, blocksToSend, message;
     let allPeers, unfetchedHeaders, peerIdx, headers, header, block;

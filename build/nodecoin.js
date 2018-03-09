@@ -2268,6 +2268,8 @@ var DEFAULT_PORT = 8334; // default port for net connections
 var MAX_PEERS = 25;
 var DELIMITER = '~~~~~';
 
+var reg = new RegExp(DELIMITER, 'gi');
+
 function handleConnection(conn) {
   var onConnData = function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(d) {
@@ -2279,7 +2281,7 @@ function handleConnection(conn) {
             case 0:
               _d$split = d.split(DELIMITER), _d$split2 = _toArray(_d$split), type = _d$split2[0], args = _d$split2.slice(1);
 
-              console.log(('> Received from: ' + remoteAddr + ' ').yellow, d.replace(DELIMITER, ' '));
+              console.log(('> Received from: ' + remoteAddr + ' ').yellow, d.replace(reg, ' '));
               version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0, peerLastBlock = void 0;
               blockHeaderHash = void 0, blocksToSend = void 0, message = void 0;
               allPeers = void 0, unfetchedHeaders = void 0, peerIdx = void 0, headers = void 0, header = void 0, block = void 0;
@@ -2719,12 +2721,12 @@ var connectWithPeer = function () {
                       case 0:
                         _data$toString$split = data.toString().split(DELIMITER), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
 
-                        console.log('> Received: '.yellow, data.toString().replace(DELIMITER, ' '));
+                        console.log('> Received: '.yellow, data.toString().replace(reg, ' '));
                         version = void 0, blockHeaderHash = void 0, lastBlock = void 0, savedLastBlock = void 0, savedLastBlockHash = void 0;
                         blocksToSend = void 0, message = void 0, allPeers = void 0, unfetchedHeaders = void 0;
                         headers = void 0, peerIdx = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 72;
+                        _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 73;
                         break;
 
                       case 8:
@@ -2736,7 +2738,7 @@ var connectWithPeer = function () {
                           break;
                         }
 
-                        return _context.abrupt('break', 72);
+                        return _context.abrupt('break', 73);
 
                       case 12:
                         IS_VERSION_COMPATIBLE = true;
@@ -2756,11 +2758,11 @@ var connectWithPeer = function () {
                         savedLastBlock = _store2.default.getState().lastBlock;
                         savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
                         client.write(['GETBLOCKS', savedLastBlockHash].join(DELIMITER));
-                        return _context.abrupt('break', 72);
+                        return _context.abrupt('break', 73);
 
                       case 21:
                         console.log('> Synced with peer'.blue);
-                        return _context.abrupt('break', 72);
+                        return _context.abrupt('break', 73);
 
                       case 23:
                         blockHeaderHash = args[0];
@@ -2787,7 +2789,7 @@ var connectWithPeer = function () {
                         client.write(message);
 
                       case 33:
-                        return _context.abrupt('break', 72);
+                        return _context.abrupt('break', 73);
 
                       case 34:
                         // add to unfetchedHeaders
@@ -2827,7 +2829,7 @@ var connectWithPeer = function () {
                         break;
 
                       case 49:
-                        return _context.abrupt('break', 72);
+                        return _context.abrupt('break', 73);
 
                       case 50:
                         // find the requested block and send as a JSON-serialized string
@@ -2843,7 +2845,7 @@ var connectWithPeer = function () {
 
                           client.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
                         }
-                        return _context.abrupt('break', 72);
+                        return _context.abrupt('break', 73);
 
                       case 56:
                         block = JSON.parse(args[0]);
@@ -2859,7 +2861,7 @@ var connectWithPeer = function () {
                           break;
                         }
 
-                        return _context.abrupt('break', 72);
+                        return _context.abrupt('break', 73);
 
                       case 62:
                         // if don't have, does the previousHash match our lastBlock.hash?
@@ -2870,26 +2872,28 @@ var connectWithPeer = function () {
                           break;
                         }
 
-                        return _context.abrupt('break', 72);
+                        return _context.abrupt('break', 73);
 
                       case 65:
-                        if (!(block.previousHash === lastBlock.header.previousHash)) {
-                          _context.next = 72;
+                        console.log('> Prev hash : ', lastBlock.getBlockHeaderHash(), block.previousHash);
+
+                        if (!(block.previousHash === lastBlock.getBlockHeaderHash())) {
+                          _context.next = 73;
                           break;
                         }
 
                         // add block to blockchain
                         newBlock = new _Block2.default(block);
-                        _context.next = 69;
+                        _context.next = 70;
                         return newBlock.save();
 
-                      case 69:
+                      case 70:
                         // remove from orphan and unfetched / loading pools
-                        _store2.default.dispatch({ type: 'NEW_BLOCK', block: formatBlock(newBlock) });
-                        _context.next = 72;
+                        _store2.default.dispatch({ type: 'NEW_BLOCK', block: (0, _syncBlocksWithStore.formatBlock)(newBlock) });
+                        _context.next = 73;
                         break;
 
-                      case 72:
+                      case 73:
                       case 'end':
                         return _context.stop();
                     }
@@ -2927,6 +2931,8 @@ var _Block = __webpack_require__(16);
 
 var _Block2 = _interopRequireDefault(_Block);
 
+var _syncBlocksWithStore = __webpack_require__(29);
+
 var _net = __webpack_require__(23);
 
 var _net2 = _interopRequireDefault(_net);
@@ -2947,6 +2953,8 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 var DEFAULT_PORT = 8334;
 var DELIMITER = '~~~~~';
+
+var reg = new RegExp(DELIMITER, 'gi');
 
 exports.default = connectWithPeer;
 
