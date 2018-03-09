@@ -238,7 +238,7 @@ store.dispatch = addLoggingToDispatch(store);
 function addLoggingToDispatch(store) {
   var rawDispatch = store.dispatch;
   return function (action) {
-    console.log('> Action: '.gray, action.type, '(Keys: ', Object.keys(action).join(', ') + ')');
+    console.log(('> Action: ' + action.type + ', (Keys:  ' + Object.keys(action).join(', ') + ')').gray);
     // console.log('> prev state'.gray, store.getState().lastBlock);
     // console.log(`> `.green);
     var returnValue = rawDispatch(action);
@@ -2268,7 +2268,7 @@ var MAX_PEERS = 25;
 function handleConnection(conn) {
   var onConnData = function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(d) {
-      var _d$split, _d$split2, type, args, version, lastBlockHash, state, lastBlock, _args, peerLastBlock, blockHeaderHash, blocksToSend, message, _store$getState, _allPeers, unfetchedHeaders, headers, peerIdx, peer, header;
+      var _d$split, _d$split2, type, args, version, lastBlockHash, state, lastBlock, peerLastBlock, blockHeaderHash, blocksToSend, message, allPeers, unfetchedHeaders, peerIdx, headers, header, block, _args, _store$getState, _allPeers, _unfetchedHeaders, peer, _header;
 
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -2277,12 +2277,14 @@ function handleConnection(conn) {
               _d$split = d.split(' '), _d$split2 = _toArray(_d$split), type = _d$split2[0], args = _d$split2.slice(1);
 
               console.log(('> Received from: ' + remoteAddr + ' ').yellow, d);
-              version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0;
+              version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0, peerLastBlock = void 0;
+              blockHeaderHash = void 0, blocksToSend = void 0, message = void 0;
+              allPeers = void 0, unfetchedHeaders = void 0, peerIdx = void 0, headers = void 0, header = void 0, block = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 16 : _context.t0 === 'BLOCKHEADERS' ? 27 : 43;
+              _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 18 : _context.t0 === 'BLOCKHEADERS' ? 29 : _context.t0 === 'REQUESTBLOCK' ? 45 : 50;
               break;
 
-            case 6:
+            case 8:
               _args = _slicedToArray(args, 2);
               version = _args[0];
               lastBlockHash = _args[1];
@@ -2291,55 +2293,56 @@ function handleConnection(conn) {
               conn.write(['VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash()].join(' '));
 
               // Check if we have the last block header transmitted
-              _context.next = 13;
+              _context.next = 15;
               return _Block2.default.findOne({ hash: lastBlockHash });
 
-            case 13:
+            case 15:
               peerLastBlock = _context.sent;
 
               if (!peerLastBlock) {
                 // send getblocks message
                 conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(' '));
               }
-              return _context.abrupt('break', 43);
+              return _context.abrupt('break', 50);
 
-            case 16:
+            case 18:
               blockHeaderHash = args[0];
-              _context.next = 19;
+              _context.next = 21;
               return _Block2.default.findOne({ hash: blockHeaderHash });
 
-            case 19:
+            case 21:
               lastBlock = _context.sent;
 
               if (!lastBlock) {
-                _context.next = 26;
+                _context.next = 28;
                 break;
               }
 
-              _context.next = 23;
+              _context.next = 25;
               return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
 
-            case 23:
+            case 25:
               blocksToSend = _context.sent;
+
               message = 'BLOCKHEADERS ' + blocksToSend.map(function (blk) {
                 return blk.hash;
               }).join(' ');
-
               conn.write(message);
 
-            case 26:
-              return _context.abrupt('break', 43);
+            case 28:
+              return _context.abrupt('break', 50);
 
-            case 27:
+            case 29:
               // add to unfetchedHeaders
               _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
-              _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, unfetchedHeaders = _store$getState.unfetchedHeaders;
-              headers = Array.from(unfetchedHeaders);
+              _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, _unfetchedHeaders = _store$getState.unfetchedHeaders;
+
+              headers = Array.from(_unfetchedHeaders);
               peerIdx = 0;
 
-            case 31:
+            case 33:
               if (!headers.length) {
-                _context.next = 42;
+                _context.next = 44;
                 break;
               }
 
@@ -2350,27 +2353,40 @@ function handleConnection(conn) {
               if (!peer.client) {
                 // await connectWithPeer(peer, lastBlockHash, version);
               }
-              header = headers.shift(); // dequeue a header
+              _header = headers.shift(); // dequeue a header
 
-              conn.write('REQUESTBLOCK ' + header);
-              _context.next = 38;
+              conn.write('REQUESTBLOCK ' + _header);
+              _context.next = 40;
               return (0, _utils.wait)(1);
 
-            case 38:
+            case 40:
               // wait 1 second
               // if peer doesn't respond within a period or doesn't have the block, move to next peer
               // if peer gives block, verify the block (if possible) and add to MongoDB
 
               // move from unfetched => loading
-              _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
+              _store2.default.dispatch({ type: 'LOADING_BLOCK', header: _header });
               peerIdx = _allPeers.length % (peerIdx + 1);
-              _context.next = 31;
+              _context.next = 33;
               break;
 
-            case 42:
-              return _context.abrupt('break', 43);
+            case 44:
+              return _context.abrupt('break', 50);
 
-            case 43:
+            case 45:
+              // find the requested block and send as a JSON-serialized string
+              header = args[0];
+              _context.next = 48;
+              return _Block2.default.findOne({ hash: header });
+
+            case 48:
+              block = _context.sent;
+
+              if (block) {
+                conn.write('SENDBLOCK ' + JSON.stringify(block));
+              }
+
+            case 50:
             case 'end':
               return _context.stop();
           }
@@ -2692,7 +2708,7 @@ var connectWithPeer = function () {
 
             client.on('data', function () {
               var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(data) {
-                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, _store$getState, allPeers, unfetchedHeaders, headers, peerIdx, _peer, header;
+                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, allPeers, unfetchedHeaders, headers, peerIdx, header, block, savedBlock, newBlock, _store$getState, _allPeers, _unfetchedHeaders, _peer, msg;
 
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                   while (1) {
@@ -2701,115 +2717,177 @@ var connectWithPeer = function () {
                         _data$toString$split = data.toString().split(' '), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
 
                         console.log('> Received: '.yellow, data.toString());
-                        version = void 0, blockHeaderHash = void 0;
+                        version = void 0, blockHeaderHash = void 0, lastBlock = void 0, savedLastBlock = void 0, savedLastBlockHash = void 0;
+                        blocksToSend = void 0, message = void 0, allPeers = void 0, unfetchedHeaders = void 0;
+                        headers = void 0, peerIdx = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 21 : _context.t0 === 'BLOCKHEADERS' ? 32 : 48;
+                        _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 73;
                         break;
 
-                      case 6:
+                      case 8:
                         version = args[0];
                         blockHeaderHash = args[1];
 
                         if (!(version !== '1')) {
-                          _context.next = 10;
+                          _context.next = 12;
                           break;
                         }
 
-                        return _context.abrupt('break', 48);
+                        return _context.abrupt('break', 73);
 
-                      case 10:
+                      case 12:
                         IS_VERSION_COMPATIBLE = true;
                         // check db for what block height received block hash is
-                        _context.next = 13;
+                        _context.next = 15;
                         return _Block2.default.findOne({ hash: blockHeaderHash });
 
-                      case 13:
+                      case 15:
                         lastBlock = _context.sent;
 
                         if (lastBlock) {
-                          _context.next = 19;
+                          _context.next = 21;
                           break;
                         }
 
                         // send getblocks message
                         savedLastBlock = _store2.default.getState().lastBlock;
                         savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
-
                         client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
-                        return _context.abrupt('break', 48);
-
-                      case 19:
-                        console.log('> Synced with peer'.blue);
-                        return _context.abrupt('break', 48);
+                        return _context.abrupt('break', 73);
 
                       case 21:
+                        console.log('> Synced with peer'.blue);
+                        return _context.abrupt('break', 73);
+
+                      case 23:
                         blockHeaderHash = args[0];
-                        _context.next = 24;
+                        _context.next = 26;
                         return _Block2.default.findOne({ hash: blockHeaderHash });
 
-                      case 24:
+                      case 26:
                         lastBlock = _context.sent;
 
                         if (!lastBlock) {
-                          _context.next = 31;
+                          _context.next = 33;
                           break;
                         }
 
-                        _context.next = 28;
+                        _context.next = 30;
                         return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
 
-                      case 28:
+                      case 30:
                         blocksToSend = _context.sent;
+
                         message = 'BLOCKHEADERS ' + blocksToSend.map(function (blk) {
                           return blk.hash;
                         }).join(' ');
-
                         client.write(message);
 
-                      case 31:
-                        return _context.abrupt('break', 48);
+                      case 33:
+                        return _context.abrupt('break', 73);
 
-                      case 32:
+                      case 34:
                         // add to unfetchedHeaders
                         _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
-                        _store$getState = _store2.default.getState(), allPeers = _store$getState.allPeers, unfetchedHeaders = _store$getState.unfetchedHeaders;
-                        headers = Array.from(unfetchedHeaders);
+                        _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, _unfetchedHeaders = _store$getState.unfetchedHeaders;
+
+                        headers = Array.from(_unfetchedHeaders);
                         peerIdx = 0;
 
-                      case 36:
+                      case 38:
                         if (!headers.length) {
-                          _context.next = 47;
+                          _context.next = 49;
                           break;
                         }
 
                         // assign header to peer
-                        _peer = allPeers[peerIdx];
+                        _peer = _allPeers[peerIdx];
                         // connect with peer if no connection
 
                         if (!_peer.client) {
                           // await connectWithPeer(peer, lastBlockHash, version);
                         }
                         header = headers.shift(); // dequeue a header
-
                         client.write('REQUESTBLOCK ' + header);
-                        _context.next = 43;
+                        _context.next = 45;
                         return (0, _utils.wait)(1);
 
-                      case 43:
+                      case 45:
                         // wait 1 second
                         // if peer doesn't respond within a period or doesn't have the block, move to next peer
                         // if peer gives block, verify the block (if possible) and add to MongoDB
 
                         // move from unfetched => loading
                         _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
-                        peerIdx = allPeers.length % (peerIdx + 1);
-                        _context.next = 36;
+                        peerIdx = _allPeers.length % (peerIdx + 1);
+                        _context.next = 38;
                         break;
 
-                      case 47:
-                        return _context.abrupt('break', 48);
+                      case 49:
+                        return _context.abrupt('break', 73);
 
-                      case 48:
+                      case 50:
+                        // find the requested block and send as a JSON-serialized string
+                        header = args[0];
+                        _context.next = 53;
+                        return _Block2.default.findOne({ hash: header });
+
+                      case 53:
+                        block = _context.sent;
+
+                        if (block) {
+                          msg = JSON.stringify(block);
+
+                          client.write('SENDBLOCK ' + JSON.stringify(block));
+                        }
+                        return _context.abrupt('break', 73);
+
+                      case 56:
+                        console.log('> SENDBLOCK: ', args);
+                        block = JSON.parse(args[0]);
+                        // check if already have
+                        _context.next = 60;
+                        return _Block2.default.findOne({ hash: block.hash });
+
+                      case 60:
+                        savedBlock = _context.sent;
+
+                        if (!savedBlock) {
+                          _context.next = 63;
+                          break;
+                        }
+
+                        return _context.abrupt('break', 73);
+
+                      case 63:
+                        // if don't have, does the previousHash match our lastBlock.hash?
+                        lastBlock = _store2.default.getState().lastBlock;
+
+                        if (lastBlock) {
+                          _context.next = 66;
+                          break;
+                        }
+
+                        return _context.abrupt('break', 73);
+
+                      case 66:
+                        if (!(block.previousHash === lastBlock.header.previousHash)) {
+                          _context.next = 73;
+                          break;
+                        }
+
+                        // add block to blockchain
+                        newBlock = new _Block2.default(block);
+                        _context.next = 70;
+                        return newBlock.save();
+
+                      case 70:
+                        // remove from orphan and unfetched / loading pools
+                        _store2.default.dispatch({ type: 'NEW_BLOCK', block: formatBlock(newBlock) });
+                        _context.next = 73;
+                        break;
+
+                      case 73:
                       case 'end':
                         return _context.stop();
                     }
@@ -2820,7 +2898,9 @@ var connectWithPeer = function () {
               return function (_x4) {
                 return _ref2.apply(this, arguments);
               };
-            }());
+            }()
+            // if not, add to orphan transactions
+            );
 
             client.on('close', function () {
               console.log('> Connection closed');
@@ -2911,6 +2991,10 @@ var initialState = {
   orphanTransactions: new Set()
 };
 
+var newUnfetchedHeaders = void 0,
+    newLoadingHeaders = void 0,
+    peerIdx = void 0;
+
 var nodeCoin = function nodeCoin() {
   var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
   var action = arguments[1];
@@ -2929,7 +3013,7 @@ var nodeCoin = function nodeCoin() {
     case 'SET_PEERS':
       return _extends({}, state, { allPeers: action.allPeers });
     case 'CONNECT_PEER':
-      var peerIdx = (0, _findIndex2.default)(state.allPeers, function (_ref) {
+      peerIdx = (0, _findIndex2.default)(state.allPeers, function (_ref) {
         var ip = _ref.ip;
         return ip === action.ip;
       });
@@ -2941,11 +3025,22 @@ var nodeCoin = function nodeCoin() {
         unfetchedHeaders: new Set([].concat(_toConsumableArray(Array.from(state.unfetchedHeaders)), _toConsumableArray(action.headers)))
       });
     case 'LOADING_BLOCK':
-      var newUnfetchedHeaders = state.unfetchedHeaders;
+      newUnfetchedHeaders = state.unfetchedHeaders;
       newUnfetchedHeaders.delete(action.header);
-      var newLoadingHeaders = state.loadingHeaders;
+      newLoadingHeaders = state.loadingHeaders;
       newLoadingHeaders.add(action.header);
       return _extends({}, state, {
+        unfetchedHeaders: newUnfetchedHeaders,
+        loadingHeaders: newLoadingHeaders
+      });
+    case 'NEW_BLOCK':
+      newUnfetchedHeaders = state.unfetchedHeaders;
+      newUnfetchedHeaders.delete(action.header);
+      newLoadingHeaders = state.loadingHeaders;
+      newLoadingHeaders.delete(action.header);
+      return _extends({}, state, {
+        lastBlock: action.block,
+        numBlocks: state.numBlocks + 1,
         unfetchedHeaders: newUnfetchedHeaders,
         loadingHeaders: newLoadingHeaders
       });

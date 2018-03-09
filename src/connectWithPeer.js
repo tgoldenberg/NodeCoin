@@ -27,7 +27,9 @@ async function connectWithPeer(peer, lastBlockHash, version) {
   client.on('data', async data => {
     let [ type, ...args ] = data.toString().split(' ');
     console.log('> Received: '.yellow, data.toString());
-    let version, blockHeaderHash;
+    let version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash;
+    let blocksToSend, message, allPeers, unfetchedHeaders;
+    let headers, peerIdx, header, block, savedBlock, newBlock;
     switch(type) {
       // Initial swapping of version number of last block hash
       case 'VERSION':
@@ -38,11 +40,11 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         }
         IS_VERSION_COMPATIBLE = true;
         // check db for what block height received block hash is
-        let lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
+        lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!lastBlock) {
           // send getblocks message
-          let savedLastBlock = store.getState().lastBlock;
-          let savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
+          savedLastBlock = store.getState().lastBlock;
+          savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
           client.write([ 'GETBLOCKS', savedLastBlockHash ].join(' '));
           break;
         }
@@ -54,37 +56,70 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         blockHeaderHash = args[0];
         lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!!lastBlock) {
-          let blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
-          let message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
+          blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+          message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
           client.write(message);
         }
         break;
 
       // Receive block headers from peer
       case 'BLOCKHEADERS':
-      // add to unfetchedHeaders
-      store.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
-      let { allPeers, unfetchedHeaders } = store.getState();
-      let headers = Array.from(unfetchedHeaders);
-      let peerIdx = 0;
-      while (headers.length) {
-        // assign header to peer
-        let peer = allPeers[peerIdx];
-        // connect with peer if no connection
-        if (!peer.client) {
-          // await connectWithPeer(peer, lastBlockHash, version);
-        }
-        let header = headers.shift(); // dequeue a header
-        client.write('REQUESTBLOCK ' + header);
-        await wait(1); // wait 1 second
-        // if peer doesn't respond within a period or doesn't have the block, move to next peer
-        // if peer gives block, verify the block (if possible) and add to MongoDB
+        // add to unfetchedHeaders
+        store.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
+        let { allPeers, unfetchedHeaders } = store.getState();
+        headers = Array.from(unfetchedHeaders);
+        peerIdx = 0;
+        while (headers.length) {
+          // assign header to peer
+          let peer = allPeers[peerIdx];
+          // connect with peer if no connection
+          if (!peer.client) {
+            // await connectWithPeer(peer, lastBlockHash, version);
+          }
+          header = headers.shift(); // dequeue a header
+          client.write('REQUESTBLOCK ' + header);
+          await wait(1); // wait 1 second
+          // if peer doesn't respond within a period or doesn't have the block, move to next peer
+          // if peer gives block, verify the block (if possible) and add to MongoDB
 
-        // move from unfetched => loading
-        store.dispatch({ type: 'LOADING_BLOCK', header });
-        peerIdx = allPeers.length % (peerIdx + 1);
-      }
-      break;
+          // move from unfetched => loading
+          store.dispatch({ type: 'LOADING_BLOCK', header });
+          peerIdx = allPeers.length % (peerIdx + 1);
+        }
+        break;
+      // Peer requests a specific block - find from DB and send serialized block
+      case 'REQUESTBLOCK':
+        // find the requested block and send as a JSON-serialized string
+        header = args[0];
+        block = await BlockModel.findOne({ hash: header });
+        if (block) {
+          let msg = JSON.stringify(block);
+          client.write('SENDBLOCK ' + JSON.stringify(block));
+        }
+        break;
+
+      case 'SENDBLOCK':
+        console.log('> SENDBLOCK: ', args)
+        block = JSON.parse(args[0]);
+        // check if already have
+        savedBlock = await BlockModel.findOne({ hash: block.hash });
+        if (savedBlock) {
+          break;
+        }
+        // if don't have, does the previousHash match our lastBlock.hash?
+        lastBlock = store.getState().lastBlock;
+        if (!lastBlock) {
+          break;
+        }
+        if (block.previousHash === lastBlock.header.previousHash) {
+          // add block to blockchain
+          newBlock = new BlockModel(block);
+          await newBlock.save();
+          // remove from orphan and unfetched / loading pools
+          store.dispatch({ type: 'NEW_BLOCK', block: formatBlock(newBlock) });
+        } else {
+          // if not, add to orphan transactions
+        }
     }
   });
 

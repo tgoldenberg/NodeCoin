@@ -23,6 +23,8 @@ const initialState = {
   orphanTransactions: new Set(),
 };
 
+let newUnfetchedHeaders, newLoadingHeaders, peerIdx;
+
 const nodeCoin = (state = initialState, action) => {
   switch(action.type) {
     case 'SET_INITIAL_BLOCK_COUNT':
@@ -40,7 +42,7 @@ const nodeCoin = (state = initialState, action) => {
     case 'SET_PEERS':
       return { ...state, allPeers: action.allPeers };
     case 'CONNECT_PEER':
-      let peerIdx = findIndex(state.allPeers, ({ ip }) => ip === action.ip);
+      peerIdx = findIndex(state.allPeers, ({ ip }) => ip === action.ip);
       return {
         ...state,
         allPeers: peerIdx === -1 ? state.allPeers : [
@@ -58,12 +60,24 @@ const nodeCoin = (state = initialState, action) => {
         ]),
       };
     case 'LOADING_BLOCK':
-      let newUnfetchedHeaders = state.unfetchedHeaders;
+      newUnfetchedHeaders = state.unfetchedHeaders;
       newUnfetchedHeaders.delete(action.header);
-      let newLoadingHeaders = state.loadingHeaders;
+      newLoadingHeaders = state.loadingHeaders;
       newLoadingHeaders.add(action.header);
       return {
         ...state,
+        unfetchedHeaders: newUnfetchedHeaders,
+        loadingHeaders: newLoadingHeaders,
+      };
+    case 'NEW_BLOCK':
+      newUnfetchedHeaders = state.unfetchedHeaders;
+      newUnfetchedHeaders.delete(action.header);
+      newLoadingHeaders = state.loadingHeaders;
+      newLoadingHeaders.delete(action.header);
+      return {
+        ...state,
+        lastBlock: action.block,
+        numBlocks: state.numBlocks + 1,
         unfetchedHeaders: newUnfetchedHeaders,
         loadingHeaders: newLoadingHeaders,
       };

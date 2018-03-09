@@ -40,7 +40,9 @@ function handleConnection(conn) {
   async function onConnData(d) {
     let [ type, ...args ] = d.split(' ');
     console.log(`> Received from: ${remoteAddr} `.yellow, d);
-    let version, lastBlockHash, state, lastBlock;
+    let version, lastBlockHash, state, lastBlock, peerLastBlock;
+    let blockHeaderHash, blocksToSend, message;
+    let allPeers, unfetchedHeaders, peerIdx, headers, header, block;
     switch(type) {
       // Initial message swapping version numbers and last block header hash
       case 'VERSION':
@@ -49,18 +51,18 @@ function handleConnection(conn) {
         conn.write([ 'VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash() ].join(' '));
 
         // Check if we have the last block header transmitted
-        let peerLastBlock = await BlockModel.findOne({ hash: lastBlockHash });
+        peerLastBlock = await BlockModel.findOne({ hash: lastBlockHash });
         if (!peerLastBlock) { // send getblocks message
           conn.write([ 'GETBLOCKS', lastBlock.getBlockHeaderHash() ].join(' '));
         }
         break;
       // Peer asks for our latest blocks
       case 'GETBLOCKS':
-        let blockHeaderHash = args[0];
+        blockHeaderHash = args[0];
         lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!!lastBlock) {
-          let blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
-          let message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
+          blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+          message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
           conn.write(message);
         }
         break;
@@ -69,8 +71,8 @@ function handleConnection(conn) {
         // add to unfetchedHeaders
         store.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
         let { allPeers, unfetchedHeaders } = store.getState();
-        let headers = Array.from(unfetchedHeaders);
-        let peerIdx = 0;
+        headers = Array.from(unfetchedHeaders);
+        peerIdx = 0;
         while (headers.length) {
           // assign header to peer
           let peer = allPeers[peerIdx];
@@ -89,6 +91,13 @@ function handleConnection(conn) {
           peerIdx = allPeers.length % (peerIdx + 1);
         }
         break;
+      case 'REQUESTBLOCK':
+        // find the requested block and send as a JSON-serialized string
+        header = args[0];
+        block = await BlockModel.findOne({ hash: header });
+        if (block) {
+          conn.write('SENDBLOCK ' + JSON.stringify(block));
+        }
     }
   }
   function onConnClose() {

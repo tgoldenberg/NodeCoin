@@ -11,7 +11,7 @@ store.dispatch = addLoggingToDispatch(store);
 function addLoggingToDispatch(store) {
   const rawDispatch = store.dispatch;
   return (action) => {
-    console.log('> Action: '.gray, action.type, '(Keys: ', Object.keys(action).join(', ') + ')');
+    console.log(`> Action: ${action.type}, (Keys:  ${Object.keys(action).join(', ')})`.gray);
     // console.log('> prev state'.gray, store.getState().lastBlock);
     // console.log(`> `.green);
     const returnValue = rawDispatch(action);
