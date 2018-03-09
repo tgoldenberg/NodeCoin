@@ -16,6 +16,7 @@ import network from 'network';
 import { seedBlocks } from '__mocks__/blocks';
 import store from 'store/store';
 import syncBlocksWithStore from 'db/syncBlocksWithStore';
+import { wait } from 'utils';
 
 require('dotenv').config();
 
@@ -80,6 +81,7 @@ function handleConnection(conn) {
           }
           let header = headers.shift(); // dequeue a header
           conn.write('REQUESTBLOCK ' + header);
+          await wait(1); // wait 1 second
           // if peer doesn't respond within a period or doesn't have the block, move to next peer
           // if peer gives block, verify the block (if possible) and add to MongoDB
 

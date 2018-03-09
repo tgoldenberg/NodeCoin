@@ -2247,6 +2247,8 @@ var _syncBlocksWithStore = __webpack_require__(29);
 
 var _syncBlocksWithStore2 = _interopRequireDefault(_syncBlocksWithStore);
 
+var _utils = __webpack_require__(150);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
@@ -2277,7 +2279,7 @@ function handleConnection(conn) {
               console.log(('> Received from: ' + remoteAddr + ' ').yellow, d);
               version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 16 : _context.t0 === 'BLOCKHEADERS' ? 27 : 34;
+              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 16 : _context.t0 === 'BLOCKHEADERS' ? 27 : 44;
               break;
 
             case 6:
@@ -2299,7 +2301,7 @@ function handleConnection(conn) {
                 // send getblocks message
                 conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(' '));
               }
-              return _context.abrupt('break', 34);
+              return _context.abrupt('break', 44);
 
             case 16:
               blockHeaderHash = args[0];
@@ -2326,7 +2328,7 @@ function handleConnection(conn) {
               conn.write(message);
 
             case 26:
-              return _context.abrupt('break', 34);
+              return _context.abrupt('break', 44);
 
             case 27:
               console.log('> Block headers', args);
@@ -2336,27 +2338,40 @@ function handleConnection(conn) {
               headers = Array.from(unfetchedHeaders);
               peerIdx = 0;
 
-              while (headers.length) {
-                // assign header to peer
-                peer = _allPeers[peerIdx];
-                // connect with peer if no connection
-
-                if (!peer.client) {
-                  // await connectWithPeer(peer, lastBlockHash, version);
-                }
-                header = headers.shift(); // dequeue a header
-
-                conn.write('REQUESTBLOCK ' + header);
-                // if peer doesn't respond within a period or doesn't have the block, move to next peer
-                // if peer gives block, verify the block (if possible) and add to MongoDB
-
-                // move from unfetched => loading
-                _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
-                peerIdx = _allPeers.length % (peerIdx + 1);
+            case 32:
+              if (!headers.length) {
+                _context.next = 43;
+                break;
               }
-              return _context.abrupt('break', 34);
 
-            case 34:
+              // assign header to peer
+              peer = _allPeers[peerIdx];
+              // connect with peer if no connection
+
+              if (!peer.client) {
+                // await connectWithPeer(peer, lastBlockHash, version);
+              }
+              header = headers.shift(); // dequeue a header
+
+              conn.write('REQUESTBLOCK ' + header);
+              _context.next = 39;
+              return (0, _utils.wait)(1);
+
+            case 39:
+              // wait 1 second
+              // if peer doesn't respond within a period or doesn't have the block, move to next peer
+              // if peer gives block, verify the block (if possible) and add to MongoDB
+
+              // move from unfetched => loading
+              _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
+              peerIdx = _allPeers.length % (peerIdx + 1);
+              _context.next = 32;
+              break;
+
+            case 43:
+              return _context.abrupt('break', 44);
+
+            case 44:
             case 'end':
               return _context.stop();
           }
@@ -5870,6 +5885,44 @@ module.exports = toNumber;
 /***/ (function(module, exports) {
 
 module.exports = require("dotenv");
+
+/***/ }),
+/* 150 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var wait = exports.wait = function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(sec) {
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            return _context.abrupt("return", new Promise(function (resolve, reject) {
+              setTimeout(function () {
+                resolve();
+              }, 1000 * sec);
+            }));
+
+          case 1:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+
+  return function wait(_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 /***/ })
 /******/ ]);
