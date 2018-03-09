@@ -38,7 +38,7 @@ function handleConnection(conn) {
 
   async function onConnData(d) {
     let [ type, ...args ] = d.split(' ');
-    console.log(`> Received from: ${remoteAddr} `, d);
+    console.log(`> Received from: ${remoteAddr} `.yellow, d);
     let version, lastBlockHash, state, lastBlock;
     switch(type) {
       // Initial message swapping version numbers and last block header hash
@@ -62,15 +62,32 @@ function handleConnection(conn) {
           let message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
           conn.write(message);
         }
+        break;
       // Peer sends us list of block headers
       case 'BLOCKHEADERS':
-        console.log('> Block headers');
+        console.log('> Block headers', args);
         // add to unfetchedHeaders
-        // for each header, assign to a peer
-        // if peer doesn't respond within a period or doesn't have the block, move to next peer
-        // if peer gives block, verify the block (if possible) and add to MongoDB
-        // remove header from unfetchedHeaders
+        store.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
+        let { allPeers, unfetchedHeaders } = store.getState();
+        let headers = Array.from(unfetchedHeaders);
+        let peerIdx = 0;
+        while (headers.length) {
+          // assign header to peer
+          let peer = allPeers[peerIdx];
+          // connect with peer if no connection
+          if (!peer.client) {
+            // await connectWithPeer(peer, lastBlockHash, version);
+          }
+          let header = headers.shift(); // dequeue a header
+          conn.write('REQUESTBLOCK ' + header);
+          // if peer doesn't respond within a period or doesn't have the block, move to next peer
+          // if peer gives block, verify the block (if possible) and add to MongoDB
 
+          // move from unfetched => loading
+          store.dispatch({ type: 'LOADING_BLOCK', header });
+          peerIdx = allPeers.length % (peerIdx + 1);
+        }
+        break;
     }
   }
   function onConnClose() {

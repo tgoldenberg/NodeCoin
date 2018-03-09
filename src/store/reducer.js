@@ -17,9 +17,10 @@ const initialState = {
   difficulty: 0,
   numBlocks: 0,
   // Mempool
-  unfetchedHeaders: [ ],
-  newTransactions: [ ],
-  orphanTransactions: [ ],
+  unfetchedHeaders: new Set(),
+  loadingHeaders: new Set(),
+  newTransactions: new Set(),
+  orphanTransactions: new Set(),
 };
 
 const nodeCoin = (state = initialState, action) => {
@@ -48,6 +49,24 @@ const nodeCoin = (state = initialState, action) => {
           ...state.allPeers.slice(peerIdx + 1),
         ],
       }
+    case 'ADD_UNFETCHED_HEADERS':
+      return {
+        ...state,
+        unfetchedHeaders: new Set([
+          ...Array.from(state.unfetchedHeaders),
+          ...action.headers,
+        ]),
+      };
+    case 'LOADING_BLOCK':
+      let newUnfetchedHeaders = state.unfetchedHeaders;
+      newUnfetchedHeaders.delete(action.header);
+      let newLoadingHeaders = state.loadingHeaders;
+      loadingHeaders.add(action.header);
+      return {
+        ...state,
+        unfetchedHeaders: newUnfetchedHeaders,
+        loadingHeaders: newLoadingHeaders,
+      };
     default:
       return state;
   }

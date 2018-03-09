@@ -2266,7 +2266,7 @@ var MAX_PEERS = 25;
 function handleConnection(conn) {
   var onConnData = function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(d) {
-      var _d$split, _d$split2, type, args, version, lastBlockHash, state, lastBlock, _args, peerLastBlock, blockHeaderHash, blocksToSend, message;
+      var _d$split, _d$split2, type, args, version, lastBlockHash, state, lastBlock, _args, peerLastBlock, blockHeaderHash, blocksToSend, message, _store$getState, _allPeers, unfetchedHeaders, headers, peerIdx, peer, header;
 
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -2274,10 +2274,10 @@ function handleConnection(conn) {
             case 0:
               _d$split = d.split(' '), _d$split2 = _toArray(_d$split), type = _d$split2[0], args = _d$split2.slice(1);
 
-              console.log('> Received from: ' + remoteAddr + ' ', d);
+              console.log(('> Received from: ' + remoteAddr + ' ').yellow, d);
               version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 16 : _context.t0 === 'BLOCKHEADERS' ? 26 : 27;
+              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 16 : _context.t0 === 'BLOCKHEADERS' ? 27 : 34;
               break;
 
             case 6:
@@ -2299,7 +2299,7 @@ function handleConnection(conn) {
                 // send getblocks message
                 conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(' '));
               }
-              return _context.abrupt('break', 27);
+              return _context.abrupt('break', 34);
 
             case 16:
               blockHeaderHash = args[0];
@@ -2326,9 +2326,37 @@ function handleConnection(conn) {
               conn.write(message);
 
             case 26:
-              console.log('> Block headers');
+              return _context.abrupt('break', 34);
 
             case 27:
+              console.log('> Block headers', args);
+              // add to unfetchedHeaders
+              _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
+              _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, unfetchedHeaders = _store$getState.unfetchedHeaders;
+              headers = Array.from(unfetchedHeaders);
+              peerIdx = 0;
+
+              while (headers.length) {
+                // assign header to peer
+                peer = _allPeers[peerIdx];
+                // connect with peer if no connection
+
+                if (!peer.client) {
+                  // await connectWithPeer(peer, lastBlockHash, version);
+                }
+                header = headers.shift(); // dequeue a header
+
+                conn.write('REQUESTBLOCK ' + header);
+                // if peer doesn't respond within a period or doesn't have the block, move to next peer
+                // if peer gives block, verify the block (if possible) and add to MongoDB
+
+                // move from unfetched => loading
+                _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
+                peerIdx = _allPeers.length % (peerIdx + 1);
+              }
+              return _context.abrupt('break', 34);
+
+            case 34:
             case 'end':
               return _context.stop();
           }
@@ -2827,9 +2855,10 @@ var initialState = {
   difficulty: 0,
   numBlocks: 0,
   // Mempool
-  unfetchedHeaders: [],
-  newTransactions: [],
-  orphanTransactions: []
+  unfetchedHeaders: new Set(),
+  loadingHeaders: new Set(),
+  newTransactions: new Set(),
+  orphanTransactions: new Set()
 };
 
 var nodeCoin = function nodeCoin() {
@@ -2856,6 +2885,19 @@ var nodeCoin = function nodeCoin() {
       });
       return _extends({}, state, {
         allPeers: peerIdx === -1 ? state.allPeers : [].concat(_toConsumableArray(state.allPeers.slice(0, peerIdx)), [{ ip: action.ip, client: action.client }], _toConsumableArray(state.allPeers.slice(peerIdx + 1)))
+      });
+    case 'ADD_UNFETCHED_HEADERS':
+      return _extends({}, state, {
+        unfetchedHeaders: new Set([].concat(_toConsumableArray(Array.from(state.unfetchedHeaders)), _toConsumableArray(action.headers)))
+      });
+    case 'LOADING_BLOCK':
+      var newUnfetchedHeaders = state.unfetchedHeaders;
+      newUnfetchedHeaders.delete(action.header);
+      var newLoadingHeaders = state.loadingHeaders;
+      loadingHeaders.add(action.header);
+      return _extends({}, state, {
+        unfetchedHeaders: newUnfetchedHeaders,
+        loadingHeaders: newLoadingHeaders
       });
     default:
       return state;
