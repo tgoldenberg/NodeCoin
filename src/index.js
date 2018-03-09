@@ -3,9 +3,11 @@ import 'babel-polyfill';
 
 import { getAddress, makeWallet } from './address';
 import { getWalletData, getWallets } from 'utils/getWalletData';
+import { lockTransaction, unlockTransaction } from 'utils/validateSignature';
 
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
+import SHA256 from 'js-sha256';
 import bodyParser from 'body-parser';
 import connectToDB from './connectToDB';
 import connectWithPeer from './connectWithPeer';
@@ -13,7 +15,6 @@ import express from 'express';
 import find from 'lodash/find';
 import findIPAddress from 'utils/findIPAddress';
 import ip from 'ip';
-import { lockTransaction } from 'utils/validateSignature';
 import mongoose from 'mongoose';
 import net from 'net';
 import network from 'network';
@@ -127,8 +128,14 @@ function startup() {
     res.status(200).send({ wallets });
   });
 
-  app.post('/send/:to_address', async function (req, res) {
-    const { amount, privateKey, publicKey } = req.body;
+  app.post('/send', async function (req, res) {
+    let { amount, privateKey, publicKey, toAddress } = req.body;
+    if (!amount || !privateKey || !publicKey || !toAddress) {
+      return res.status(500).send({ error: 'Missing parameters [amount|privateKey|publicKey|toAddress]'});
+    }
+    if (typeof amount === 'string') {
+      amount = parseInt(amount);
+    }
     let address = getAddress(publicKey);
     let walletData = await getWalletData(address);
     let { utxo, balance } = walletData;
@@ -136,21 +143,44 @@ function startup() {
     // is transaction less than balance?
     let isLessThanBalance = balance > amount;
     if (!isLessThanBalance) {
-      res.status(500).send({ error: 'Balance must be above amount to send.' });
+      return res.status(500).send({ error: 'Balance must be above amount to send.' });
     }
     let remaining = amount;
+    let vin = [ ];
+    let vout = [ ];
+    let spentTxs = [ ];
     // get rid of spare change
     for (let i = 0; i < utxo.length; i++) {
-      remaining -= utxo.nValue;
+      let tx = utxo[i];
+      let remainder = tx.nValue - remaining;
+      let spent = Math.min(remaining, tx.nValue);
+      remaining -= spent;
+      spentTxs.push(tx);
+      vin.push({
+        prevout: tx.txid,
+        n: tx.n,
+        scriptSig: unlockTransaction(tx.id, publicKey, privateKey),
+      });
+      vout.push({
+        scriptPubKey: `${tx.txid} ${toAddress}`,
+        nValue: spent,
+      });
+      if (remainder > 0) {
+        // add vout to self of remaining
+        vout.push({
+          scriptPubKey: `${tx.txid} ${publicKey}`,
+          nValue: remainder,
+        });
+        break;
+      }
     }
-    let vin = [ ]
-    let vout = [ { nValue: amount, scriptPubKey: lockTransaction() }]
-    // let txid = SHA256(amount + req.params.to_address + );
     let transaction = {
-      vin: [ ],
-      vout: [ { scriptPubKey: `${req.params.to_address}`}],
-    }
-    res.status(200).send({ transaction: { amount: amount } });
+      hash: SHA256(JSON.stringify(vin) + JSON.stringify(vout)),
+      vin,
+      vout,
+    };
+    // broadcast to network
+    res.status(200).send({ transaction, spentTxs });
   });
 
   // curl -XPOST localhost:3000/wallets/new | python -m json.tool

@@ -2352,6 +2352,8 @@ var _address = __webpack_require__(148);
 
 var _getWalletData = __webpack_require__(155);
 
+var _validateSignature = __webpack_require__(7);
+
 var _Block = __webpack_require__(6);
 
 var _Block2 = _interopRequireDefault(_Block);
@@ -2359,6 +2361,10 @@ var _Block2 = _interopRequireDefault(_Block);
 var _pusherJs = __webpack_require__(56);
 
 var _pusherJs2 = _interopRequireDefault(_pusherJs);
+
+var _jsSha = __webpack_require__(19);
+
+var _jsSha2 = _interopRequireDefault(_jsSha);
 
 var _bodyParser = __webpack_require__(57);
 
@@ -2387,8 +2393,6 @@ var _findIPAddress2 = _interopRequireDefault(_findIPAddress);
 var _ip = __webpack_require__(153);
 
 var _ip2 = _interopRequireDefault(_ip);
-
-var _validateSignature = __webpack_require__(7);
 
 var _mongoose = __webpack_require__(17);
 
@@ -2619,20 +2623,32 @@ function startup() {
     };
   }());
 
-  app.post('/send/:to_address', function () {
+  app.post('/send', function () {
     var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(req, res) {
-      var _req$body, amount, privateKey, publicKey, address, walletData, utxo, balance, isLessThanBalance, remaining, i, vin, vout, transaction;
+      var _req$body, amount, privateKey, publicKey, toAddress, address, walletData, utxo, balance, isLessThanBalance, remaining, vin, vout, spentTxs, i, tx, remainder, spent, transaction;
 
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
-              _req$body = req.body, amount = _req$body.amount, privateKey = _req$body.privateKey, publicKey = _req$body.publicKey;
+              _req$body = req.body, amount = _req$body.amount, privateKey = _req$body.privateKey, publicKey = _req$body.publicKey, toAddress = _req$body.toAddress;
+
+              if (!(!amount || !privateKey || !publicKey || !toAddress)) {
+                _context3.next = 3;
+                break;
+              }
+
+              return _context3.abrupt('return', res.status(500).send({ error: 'Missing parameters [amount|privateKey|publicKey|toAddress]' }));
+
+            case 3:
+              if (typeof amount === 'string') {
+                amount = parseInt(amount);
+              }
               address = (0, _address.getAddress)(publicKey);
-              _context3.next = 4;
+              _context3.next = 7;
               return (0, _getWalletData.getWalletData)(address);
 
-            case 4:
+            case 7:
               walletData = _context3.sent;
               utxo = walletData.utxo, balance = walletData.balance;
 
@@ -2642,27 +2658,72 @@ function startup() {
               // is transaction less than balance?
               isLessThanBalance = balance > amount;
 
-              if (!isLessThanBalance) {
-                res.status(500).send({ error: 'Balance must be above amount to send.' });
+              if (isLessThanBalance) {
+                _context3.next = 13;
+                break;
               }
+
+              return _context3.abrupt('return', res.status(500).send({ error: 'Balance must be above amount to send.' }));
+
+            case 13:
               remaining = amount;
+              vin = [];
+              vout = [];
+              spentTxs = [];
               // get rid of spare change
 
-              for (i = 0; i < utxo.length; i++) {
-                remaining -= utxo.nValue;
+              i = 0;
+
+            case 18:
+              if (!(i < utxo.length)) {
+                _context3.next = 32;
+                break;
               }
-              vin = [];
-              vout = [{ nValue: amount, scriptPubKey: (0, _validateSignature.lockTransaction)() }];
-              // let txid = SHA256(amount + req.params.to_address + );
 
+              tx = utxo[i];
+              remainder = tx.nValue - remaining;
+              spent = Math.min(remaining, tx.nValue);
+
+              remaining -= spent;
+              spentTxs.push(tx);
+              vin.push({
+                prevout: tx.txid,
+                n: tx.n,
+                scriptSig: (0, _validateSignature.unlockTransaction)(tx.id, publicKey, privateKey)
+              });
+              vout.push({
+                scriptPubKey: tx.txid + ' ' + toAddress,
+                nValue: spent
+              });
+
+              if (!(remainder > 0)) {
+                _context3.next = 29;
+                break;
+              }
+
+              // add vout to self of remaining
+              vout.push({
+                scriptPubKey: tx.txid + ' ' + publicKey,
+                nValue: remainder
+              });
+              return _context3.abrupt('break', 32);
+
+            case 29:
+              i++;
+              _context3.next = 18;
+              break;
+
+            case 32:
               transaction = {
-                vin: [],
-                vout: [{ scriptPubKey: '' + req.params.to_address }]
+                hash: (0, _jsSha2.default)(JSON.stringify(vin) + JSON.stringify(vout)),
+                vin: vin,
+                vout: vout
               };
+              // broadcast to network
 
-              res.status(200).send({ transaction: { amount: amount } });
+              res.status(200).send({ transaction: transaction, spentTxs: spentTxs });
 
-            case 15:
+            case 34:
             case 'end':
               return _context3.stop();
           }
