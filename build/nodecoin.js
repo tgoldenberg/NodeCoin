@@ -2563,7 +2563,7 @@ var connectWithPeer = function () {
 
             client.on('data', function () {
               var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(data) {
-                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash;
+                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message;
 
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                   while (1) {
@@ -2574,7 +2574,7 @@ var connectWithPeer = function () {
 
                         version = void 0, blockHeaderHash = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 5 : _context.t0 === 'GETBLOCKS' ? 21 : 22;
+                        _context.next = _context.t0 === 'VERSION' ? 5 : _context.t0 === 'GETBLOCKS' ? 21 : 31;
                         break;
 
                       case 5:
@@ -2586,7 +2586,7 @@ var connectWithPeer = function () {
                           break;
                         }
 
-                        return _context.abrupt('break', 22);
+                        return _context.abrupt('break', 31);
 
                       case 9:
                         IS_VERSION_COMPATIBLE = true;
@@ -2608,16 +2608,37 @@ var connectWithPeer = function () {
                         savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
 
                         client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
-                        return _context.abrupt('break', 22);
+                        return _context.abrupt('break', 31);
 
                       case 19:
                         console.log('> Synced with peer'.blue);
-                        return _context.abrupt('break', 22);
+                        return _context.abrupt('break', 31);
 
                       case 21:
                         blockHeaderHash = args[1];
+                        _context.next = 24;
+                        return _Block2.default.findOne({ hash: blockHeaderHash });
 
-                      case 22:
+                      case 24:
+                        lastBlock = _context.sent;
+
+                        if (!lastBlock) {
+                          _context.next = 31;
+                          break;
+                        }
+
+                        _context.next = 28;
+                        return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+
+                      case 28:
+                        blocksToSend = _context.sent;
+                        message = 'BLOCKHEADERS ' + blocksToSend.map(function (blk) {
+                          return blk.hash;
+                        }).join(' ');
+
+                        client.write(message);
+
+                      case 31:
                       case 'end':
                         return _context.stop();
                     }

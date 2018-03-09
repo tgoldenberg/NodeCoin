@@ -1,6 +1,6 @@
 import 'colors';
 
-import Block from 'models/Block';
+import BlockModel from 'models/Block';
 import net from 'net';
 import store from 'store/store';
 
@@ -25,6 +25,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
     // console.log('> Received: ', data.toString());
     let version, blockHeaderHash;
     switch(type) {
+      // Initial swapping of version number of last block hash
       case 'VERSION':
         version = args[0];
         blockHeaderHash = args[1];
@@ -34,7 +35,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         IS_VERSION_COMPATIBLE = true;
         console.log('> Received block hash: ', blockHeaderHash);
         // check db for what block height received block hash is
-        let lastBlock = await Block.findOne({ hash: blockHeaderHash });
+        let lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!lastBlock) {
           // send getblocks message
           let savedLastBlock = store.getState().lastBlock;
@@ -44,9 +45,16 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         }
         console.log('> Synced with peer'.blue);
         break;
+
+      // Peer requests block headers for up to 50 blocks
       case 'GETBLOCKS':
         blockHeaderHash = args[1];
-
+        lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
+        if (!!lastBlock) {
+          let blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+          let message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
+          client.write(message);
+        }
     }
   });
 
