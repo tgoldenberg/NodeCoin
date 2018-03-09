@@ -6,6 +6,7 @@ import store from 'store/store';
 import { wait } from 'utils';
 
 const DEFAULT_PORT = 8334;
+const DELIMITER = '~~~~~'
 
 async function connectWithPeer(peer, lastBlockHash, version) {
   let IS_CONNECTED = false;
@@ -18,7 +19,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
     console.log('> Connected to peer: ', peer);
     IS_CONNECTED = true;
     let type = 'VERSION';
-    client.write([ type, version, lastBlockHash ].join(' '));
+    client.write([ type, version, lastBlockHash ].join(DELIMITER));
 
     // connect client to peer in Redux store
     store.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client });
@@ -45,7 +46,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           // send getblocks message
           savedLastBlock = store.getState().lastBlock;
           savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
-          client.write([ 'GETBLOCKS', savedLastBlockHash ].join(' '));
+          client.write([ 'GETBLOCKS', savedLastBlockHash ].join(DELIMITER));
           break;
         }
         console.log('> Synced with peer'.blue);
@@ -57,7 +58,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!!lastBlock) {
           blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
-          message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
+          message = ['BLOCKHEADERS', ...blocksToSend.map(blk => blk.hash)).join(DELIMITER);
           client.write(message);
         }
         break;
@@ -77,7 +78,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
             // await connectWithPeer(peer, lastBlockHash, version);
           }
           header = headers.shift(); // dequeue a header
-          client.write('REQUESTBLOCK ' + header);
+          client.write(`REQUESTBLOCK${DELIMITER}` + header);
           await wait(1); // wait 1 second
           // if peer doesn't respond within a period or doesn't have the block, move to next peer
           // if peer gives block, verify the block (if possible) and add to MongoDB
@@ -94,12 +95,11 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         block = await BlockModel.findOne({ hash: header });
         if (block) {
           let msg = JSON.stringify(block);
-          client.write('SENDBLOCK ' + JSON.stringify(block));
+          client.write(`SENDBLOCK${DELIMITER}` + JSON.stringify(block));
         }
         break;
 
       case 'SENDBLOCK':
-        console.log('> SENDBLOCK: ', args)
         block = JSON.parse(args[0]);
         // check if already have
         savedBlock = await BlockModel.findOne({ hash: block.hash });

@@ -27,6 +27,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 const PUSHER_APP_KEY = '86e36fb6cb404d67a108'; // connect via public key
 const DEFAULT_PORT = 8334; // default port for net connections
 const MAX_PEERS = 25;
+const DELIMITER = '~~~~~'
 
 function handleConnection(conn) {
   const remoteAddr = `${conn.remoteAddress}:${conn.remotePort}`;
@@ -48,12 +49,12 @@ function handleConnection(conn) {
       case 'VERSION':
         [ version, lastBlockHash ] = args;
         lastBlock = store.getState().lastBlock;
-        conn.write([ 'VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash() ].join(' '));
+        conn.write([ 'VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash() ].join(DELIMITER));
 
         // Check if we have the last block header transmitted
         peerLastBlock = await BlockModel.findOne({ hash: lastBlockHash });
         if (!peerLastBlock) { // send getblocks message
-          conn.write([ 'GETBLOCKS', lastBlock.getBlockHeaderHash() ].join(' '));
+          conn.write([ 'GETBLOCKS', lastBlock.getBlockHeaderHash() ].join(DELIMITER));
         }
         break;
       // Peer asks for our latest blocks
@@ -62,7 +63,7 @@ function handleConnection(conn) {
         lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!!lastBlock) {
           blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
-          message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
+          message = ['BLOCKHEADERS', ...blocksToSend.map(blk => blk.hash) ].join(DELIMITER);
           conn.write(message);
         }
         break;
@@ -81,7 +82,7 @@ function handleConnection(conn) {
             // await connectWithPeer(peer, lastBlockHash, version);
           }
           let header = headers.shift(); // dequeue a header
-          conn.write('REQUESTBLOCK ' + header);
+          conn.write(`REQUESTBLOCK${DELIMITER}` + header);
           await wait(1); // wait 1 second
           // if peer doesn't respond within a period or doesn't have the block, move to next peer
           // if peer gives block, verify the block (if possible) and add to MongoDB
@@ -96,7 +97,7 @@ function handleConnection(conn) {
         header = args[0];
         block = await BlockModel.findOne({ hash: header });
         if (block) {
-          conn.write('SENDBLOCK ' + JSON.stringify(block));
+          conn.write(`SENDBLOCK${DELIMITER}` + JSON.stringify(block));
         }
     }
   }
@@ -121,7 +122,7 @@ function startup() {
     console.log('> Connected to local MongoDB'.gray);
 
     // seed blocks
-    await seedBlocks();
+    // await seedBlocks();
 
     // create a TCP/IP server on current IP address
     const server = net.createServer();
