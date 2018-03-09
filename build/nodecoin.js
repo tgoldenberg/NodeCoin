@@ -2187,6 +2187,10 @@ __webpack_require__(5);
 
 __webpack_require__(49);
 
+var _Block = __webpack_require__(16);
+
+var _Block2 = _interopRequireDefault(_Block);
+
 var _pusherJs = __webpack_require__(50);
 
 var _pusherJs2 = _interopRequireDefault(_pusherJs);
@@ -2243,9 +2247,9 @@ var _syncBlocksWithStore2 = _interopRequireDefault(_syncBlocksWithStore);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
 function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 __webpack_require__(149).config();
 
@@ -2258,6 +2262,70 @@ var DEFAULT_PORT = 8334; // default port for net connections
 var MAX_PEERS = 25;
 
 function handleConnection(conn) {
+  var onConnData = function () {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(d) {
+      var _d$split, _d$split2, type, args, version, lastBlockHash, state, lastBlock, blockHeaderHash, blocksToSend, message;
+
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _d$split = d.split(' '), _d$split2 = _toArray(_d$split), type = _d$split2[0], args = _d$split2.slice(1);
+
+              console.log('> Connection data from: ' + remoteAddr, d);
+              version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0;
+              _context.t0 = type;
+              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 13 : 25;
+              break;
+
+            case 6:
+              version = args[0];
+              lastBlockHash = args[1];
+              state = _store2.default.getState();
+              lastBlock = state.lastBlock;
+              console.log('> Responding to VERSION request');
+              conn.write(['VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash()].join(' '));
+              return _context.abrupt('break', 25);
+
+            case 13:
+              console.log('> Get Blocks: ', d);
+              conn.write('BLOCKHEADERS abc xyz');
+              blockHeaderHash = args[0];
+              _context.next = 18;
+              return _Block2.default.findOne({ hash: blockHeaderHash });
+
+            case 18:
+              lastBlock = _context.sent;
+
+              if (!lastBlock) {
+                _context.next = 25;
+                break;
+              }
+
+              _context.next = 22;
+              return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+
+            case 22:
+              blocksToSend = _context.sent;
+              message = 'BLOCKHEADERS ' + blocksToSend.map(function (blk) {
+                return blk.hash;
+              }).join(' ');
+
+              conn.write(message);
+
+            case 25:
+            case 'end':
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+
+    return function onConnData(_x) {
+      return _ref.apply(this, arguments);
+    };
+  }();
+
   var remoteAddr = conn.remoteAddress + ':' + conn.remotePort;
   console.log(('> New client connection from ' + remoteAddr).blue);
 
@@ -2266,30 +2334,6 @@ function handleConnection(conn) {
   conn.on('close', onConnClose);
   conn.on('error', onConnError);
 
-  function onConnData(d) {
-    var _d$split = d.split(' '),
-        _d$split2 = _toArray(_d$split),
-        type = _d$split2[0],
-        args = _d$split2.slice(1);
-
-    console.log('> Connection data from: ' + remoteAddr, d);
-    var version = void 0,
-        lastBlockHash = void 0,
-        state = void 0,
-        lastBlock = void 0;
-    switch (type) {
-      case 'VERSION':
-        version = args[0];
-        lastBlockHash = args[1];
-        state = _store2.default.getState();
-        lastBlock = state.lastBlock;
-        console.log('> Responding to VERSION request');
-        conn.write(['VERSION', lastBlock.header.version, lastBlock.getBlockHeaderHash()].join(' '));
-        break;
-      case 'GETBLOCKS':
-        console.log('> Get Blocks: ', d);
-    }
-  }
   function onConnClose() {
     console.log('connection from %s closed', remoteAddr);
   }
@@ -2301,29 +2345,29 @@ function handleConnection(conn) {
 var allPeers = [];
 
 function startup() {
-  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
     var _this = this;
 
-    var ipAddr, dbConnection, server, client, _ref2, numBlocks, lastBlock, channel;
+    var ipAddr, dbConnection, server, client, _ref3, numBlocks, lastBlock, channel;
 
-    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
-        switch (_context2.prev = _context2.next) {
+        switch (_context3.prev = _context3.next) {
           case 0:
-            _context2.next = 2;
+            _context3.next = 2;
             return (0, _findIPAddress2.default)();
 
           case 2:
-            ipAddr = _context2.sent;
+            ipAddr = _context3.sent;
 
             console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
             // connect to local instance of MongoDB
-            _context2.next = 6;
+            _context3.next = 6;
             return (0, _connectToDB2.default)();
 
           case 6:
-            dbConnection = _context2.sent;
+            dbConnection = _context3.sent;
 
             console.log('> Connected to local MongoDB'.gray);
 
@@ -2349,13 +2393,13 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context2.next = 14;
+            _context3.next = 14;
             return (0, _syncBlocksWithStore2.default)();
 
           case 14:
-            _ref2 = _context2.sent;
-            numBlocks = _ref2.numBlocks;
-            lastBlock = _ref2.lastBlock;
+            _ref3 = _context3.sent;
+            numBlocks = _ref3.numBlocks;
+            lastBlock = _ref3.lastBlock;
 
 
             console.log('> Subscribing to broadcast changes...'.gray);
@@ -2364,11 +2408,11 @@ function startup() {
             // SUCCESSFULLY JOINED
 
             channel.bind('pusher:subscription_succeeded', function () {
-              var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(members) {
+              var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(members) {
                 var lastBlock, lastBlockHash, version, i, peer;
-                return regeneratorRuntime.wrap(function _callee$(_context) {
+                return regeneratorRuntime.wrap(function _callee2$(_context2) {
                   while (1) {
-                    switch (_context.prev = _context.next) {
+                    switch (_context2.prev = _context2.next) {
                       case 0:
                         console.log('> Subscription succeeded: ', members);
                         allPeers = [];
@@ -2391,29 +2435,29 @@ function startup() {
 
                       case 9:
                         if (!(i < allPeers.length)) {
-                          _context.next = 16;
+                          _context2.next = 16;
                           break;
                         }
 
                         peer = allPeers[i];
-                        _context.next = 13;
+                        _context2.next = 13;
                         return (0, _connectWithPeer2.default)(peer, lastBlockHash, version);
 
                       case 13:
                         i++;
-                        _context.next = 9;
+                        _context2.next = 9;
                         break;
 
                       case 16:
                       case 'end':
-                        return _context.stop();
+                        return _context2.stop();
                     }
                   }
-                }, _callee, _this);
+                }, _callee2, _this);
               }));
 
-              return function (_x) {
-                return _ref3.apply(this, arguments);
+              return function (_x2) {
+                return _ref4.apply(this, arguments);
               };
             }());
 
@@ -2441,10 +2485,10 @@ function startup() {
 
           case 22:
           case 'end':
-            return _context2.stop();
+            return _context3.stop();
         }
       }
-    }, _callee2, this);
+    }, _callee3, this);
   })));
 }
 
@@ -2570,36 +2614,36 @@ var connectWithPeer = function () {
                     switch (_context.prev = _context.next) {
                       case 0:
                         _data$toString$split = data.toString().split(' '), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
-                        // console.log('> Received: ', data.toString());
 
+                        console.log('> Received: ', data.toString());
                         version = void 0, blockHeaderHash = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 5 : _context.t0 === 'GETBLOCKS' ? 21 : 31;
+                        _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 22 : 32;
                         break;
 
-                      case 5:
+                      case 6:
                         version = args[0];
                         blockHeaderHash = args[1];
 
                         if (!(version !== '1')) {
-                          _context.next = 9;
+                          _context.next = 10;
                           break;
                         }
 
-                        return _context.abrupt('break', 31);
+                        return _context.abrupt('break', 32);
 
-                      case 9:
+                      case 10:
                         IS_VERSION_COMPATIBLE = true;
                         console.log('> Received block hash: ', blockHeaderHash);
                         // check db for what block height received block hash is
-                        _context.next = 13;
+                        _context.next = 14;
                         return _Block2.default.findOne({ hash: blockHeaderHash });
 
-                      case 13:
+                      case 14:
                         lastBlock = _context.sent;
 
                         if (lastBlock) {
-                          _context.next = 19;
+                          _context.next = 20;
                           break;
                         }
 
@@ -2608,29 +2652,29 @@ var connectWithPeer = function () {
                         savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
 
                         client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
-                        return _context.abrupt('break', 31);
+                        return _context.abrupt('break', 32);
 
-                      case 19:
+                      case 20:
                         console.log('> Synced with peer'.blue);
-                        return _context.abrupt('break', 31);
+                        return _context.abrupt('break', 32);
 
-                      case 21:
-                        blockHeaderHash = args[1];
-                        _context.next = 24;
+                      case 22:
+                        blockHeaderHash = args[0];
+                        _context.next = 25;
                         return _Block2.default.findOne({ hash: blockHeaderHash });
 
-                      case 24:
+                      case 25:
                         lastBlock = _context.sent;
 
                         if (!lastBlock) {
-                          _context.next = 31;
+                          _context.next = 32;
                           break;
                         }
 
-                        _context.next = 28;
+                        _context.next = 29;
                         return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
 
-                      case 28:
+                      case 29:
                         blocksToSend = _context.sent;
                         message = 'BLOCKHEADERS ' + blocksToSend.map(function (blk) {
                           return blk.hash;
@@ -2638,7 +2682,7 @@ var connectWithPeer = function () {
 
                         client.write(message);
 
-                      case 31:
+                      case 32:
                       case 'end':
                         return _context.stop();
                     }

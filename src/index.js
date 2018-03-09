@@ -1,6 +1,7 @@
 import 'colors';
 import 'babel-polyfill';
 
+import BlockModel from 'models/Block';
 import Client from 'pusher-js';
 import _ from 'lodash';
 import bodyParser from 'body-parser';
@@ -35,7 +36,7 @@ function handleConnection(conn) {
   conn.on('close', onConnClose);
   conn.on('error', onConnError);
 
-  function onConnData(d) {
+  async function onConnData(d) {
     let [ type, ...args ] = d.split(' ');
     console.log(`> Connection data from: ${remoteAddr}`, d);
     let version, lastBlockHash, state, lastBlock;
@@ -50,6 +51,14 @@ function handleConnection(conn) {
         break;
       case 'GETBLOCKS':
         console.log('> Get Blocks: ', d);
+        conn.write('BLOCKHEADERS abc xyz');
+        let blockHeaderHash = args[0];
+        lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
+        if (!!lastBlock) {
+          let blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+          let message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
+          conn.write(message);
+        }
     }
   }
   function onConnClose() {

@@ -22,7 +22,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
 
   client.on('data', async data => {
     let [ type, ...args ] = data.toString().split(' ');
-    // console.log('> Received: ', data.toString());
+    console.log('> Received: ', data.toString());
     let version, blockHeaderHash;
     switch(type) {
       // Initial swapping of version number of last block hash
@@ -48,7 +48,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
 
       // Peer requests block headers for up to 50 blocks
       case 'GETBLOCKS':
-        blockHeaderHash = args[1];
+        blockHeaderHash = args[0];
         lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!!lastBlock) {
           let blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
