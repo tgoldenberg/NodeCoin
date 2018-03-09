@@ -39,7 +39,13 @@ export async function seedBlocks() {
   // BLOCK 2
   let prev = genesisBlock;
   let amount = Math.floor(Math.random() * 16);
-  let header = { version: 1, previousHash: prev.getBlockHeaderHash(), merkleHash: uuid(), timestamp: new Date().getTime(), difficulty: prev.header.difficulty, nonce: prev.header.nonce };
+  let header = { version: 1, previousHash: prev.getBlockHeaderHash(), merkleHash: uuid(), timestamp: new Date().getTime(), difficulty: prev.header.difficulty, nonce: 0 };
+  let blockHeaderHash = SHA256(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+  let target = Math.pow(2, 256 - header.difficulty);
+  while (parseInt(blockHeaderHash, 16) > target) {
+    header.nonce++;
+    blockHeaderHash = SHA256(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+  }
   let block = new BlockClass(header, [ ]);
   let txId = SHA256(block.getBlockHeaderHash() + '0');
   remaining -= (amount * COIN);
@@ -65,6 +71,12 @@ export async function seedBlocks() {
   prev = formatBlock(newBlock);
   amount = Math.floor(Math.random() * 16);
   header = { version: 1, previousHash: prev.getBlockHeaderHash(), merkleHash: uuid(), timestamp: new Date().getTime(), difficulty: prev.header.difficulty, nonce: prev.header.nonce };
+  blockHeaderHash = SHA256(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+  target = Math.pow(2, 256 - header.difficulty);
+  while (parseInt(blockHeaderHash, 16) > target) {
+    header.nonce++;
+    blockHeaderHash = SHA256(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+  }
   block = new BlockClass(header, [ ]);
   txId = SHA256(block.getBlockHeaderHash() + '0');
   remaining -= (amount * COIN);

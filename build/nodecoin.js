@@ -707,7 +707,7 @@ exports.seedBlocks = exports.myWallet = undefined;
 
 var seedBlocks = exports.seedBlocks = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-    var genesisBlock, savedGenesisBlock, remaining, prev, amount, header, block, txId, transactions, newBlock, newBlock2;
+    var genesisBlock, savedGenesisBlock, remaining, prev, amount, header, blockHeaderHash, target, block, txId, transactions, newBlock, newBlock2;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -731,7 +731,14 @@ var seedBlocks = exports.seedBlocks = function () {
 
             prev = genesisBlock;
             amount = Math.floor(Math.random() * 16);
-            header = { version: 1, previousHash: prev.getBlockHeaderHash(), merkleHash: (0, _uuid2.default)(), timestamp: new Date().getTime(), difficulty: prev.header.difficulty, nonce: prev.header.nonce };
+            header = { version: 1, previousHash: prev.getBlockHeaderHash(), merkleHash: (0, _uuid2.default)(), timestamp: new Date().getTime(), difficulty: prev.header.difficulty, nonce: 0 };
+            blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+            target = Math.pow(2, 256 - header.difficulty);
+
+            while (parseInt(blockHeaderHash, 16) > target) {
+              header.nonce++;
+              blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+            }
             block = new _Block2.default(header, []);
             txId = (0, _jsSha2.default)(block.getBlockHeaderHash() + '0');
 
@@ -750,15 +757,21 @@ var seedBlocks = exports.seedBlocks = function () {
             newBlock = new _Block4.default(block.getDBFormat());
 
             console.log('> New block 2: '.blue, newBlock.hash);
-            _context.next = 20;
+            _context.next = 23;
             return newBlock.save();
 
-          case 20:
+          case 23:
 
             // BLOCK 3
             prev = (0, _syncBlocksWithStore.formatBlock)(newBlock);
             amount = Math.floor(Math.random() * 16);
             header = { version: 1, previousHash: prev.getBlockHeaderHash(), merkleHash: (0, _uuid2.default)(), timestamp: new Date().getTime(), difficulty: prev.header.difficulty, nonce: prev.header.nonce };
+            blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+            target = Math.pow(2, 256 - header.difficulty);
+            while (parseInt(blockHeaderHash, 16) > target) {
+              header.nonce++;
+              blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+            }
             block = new _Block2.default(header, []);
             txId = (0, _jsSha2.default)(block.getBlockHeaderHash() + '0');
             remaining -= amount * COIN;
@@ -775,13 +788,13 @@ var seedBlocks = exports.seedBlocks = function () {
             newBlock2 = new _Block4.default(block.getDBFormat());
 
             console.log('> New block 3: '.blue, newBlock2.hash);
-            _context.next = 32;
+            _context.next = 38;
             return newBlock2.save();
 
-          case 32:
+          case 38:
             return _context.abrupt('return', savedGenesisBlock);
 
-          case 33:
+          case 39:
           case 'end':
             return _context.stop();
         }
@@ -973,11 +986,13 @@ var store = __webpack_require__(6);
 
 var MY_PUBLIC_KEY = '044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba';
 var COIN = 100000000;
-var genesisPreviousHash = '0000000000000000000000000000000000000000000000000000000000000000';
-var genesisMerkleRoot = '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b';
-var genesisDifficulty = 486604799;
-var genesisNonce = 2083236893;
-var genesisTimestamp = 1231006505000; // Jan 3, 2009
+var GENESIS_VERSION = 1;
+var GENESIS_PREVIOUS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+var GENESIS_MERKLE_ROOT = '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b';
+var GENESIS_DIFFICULTY = 22;
+var GENESIS_TARGET = Math.pow(2, 256 - GENESIS_DIFFICULTY);
+var GENESIS_NONCE = 2620954;
+var GENESIS_TIMESTAMP = 1231006505000; // Jan 3, 2009
 
 var Block = function () {
   function Block(header, txs) {
@@ -987,12 +1002,12 @@ var Block = function () {
 
     var state = store.getState();
     this.header = {
-      version: isGenesis ? 1 : header.version,
-      previousHash: isGenesis ? genesisPreviousHash : header.previousHash,
-      merkleHash: isGenesis ? genesisMerkleRoot : header.merkleHash,
-      timestamp: isGenesis ? genesisTimestamp : header.timestamp,
-      difficulty: isGenesis ? genesisDifficulty : header.difficulty,
-      nonce: isGenesis ? genesisNonce : header.nonce
+      version: isGenesis ? GENESIS_VERSION : header.version,
+      previousHash: isGenesis ? GENESIS_PREVIOUS_HASH : header.previousHash,
+      merkleHash: isGenesis ? GENESIS_MERKLE_ROOT : header.merkleHash,
+      timestamp: isGenesis ? GENESIS_TIMESTAMP : header.timestamp,
+      difficulty: isGenesis ? GENESIS_DIFFICULTY : header.difficulty,
+      nonce: isGenesis ? GENESIS_NONCE : header.nonce
     };
     this.txs = [];
     if (isGenesis) {
@@ -1034,7 +1049,7 @@ var Block = function () {
           difficulty = _header.difficulty,
           nonce = _header.nonce;
 
-      return (0, _jsSha2.default)([version, previousHash, merkleHash, timestamp, difficulty, nonce].join(' '));
+      return (0, _jsSha2.default)([version, previousHash, merkleHash, timestamp, difficulty, nonce].join(''));
     }
   }, {
     key: 'setHeader',
@@ -1090,8 +1105,8 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var isValidBlock = function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(block) {
-    var txs, i, isValid;
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(block, prevBlock) {
+    var txs, i, isValid, prevHash, difficulty, target;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -1124,9 +1139,51 @@ var isValidBlock = function () {
             break;
 
           case 11:
+            if (prevBlock) {
+              _context.next = 16;
+              break;
+            }
+
+            if (!(block.header.previousHash !== GENESIS_PREVIOUS_HASH)) {
+              _context.next = 14;
+              break;
+            }
+
+            return _context.abrupt('return', false);
+
+          case 14:
+            _context.next = 19;
+            break;
+
+          case 16:
+            // check blockHeaderHash to see if is an accurate hash
+            prevHash = prevBlock.getBlockHeaderHash();
+
+            if (!(block.header.previousHash != prevHash)) {
+              _context.next = 19;
+              break;
+            }
+
+            return _context.abrupt('return', false);
+
+          case 19:
+            // TODO: check locktime, nSequence
+            // check difficulty and nonce
+            difficulty = block.header.difficulty;
+            target = Math.pow(2, 256 - difficulty);
+
+            if (!(parseInt(block.getBlockHeaderHash(), 16) > target)) {
+              _context.next = 24;
+              break;
+            }
+
+            console.log('> Incorrect nonce: ', block.header);
+            return _context.abrupt('return', false);
+
+          case 24:
             return _context.abrupt('return', true);
 
-          case 12:
+          case 25:
           case 'end':
             return _context.stop();
         }
@@ -1134,7 +1191,7 @@ var isValidBlock = function () {
     }, _callee, this);
   }));
 
-  return function isValidBlock(_x) {
+  return function isValidBlock(_x, _x2) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -1334,14 +1391,14 @@ var isValidTransaction = function () {
     }, _callee2, this);
   }));
 
-  return function isValidTransaction(_x2, _x3) {
+  return function isValidTransaction(_x3, _x4) {
     return _ref2.apply(this, arguments);
   };
 }();
 
 var syncBlocksWithStore = function () {
   var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-    var blocks, lastBlock, numBlocks, areBlocksValid, i, block, isValid, _block, newBlock, _lastBlock, difficulty, nonce;
+    var blocks, lastBlock, numBlocks, areBlocksValid, i, block, prevBlock, isValid, _block, newBlock, _lastBlock, difficulty, nonce;
 
     return regeneratorRuntime.wrap(function _callee3$(_context4) {
       while (1) {
@@ -1363,67 +1420,68 @@ var syncBlocksWithStore = function () {
 
           case 8:
             if (!(i < blocks.length)) {
-              _context4.next = 24;
+              _context4.next = 25;
               break;
             }
 
             block = blocks[i];
-            _context4.next = 12;
-            return isValidBlock(formatBlock(block));
+            prevBlock = i === 0 ? null : formatBlock(blocks[i - 1]);
+            _context4.next = 13;
+            return isValidBlock(formatBlock(block), prevBlock);
 
-          case 12:
+          case 13:
             isValid = _context4.sent;
 
             if (isValid) {
-              _context4.next = 21;
+              _context4.next = 22;
               break;
             }
 
             areBlocksValid = false;
-            _context4.next = 17;
+            _context4.next = 18;
             return _Block4.default.find({}).remove({});
 
-          case 17:
+          case 18:
             // remove corrupted blocks
             numBlocks = 0;
             lastBlock = null;
             blocks = [];
-            return _context4.abrupt('break', 24);
+            return _context4.abrupt('break', 25);
 
-          case 21:
+          case 22:
             i++;
             _context4.next = 8;
             break;
 
-          case 24:
+          case 25:
 
             console.log('> Blocks verified: '.blue, areBlocksValid, numBlocks);
 
             // if invalid blocks or no local blocks, initialize genesis block
 
             if (!(numBlocks <= 0)) {
-              _context4.next = 31;
+              _context4.next = 32;
               break;
             }
 
             _block = new _Block2.default({}, [], true);
             newBlock = new _Block4.default(_block.getDBFormat());
-            _context4.next = 30;
+            _context4.next = 31;
             return newBlock.save();
 
-          case 30:
+          case 31:
             lastBlock = newBlock;
 
-          case 31:
+          case 32:
             _lastBlock = lastBlock, difficulty = _lastBlock.difficulty, nonce = _lastBlock.nonce;
 
             // update Redux store
 
-            _store2.default.dispatch({ type: 'SET_NONCE', difficulty: difficulty, nonce: nonce });
+            _store2.default.dispatch({ type: 'SET_DIFFICULTY', difficulty: difficulty, nonce: nonce });
             _store2.default.dispatch({ type: 'SET_INITIAL_BLOCK_COUNT', lastBlock: formatBlock(lastBlock), numBlocks: numBlocks });
             return _context4.abrupt('return', { numBlocks: numBlocks, lastBlock: lastBlock });
 
-          case 35:
+          case 36:
           case 'end':
             return _context4.stop();
         }
@@ -1465,6 +1523,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 var COIN = 100000000;
 var COINBASE_REWARD = 50 * COIN;
 var MIN_FEES = 5;
+var GENESIS_PREVIOUS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 
 function formatBlock(block) {
   var newBlock = new _Block2.default(block, block.txs);
@@ -2269,7 +2328,10 @@ function startup() {
             console.log('> Connected to local MongoDB'.gray);
 
             // seed blocks
-            // await seedBlocks();
+            _context2.next = 10;
+            return (0, _blocks.seedBlocks)();
+
+          case 10:
 
             // create a TCP/IP server on current IP address
             server = _net2.default.createServer();
@@ -2290,10 +2352,10 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context2.next = 14;
+            _context2.next = 16;
             return (0, _syncBlocksWithStore2.default)();
 
-          case 14:
+          case 16:
             _ref2 = _context2.sent;
             numBlocks = _ref2.numBlocks;
             lastBlock = _ref2.lastBlock;
@@ -2380,7 +2442,7 @@ function startup() {
               // TODO: stop any ongoing requests with peer
             });
 
-          case 22:
+          case 24:
           case 'end':
             return _context2.stop();
         }
@@ -2515,7 +2577,7 @@ var connectWithPeer = function () {
 
                         version = void 0, blockHeaderHash = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 5 : _context.t0 === 'GETBLOCKS' ? 21 : 21;
+                        _context.next = _context.t0 === 'VERSION' ? 5 : _context.t0 === 'GETBLOCKS' ? 21 : 22;
                         break;
 
                       case 5:
@@ -2527,7 +2589,7 @@ var connectWithPeer = function () {
                           break;
                         }
 
-                        return _context.abrupt('break', 21);
+                        return _context.abrupt('break', 22);
 
                       case 9:
                         IS_VERSION_COMPATIBLE = true;
@@ -2549,13 +2611,16 @@ var connectWithPeer = function () {
                         savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
 
                         client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
-                        return _context.abrupt('break', 21);
+                        return _context.abrupt('break', 22);
 
                       case 19:
                         console.log('> Synced with peer'.blue);
-                        return _context.abrupt('break', 21);
+                        return _context.abrupt('break', 22);
 
                       case 21:
+                        blockHeaderHash = args[1];
+
+                      case 22:
                       case 'end':
                         return _context.stop();
                     }
@@ -2566,9 +2631,7 @@ var connectWithPeer = function () {
               return function (_x4) {
                 return _ref2.apply(this, arguments);
               };
-            }()
-            // find next 50 blocks
-            );
+            }());
 
             client.on('close', function () {
               console.log('> Connection closed');
@@ -2626,9 +2689,7 @@ module.exports = require("bluebird");
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-var initialState = _defineProperty({
+var initialState = {
   /*
     this checks at start, connect to local mongo and load number of blocks -
     let count = await Blocks.find({}).count();
@@ -2637,14 +2698,17 @@ var initialState = _defineProperty({
     If count > 0, find last block - await Blocks.find({ }).sort({ timestamp: -1 }).limit(1);
     Emit last block to peers to receive remaining blocks
   */
+  // Initialization
   dbLoaded: false,
-  numBlocks: 0,
-  allPeers: [], // list of { ip: String, port: Number }
   lastBlock: null,
+  allPeers: [], // list of { ip: String, port: Number }
   version: 1,
-  nonce: 0,
-  difficulty: 0
-}, 'numBlocks', 0);
+  difficulty: 0,
+  numBlocks: 0,
+  // Mempool
+  newTransactions: [],
+  orphanTransactions: []
+};
 
 var nodeCoin = function nodeCoin() {
   var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
@@ -2657,10 +2721,9 @@ var nodeCoin = function nodeCoin() {
         lastBlock: action.lastBlock,
         numBlocks: action.numBlocks
       });
-    case 'SET_NONCE':
+    case 'SET_DIFFICULTY':
       return _extends({}, state, {
-        difficulty: action.difficulty,
-        nonce: action.nonce
+        difficulty: action.difficulty
       });
     case 'SET_PEERS':
       return _extends({}, state, { allPeers: action.allPeers });

@@ -7,14 +7,16 @@ const initialState = {
     If count > 0, find last block - await Blocks.find({ }).sort({ timestamp: -1 }).limit(1);
     Emit last block to peers to receive remaining blocks
   */
+  // Initialization
   dbLoaded: false,
-  numBlocks: 0,
-  allPeers: [ ], // list of { ip: String, port: Number }
   lastBlock: null,
+  allPeers: [ ], // list of { ip: String, port: Number }
   version: 1,
-  nonce: 0,
   difficulty: 0,
   numBlocks: 0,
+  // Mempool
+  newTransactions: [ ],
+  orphanTransactions: [ ],
 };
 
 const nodeCoin = (state = initialState, action) => {
@@ -26,11 +28,10 @@ const nodeCoin = (state = initialState, action) => {
         lastBlock: action.lastBlock,
         numBlocks: action.numBlocks,
       };
-    case 'SET_NONCE':
+    case 'SET_DIFFICULTY':
       return {
         ...state,
         difficulty: action.difficulty,
-        nonce: action.nonce,
       };
     case 'SET_PEERS':
       return { ...state, allPeers: action.allPeers };

@@ -45,7 +45,8 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         console.log('> Synced with peer'.blue);
         break;
       case 'GETBLOCKS':
-        // find next 50 blocks
+        blockHeaderHash = args[1];
+
     }
   });
 

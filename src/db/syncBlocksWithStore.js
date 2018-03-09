@@ -10,14 +10,35 @@ import store from 'store/store';
 const COIN = 100000000;
 const COINBASE_REWARD = 50 * COIN;
 const MIN_FEES = 5;
+const GENESIS_PREVIOUS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 
-async function isValidBlock(block) {
+async function isValidBlock(block, prevBlock) {
   const { txs } = block;
   for (let i = 0; i < txs.length; i++) {
     let isValid = await isValidTransaction(txs[i]);
     if (!isValid) {
       return false;
     }
+  }
+  // check previous hash to make sure is correct
+  if (!prevBlock) {
+    if (block.header.previousHash !== GENESIS_PREVIOUS_HASH) {
+      return false;
+    }
+  } else {
+    // check blockHeaderHash to see if is an accurate hash
+    let prevHash = prevBlock.getBlockHeaderHash();
+    if (block.header.previousHash != prevHash) {
+      return false;
+    }
+  }
+  // TODO: check locktime, nSequence
+  // check difficulty and nonce
+  let difficulty = block.header.difficulty;
+  let target = Math.pow(2, 256 - difficulty);
+  if (parseInt(block.getBlockHeaderHash(), 16) > target) {
+    console.log('> Incorrect nonce: ', block.header);
+    return false;
   }
   return true;
 }
@@ -91,7 +112,8 @@ async function syncBlocksWithStore() {
   // if invalid, reset local storage
   for (let i = 0; i < blocks.length; i++) {
     let block = blocks[i];
-    let isValid = await isValidBlock(formatBlock(block));
+    let prevBlock = i === 0 ? null : formatBlock(blocks[i - 1]);
+    let isValid = await isValidBlock(formatBlock(block), prevBlock);
     if (!isValid) {
       areBlocksValid = false;
       await BlockModel.find({ }).remove({ }); // remove corrupted blocks
@@ -115,7 +137,7 @@ async function syncBlocksWithStore() {
   const { difficulty, nonce } = lastBlock;
 
   // update Redux store
-  store.dispatch({ type: 'SET_NONCE', difficulty, nonce });
+  store.dispatch({ type: 'SET_DIFFICULTY', difficulty, nonce });
   store.dispatch({ type: 'SET_INITIAL_BLOCK_COUNT', lastBlock: formatBlock(lastBlock), numBlocks });
   return { numBlocks, lastBlock };
 }
