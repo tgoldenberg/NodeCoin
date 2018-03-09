@@ -66,7 +66,6 @@ function handleConnection(conn) {
         break;
       // Peer sends us list of block headers
       case 'BLOCKHEADERS':
-        console.log('> Block headers', args);
         // add to unfetchedHeaders
         store.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
         let { allPeers, unfetchedHeaders } = store.getState();

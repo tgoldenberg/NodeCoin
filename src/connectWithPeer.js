@@ -3,6 +3,7 @@ import 'colors';
 import BlockModel from 'models/Block';
 import net from 'net';
 import store from 'store/store';
+import { wait } from 'utils';
 
 const DEFAULT_PORT = 8334;
 
@@ -61,9 +62,29 @@ async function connectWithPeer(peer, lastBlockHash, version) {
 
       // Receive block headers from peer
       case 'BLOCKHEADERS':
-        let blockHeaders = args;
-        console.log('> New block headers: ', blockHeaders);
-        // iterate through peers and ask for specific block
+      // add to unfetchedHeaders
+      store.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
+      let { allPeers, unfetchedHeaders } = store.getState();
+      let headers = Array.from(unfetchedHeaders);
+      let peerIdx = 0;
+      while (headers.length) {
+        // assign header to peer
+        let peer = allPeers[peerIdx];
+        // connect with peer if no connection
+        if (!peer.client) {
+          // await connectWithPeer(peer, lastBlockHash, version);
+        }
+        let header = headers.shift(); // dequeue a header
+        client.write('REQUESTBLOCK ' + header);
+        await wait(1); // wait 1 second
+        // if peer doesn't respond within a period or doesn't have the block, move to next peer
+        // if peer gives block, verify the block (if possible) and add to MongoDB
+
+        // move from unfetched => loading
+        store.dispatch({ type: 'LOADING_BLOCK', header });
+        peerIdx = allPeers.length % (peerIdx + 1);
+      }
+      break;
     }
   });
 

@@ -2279,7 +2279,7 @@ function handleConnection(conn) {
               console.log(('> Received from: ' + remoteAddr + ' ').yellow, d);
               version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 16 : _context.t0 === 'BLOCKHEADERS' ? 27 : 44;
+              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 16 : _context.t0 === 'BLOCKHEADERS' ? 27 : 43;
               break;
 
             case 6:
@@ -2301,7 +2301,7 @@ function handleConnection(conn) {
                 // send getblocks message
                 conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(' '));
               }
-              return _context.abrupt('break', 44);
+              return _context.abrupt('break', 43);
 
             case 16:
               blockHeaderHash = args[0];
@@ -2328,19 +2328,18 @@ function handleConnection(conn) {
               conn.write(message);
 
             case 26:
-              return _context.abrupt('break', 44);
+              return _context.abrupt('break', 43);
 
             case 27:
-              console.log('> Block headers', args);
               // add to unfetchedHeaders
               _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
               _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, unfetchedHeaders = _store$getState.unfetchedHeaders;
               headers = Array.from(unfetchedHeaders);
               peerIdx = 0;
 
-            case 32:
+            case 31:
               if (!headers.length) {
-                _context.next = 43;
+                _context.next = 42;
                 break;
               }
 
@@ -2354,10 +2353,10 @@ function handleConnection(conn) {
               header = headers.shift(); // dequeue a header
 
               conn.write('REQUESTBLOCK ' + header);
-              _context.next = 39;
+              _context.next = 38;
               return (0, _utils.wait)(1);
 
-            case 39:
+            case 38:
               // wait 1 second
               // if peer doesn't respond within a period or doesn't have the block, move to next peer
               // if peer gives block, verify the block (if possible) and add to MongoDB
@@ -2365,13 +2364,13 @@ function handleConnection(conn) {
               // move from unfetched => loading
               _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
               peerIdx = _allPeers.length % (peerIdx + 1);
-              _context.next = 32;
+              _context.next = 31;
               break;
 
-            case 43:
-              return _context.abrupt('break', 44);
+            case 42:
+              return _context.abrupt('break', 43);
 
-            case 44:
+            case 43:
             case 'end':
               return _context.stop();
           }
@@ -2693,7 +2692,7 @@ var connectWithPeer = function () {
 
             client.on('data', function () {
               var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(data) {
-                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, blockHeaders;
+                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, _store$getState, allPeers, unfetchedHeaders, headers, peerIdx, _peer, header;
 
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                   while (1) {
@@ -2704,7 +2703,7 @@ var connectWithPeer = function () {
                         console.log('> Received: '.yellow, data.toString());
                         version = void 0, blockHeaderHash = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 21 : _context.t0 === 'BLOCKHEADERS' ? 32 : 34;
+                        _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 21 : _context.t0 === 'BLOCKHEADERS' ? 32 : 48;
                         break;
 
                       case 6:
@@ -2716,7 +2715,7 @@ var connectWithPeer = function () {
                           break;
                         }
 
-                        return _context.abrupt('break', 34);
+                        return _context.abrupt('break', 48);
 
                       case 10:
                         IS_VERSION_COMPATIBLE = true;
@@ -2737,11 +2736,11 @@ var connectWithPeer = function () {
                         savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
 
                         client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
-                        return _context.abrupt('break', 34);
+                        return _context.abrupt('break', 48);
 
                       case 19:
                         console.log('> Synced with peer'.blue);
-                        return _context.abrupt('break', 34);
+                        return _context.abrupt('break', 48);
 
                       case 21:
                         blockHeaderHash = args[0];
@@ -2768,14 +2767,49 @@ var connectWithPeer = function () {
                         client.write(message);
 
                       case 31:
-                        return _context.abrupt('break', 34);
+                        return _context.abrupt('break', 48);
 
                       case 32:
-                        blockHeaders = args;
+                        // add to unfetchedHeaders
+                        _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
+                        _store$getState = _store2.default.getState(), allPeers = _store$getState.allPeers, unfetchedHeaders = _store$getState.unfetchedHeaders;
+                        headers = Array.from(unfetchedHeaders);
+                        peerIdx = 0;
 
-                        console.log('> New block headers: ', blockHeaders);
+                      case 36:
+                        if (!headers.length) {
+                          _context.next = 47;
+                          break;
+                        }
 
-                      case 34:
+                        // assign header to peer
+                        _peer = allPeers[peerIdx];
+                        // connect with peer if no connection
+
+                        if (!_peer.client) {
+                          // await connectWithPeer(peer, lastBlockHash, version);
+                        }
+                        header = headers.shift(); // dequeue a header
+
+                        client.write('REQUESTBLOCK ' + header);
+                        _context.next = 43;
+                        return (0, _utils.wait)(1);
+
+                      case 43:
+                        // wait 1 second
+                        // if peer doesn't respond within a period or doesn't have the block, move to next peer
+                        // if peer gives block, verify the block (if possible) and add to MongoDB
+
+                        // move from unfetched => loading
+                        _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
+                        peerIdx = allPeers.length % (peerIdx + 1);
+                        _context.next = 36;
+                        break;
+
+                      case 47:
+                        return _context.abrupt('break', 48);
+
+                      case 48:
                       case 'end':
                         return _context.stop();
                     }
@@ -2786,8 +2820,7 @@ var connectWithPeer = function () {
               return function (_x4) {
                 return _ref2.apply(this, arguments);
               };
-            }() // iterate through peers and ask for specific block
-            );
+            }());
 
             client.on('close', function () {
               console.log('> Connection closed');
@@ -2819,6 +2852,8 @@ var _net2 = _interopRequireDefault(_net);
 var _store = __webpack_require__(6);
 
 var _store2 = _interopRequireDefault(_store);
+
+var _utils = __webpack_require__(150);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
