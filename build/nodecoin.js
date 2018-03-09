@@ -2221,7 +2221,7 @@ var _findIPAddress = __webpack_require__(59);
 
 var _findIPAddress2 = _interopRequireDefault(_findIPAddress);
 
-var _address2 = __webpack_require__(151);
+var _address3 = __webpack_require__(151);
 
 var _ip = __webpack_require__(60);
 
@@ -2266,6 +2266,7 @@ app.use(_bodyParser2.default.json());
 app.use(_bodyParser2.default.urlencoded({ extended: false }));
 
 var PUSHER_APP_KEY = '86e36fb6cb404d67a108'; // connect via public key
+var COIN = 100000000;
 var DEFAULT_PORT = 8334; // default port for net connections
 var MAX_PEERS = 25;
 var DELIMITER = '~~~~~';
@@ -2438,6 +2439,10 @@ function startup() {
             case 0:
               // go through all block transactions (txin that is not Coinbase)
               wallets = {};
+              // keep map of balances
+              // for each txin, subtract from the address
+              // for each txout, add to the address balance
+
               _context3.next = 3;
               return _Block2.default.find({}).sort({ timestamp: 1 });
 
@@ -2487,12 +2492,12 @@ function startup() {
                             return hash === txin.prevout;
                           });
                           prevTxOut = prevTx.vout[txin.n];
-                          _address = (0, _address2.getAddress)(prevTxOut.scriptPubKey.split(' ')[1]);
+                          _address = (0, _address3.getAddress)(prevTxOut.scriptPubKey.split(' ')[1]);
 
                           if (wallets[_address]) {
-                            wallets[_address] += prevTxOut.nValue;
+                            wallets[_address] -= prevTxOut.nValue / COIN;
                           } else {
-                            wallets[_address] = prevTxOut.nValue;
+                            wallets[_address] = prevTxOut.nValue / COIN;
                           }
                         }
 
@@ -2521,12 +2526,14 @@ function startup() {
             case 17:
               for (k = 0; k < tx.vout.length; k++) {
                 txout = tx.vout[k];
-                address = (0, _address2.getAddress)(txout.scriptPubKey.split(' ')[1]);
+                // convert publicKey to publicKeyHash => address
+
+                address = (0, _address3.getAddress)(txout.scriptPubKey.split(' ')[1]);
 
                 if (wallets[address]) {
-                  wallets[address] += txout.nValue;
+                  wallets[address] += txout.nValue / COIN;
                 } else {
-                  wallets[address] = txout.nValue;
+                  wallets[address] = txout.nValue / COIN;
                 }
               }
 
@@ -2541,10 +2548,6 @@ function startup() {
               break;
 
             case 24:
-              // convert publicKey to publicKeyHash => address
-              // keep map of balances
-              // for each txin, subtract from the address
-              // for each txout, add to the address balance
               res.status(200).send({ wallets: wallets });
 
             case 25:
@@ -2560,59 +2563,230 @@ function startup() {
     };
   }());
 
-  app.post('/send/:to_address', function (req, res) {
-    var _req$body = req.body,
-        amount = _req$body.amount,
-        privateKey = _req$body.privateKey,
-        publicKey = _req$body.publicKey;
-    // go through all block transactions to find UXTO
-    // get best match for UTXO
-    // send money to public address and change to self, with MIN_FEES
-    // broadcast transaction to Pusher for everyone
-    // add transaction to mempool
-    // all nodes should try to mine the new transaction
+  app.post('/send/:to_address', function () {
+    var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(req, res) {
+      var _req$body, amount, privateKey, publicKey;
 
-    res.status(200).send({ transaction: { amount: amount } });
-  });
+      return regeneratorRuntime.wrap(function _callee3$(_context4) {
+        while (1) {
+          switch (_context4.prev = _context4.next) {
+            case 0:
+              _req$body = req.body, amount = _req$body.amount, privateKey = _req$body.privateKey, publicKey = _req$body.publicKey;
+              // go through all block transactions to find UXTO
+              // get best match for UTXO
+              // send money to public address and change to self, with MIN_FEES
+              // broadcast transaction to Pusher for everyone
+              // add transaction to mempool
+              // all nodes should try to mine the new transaction
 
-  app.post('/wallets/new', function (req, res) {
-    // generate new wallet and provide to user
-    res.status(200).send({ wallet: { privateKey: 'abc' } });
-  });
+              res.status(200).send({ transaction: { amount: amount } });
 
-  app.get('/wallets/:address', function (req, res) {
-    // go through all block transactions (txin that is not Coinbase)
-    // convert publicKey to publicKeyHash => address
-    // keep map of balances
-    // for each txin, subtract from the address
-    // for each txout, add to the address balance
-    // return specific address
-    res.status(200).send({ wallet: { balance: 100 } });
-  });
+            case 2:
+            case 'end':
+              return _context4.stop();
+          }
+        }
+      }, _callee3, this);
+    }));
 
-  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5() {
-    var _this2 = this;
+    return function (_x4, _x5) {
+      return _ref4.apply(this, arguments);
+    };
+  }());
 
-    var ipAddr, dbConnection, server, client, _ref5, numBlocks, lastBlock, channel;
+  app.post('/wallets/new', function () {
+    var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(req, res) {
+      return regeneratorRuntime.wrap(function _callee4$(_context5) {
+        while (1) {
+          switch (_context5.prev = _context5.next) {
+            case 0:
+              // generate new wallet and provide to user
+              res.status(200).send({ wallet: { privateKey: 'abc' } });
 
-    return regeneratorRuntime.wrap(function _callee5$(_context6) {
+            case 1:
+            case 'end':
+              return _context5.stop();
+          }
+        }
+      }, _callee4, this);
+    }));
+
+    return function (_x6, _x7) {
+      return _ref5.apply(this, arguments);
+    };
+  }());
+
+  app.get('/wallets/:address', function () {
+    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(req, res) {
+      var _this2 = this;
+
+      var balance, utxoMap, blocks, i, block, j, tx, _loop2, k, txout, address, utxo;
+
+      return regeneratorRuntime.wrap(function _callee5$(_context7) {
+        while (1) {
+          switch (_context7.prev = _context7.next) {
+            case 0:
+              // go through all block transactions (txin that is not Coinbase)
+              // convert publicKey to publicKeyHash => address
+              // keep map of balances
+              // for each txin, subtract from the address
+              // for each txout, add to the address balance
+              // return specific address
+              // go through all block transactions (txin that is not Coinbase)
+              balance = 0;
+              utxoMap = {};
+              // keep map of balances
+              // for each txin, subtract from the address
+              // for each txout, add to the address balance
+
+              _context7.next = 4;
+              return _Block2.default.find({}).sort({ timestamp: 1 });
+
+            case 4:
+              blocks = _context7.sent;
+              i = 0;
+
+            case 6:
+              if (!(i < blocks.length)) {
+                _context7.next = 25;
+                break;
+              }
+
+              block = blocks[i];
+              j = 0;
+
+            case 9:
+              if (!(j < block.txs.length)) {
+                _context7.next = 22;
+                break;
+              }
+
+              tx = block.txs[j];
+              _loop2 = /*#__PURE__*/regeneratorRuntime.mark(function _loop2(k) {
+                var txin, prevTxBlock, prevTx, prevTxOut, _address2;
+
+                return regeneratorRuntime.wrap(function _loop2$(_context6) {
+                  while (1) {
+                    switch (_context6.prev = _context6.next) {
+                      case 0:
+                        txin = tx.vin[k];
+
+                        if (!(txin.prevout != 'COINBASE')) {
+                          _context6.next = 6;
+                          break;
+                        }
+
+                        _context6.next = 4;
+                        return _Block2.default.findOne({ "txs.hash": txin.prevout });
+
+                      case 4:
+                        prevTxBlock = _context6.sent;
+
+                        if (prevTxBlock) {
+                          prevTx = (0, _find2.default)(prevTxBlock.txs, function (_ref7) {
+                            var hash = _ref7.hash;
+                            return hash === txin.prevout;
+                          });
+                          prevTxOut = prevTx.vout[txin.n];
+                          _address2 = (0, _address3.getAddress)(prevTxOut.scriptPubKey.split(' ')[1]);
+
+                          if (_address2 == req.params.address) {
+                            balance -= prevTxOut.nValue / COIN;
+                            delete utxoMap[txin.prevout];
+                          }
+                        }
+
+                      case 6:
+                      case 'end':
+                        return _context6.stop();
+                    }
+                  }
+                }, _loop2, _this2);
+              });
+              k = 0;
+
+            case 13:
+              if (!(k < tx.vin.length)) {
+                _context7.next = 18;
+                break;
+              }
+
+              return _context7.delegateYield(_loop2(k), 't0', 15);
+
+            case 15:
+              k++;
+              _context7.next = 13;
+              break;
+
+            case 18:
+              for (k = 0; k < tx.vout.length; k++) {
+                txout = tx.vout[k];
+                // convert publicKey to publicKeyHash => address
+
+                address = (0, _address3.getAddress)(txout.scriptPubKey.split(' ')[1]);
+
+                if (address == req.params.address) {
+                  balance += txout.nValue / COIN;
+                  utxoMap[tx.hash] = txout.nValue / COIN;
+                }
+              }
+
+            case 19:
+              j++;
+              _context7.next = 9;
+              break;
+
+            case 22:
+              i++;
+              _context7.next = 6;
+              break;
+
+            case 25:
+              utxo = Object.keys(utxoMap).map(function (txid) {
+                return {
+                  txid: txid,
+                  nValue: utxoMap[txid]
+                };
+              });
+
+              res.status(200).send({ wallet: { balance: balance }, utxo: utxo });
+
+            case 27:
+            case 'end':
+              return _context7.stop();
+          }
+        }
+      }, _callee5, this);
+    }));
+
+    return function (_x8, _x9) {
+      return _ref6.apply(this, arguments);
+    };
+  }());
+
+  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+    var _this3 = this;
+
+    var ipAddr, dbConnection, server, client, _ref9, numBlocks, lastBlock, channel;
+
+    return regeneratorRuntime.wrap(function _callee8$(_context10) {
       while (1) {
-        switch (_context6.prev = _context6.next) {
+        switch (_context10.prev = _context10.next) {
           case 0:
-            _context6.next = 2;
+            _context10.next = 2;
             return (0, _findIPAddress2.default)();
 
           case 2:
-            ipAddr = _context6.sent;
+            ipAddr = _context10.sent;
 
             console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
             // connect to local instance of MongoDB
-            _context6.next = 6;
+            _context10.next = 6;
             return (0, _connectToDB2.default)();
 
           case 6:
-            dbConnection = _context6.sent;
+            dbConnection = _context10.sent;
 
             console.log('> Connected to local MongoDB'.gray);
 
@@ -2638,13 +2812,13 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context6.next = 14;
+            _context10.next = 14;
             return (0, _syncBlocksWithStore2.default)();
 
           case 14:
-            _ref5 = _context6.sent;
-            numBlocks = _ref5.numBlocks;
-            lastBlock = _ref5.lastBlock;
+            _ref9 = _context10.sent;
+            numBlocks = _ref9.numBlocks;
+            lastBlock = _ref9.lastBlock;
 
 
             console.log('> Subscribing to broadcast changes...'.gray);
@@ -2653,11 +2827,11 @@ function startup() {
             // SUCCESSFULLY JOINED
 
             channel.bind('pusher:subscription_succeeded', function () {
-              var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(members) {
+              var _ref10 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(members) {
                 var lastBlock, lastBlockHash, version, i, peer;
-                return regeneratorRuntime.wrap(function _callee3$(_context4) {
+                return regeneratorRuntime.wrap(function _callee6$(_context8) {
                   while (1) {
-                    switch (_context4.prev = _context4.next) {
+                    switch (_context8.prev = _context8.next) {
                       case 0:
                         console.log('> Subscription succeeded: ', members);
                         allPeers = [];
@@ -2680,39 +2854,39 @@ function startup() {
 
                       case 9:
                         if (!(i < allPeers.length)) {
-                          _context4.next = 16;
+                          _context8.next = 16;
                           break;
                         }
 
                         peer = allPeers[i];
-                        _context4.next = 13;
+                        _context8.next = 13;
                         return (0, _connectWithPeer2.default)(peer, lastBlockHash, version);
 
                       case 13:
                         i++;
-                        _context4.next = 9;
+                        _context8.next = 9;
                         break;
 
                       case 16:
                       case 'end':
-                        return _context4.stop();
+                        return _context8.stop();
                     }
                   }
-                }, _callee3, _this2);
+                }, _callee6, _this3);
               }));
 
-              return function (_x4) {
-                return _ref6.apply(this, arguments);
+              return function (_x10) {
+                return _ref10.apply(this, arguments);
               };
             }());
 
             // MEMBER ADDED
             channel.bind('pusher:member_added', function () {
-              var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(member) {
+              var _ref11 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(member) {
                 var allPeers, lastBlock, lastBlockHash, version;
-                return regeneratorRuntime.wrap(function _callee4$(_context5) {
+                return regeneratorRuntime.wrap(function _callee7$(_context9) {
                   while (1) {
-                    switch (_context5.prev = _context5.next) {
+                    switch (_context9.prev = _context9.next) {
                       case 0:
                         console.log('> Member added: '.gray, member);
                         allPeers = _store2.default.getState().allPeers;
@@ -2728,14 +2902,14 @@ function startup() {
 
                       case 7:
                       case 'end':
-                        return _context5.stop();
+                        return _context9.stop();
                     }
                   }
-                }, _callee4, this);
+                }, _callee7, this);
               }));
 
-              return function (_x5) {
-                return _ref7.apply(this, arguments);
+              return function (_x11) {
+                return _ref11.apply(this, arguments);
               };
             }());
 
@@ -2755,10 +2929,10 @@ function startup() {
 
           case 22:
           case 'end':
-            return _context6.stop();
+            return _context10.stop();
         }
       }
-    }, _callee5, this);
+    }, _callee8, this);
   })));
 }
 

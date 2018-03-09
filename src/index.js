@@ -26,6 +26,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 const PUSHER_APP_KEY = '86e36fb6cb404d67a108'; // connect via public key
+const COIN = 100000000;
 const DEFAULT_PORT = 8334; // default port for net connections
 const MAX_PEERS = 25;
 const DELIMITER = '~~~~~';
@@ -120,6 +121,9 @@ function startup() {
   app.get('/wallets', async function (req, res) {
     // go through all block transactions (txin that is not Coinbase)
     let wallets = { };
+    // keep map of balances
+    // for each txin, subtract from the address
+    // for each txout, add to the address balance
     let blocks = await BlockModel.find({ }).sort({ timestamp: 1 });
     for (let i = 0; i < blocks.length; i++) {
       let block = blocks[i];
@@ -135,32 +139,29 @@ function startup() {
               let prevTxOut = prevTx.vout[txin.n];
               let address = getAddress(prevTxOut.scriptPubKey.split(' ')[1]);
               if (wallets[address]) {
-                wallets[address] += prevTxOut.nValue;
+                wallets[address] -= prevTxOut.nValue / COIN;
               } else {
-                wallets[address] = prevTxOut.nValue;
+                wallets[address] = prevTxOut.nValue / COIN;
               }
             }
           }
         }
         for (let k = 0; k < tx.vout.length; k++) {
           let txout = tx.vout[k];
+          // convert publicKey to publicKeyHash => address
           let address = getAddress(txout.scriptPubKey.split(' ')[1]);
           if (wallets[address]) {
-            wallets[address] += txout.nValue;
+            wallets[address] += txout.nValue / COIN;
           } else {
-            wallets[address] = txout.nValue;
+            wallets[address] = txout.nValue / COIN;
           }
         }
       }
     }
-    // convert publicKey to publicKeyHash => address
-    // keep map of balances
-    // for each txin, subtract from the address
-    // for each txout, add to the address balance
     res.status(200).send({ wallets });
   });
 
-  app.post('/send/:to_address', function (req, res) {
+  app.post('/send/:to_address', async function (req, res) {
     const { amount, privateKey, publicKey } = req.body;
     // go through all block transactions to find UXTO
     // get best match for UTXO
@@ -171,19 +172,63 @@ function startup() {
     res.status(200).send({ transaction: { amount: amount } });
   });
 
-  app.post('/wallets/new', function(req, res) {
+  app.post('/wallets/new', async function(req, res) {
     // generate new wallet and provide to user
     res.status(200).send({ wallet: { privateKey: 'abc' } });
   });
 
-  app.get('/wallets/:address', function (req, res) {
+  app.get('/wallets/:address', async function (req, res) {
     // go through all block transactions (txin that is not Coinbase)
     // convert publicKey to publicKeyHash => address
     // keep map of balances
     // for each txin, subtract from the address
     // for each txout, add to the address balance
     // return specific address
-    res.status(200).send({ wallet: { balance: 100 } });
+    // go through all block transactions (txin that is not Coinbase)
+    let balance = 0;
+    let utxoMap = { };
+    // keep map of balances
+    // for each txin, subtract from the address
+    // for each txout, add to the address balance
+    let blocks = await BlockModel.find({ }).sort({ timestamp: 1 });
+    for (let i = 0; i < blocks.length; i++) {
+      let block = blocks[i];
+      for (let j = 0; j < block.txs.length; j++) {
+        let tx = block.txs[j];
+        for (let k = 0; k < tx.vin.length; k++) {
+          let txin = tx.vin[k];
+          if (txin.prevout != 'COINBASE') {
+            // find amount from previout tx and subtract from address
+            let prevTxBlock = await BlockModel.findOne({ "txs.hash": txin.prevout });
+            if (prevTxBlock) {
+              let prevTx = find(prevTxBlock.txs, ({ hash }) => hash === txin.prevout);
+              let prevTxOut = prevTx.vout[txin.n];
+              let address = getAddress(prevTxOut.scriptPubKey.split(' ')[1]);
+              if (address == req.params.address) {
+                balance -= prevTxOut.nValue / COIN;
+                delete utxoMap[txin.prevout];
+              }
+            }
+          }
+        }
+        for (let k = 0; k < tx.vout.length; k++) {
+          let txout = tx.vout[k];
+          // convert publicKey to publicKeyHash => address
+          let address = getAddress(txout.scriptPubKey.split(' ')[1]);
+          if (address == req.params.address) {
+            balance += txout.nValue / COIN;
+            utxoMap[tx.hash] = txout.nValue / COIN;
+          }
+        }
+      }
+    }
+    let utxo = Object.keys(utxoMap).map(txid => {
+      return {
+        txid: txid,
+        nValue: utxoMap[txid],
+      };
+    })
+    res.status(200).send({ wallet: { balance }, utxo: utxo });
   });
 
   app.listen(process.env.PORT || 3000, async function() {
