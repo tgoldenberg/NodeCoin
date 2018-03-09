@@ -2350,6 +2350,8 @@ __webpack_require__(54);
 
 var _address = __webpack_require__(148);
 
+var _getWalletData = __webpack_require__(155);
+
 var _Block = __webpack_require__(6);
 
 var _Block2 = _interopRequireDefault(_Block);
@@ -2381,8 +2383,6 @@ var _find2 = _interopRequireDefault(_find);
 var _findIPAddress = __webpack_require__(147);
 
 var _findIPAddress2 = _interopRequireDefault(_findIPAddress);
-
-var _getWalletData = __webpack_require__(155);
 
 var _ip = __webpack_require__(153);
 
@@ -2590,6 +2590,7 @@ var allPeers = [];
 
 function startup() {
 
+  // curl -XGET localhost:3000/wallets | python -m json.tool
   app.get('/wallets', function () {
     var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(req, res) {
       var wallets;
@@ -2598,7 +2599,7 @@ function startup() {
           switch (_context2.prev = _context2.next) {
             case 0:
               _context2.next = 2;
-              return getWallets();
+              return (0, _getWalletData.getWallets)();
 
             case 2:
               wallets = _context2.sent;
@@ -2674,6 +2675,7 @@ function startup() {
     };
   }());
 
+  // curl -XPOST localhost:3000/wallets/new | python -m json.tool
   app.post('/wallets/new', function () {
     var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(req, res) {
       var wallet;
@@ -2702,6 +2704,7 @@ function startup() {
     };
   }());
 
+  // curl -XGET localhost:3000/wallets/1Nd85AnFYDtaQAG6vF9FVWXFWksG5HuA3M | python -m json.tool
   app.get('/wallets/:address', function () {
     var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(req, res) {
       var walletData, utxo, balance;

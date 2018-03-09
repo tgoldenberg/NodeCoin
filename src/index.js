@@ -2,6 +2,7 @@ import 'colors';
 import 'babel-polyfill';
 
 import { getAddress, makeWallet } from './address';
+import { getWalletData, getWallets } from 'utils/getWalletData';
 
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
@@ -11,7 +12,6 @@ import connectWithPeer from './connectWithPeer';
 import express from 'express';
 import find from 'lodash/find';
 import findIPAddress from 'utils/findIPAddress';
-import { getWalletData } from 'utils/getWalletData';
 import ip from 'ip';
 import { lockTransaction } from 'utils/validateSignature';
 import mongoose from 'mongoose';
@@ -120,6 +120,7 @@ let allPeers = [ ];
 
 function startup() {
 
+  // curl -XGET localhost:3000/wallets | python -m json.tool
   app.get('/wallets', async function (req, res) {
     // go through all block transactions (txin that is not Coinbase)
     let wallets = await getWallets();
@@ -152,12 +153,14 @@ function startup() {
     res.status(200).send({ transaction: { amount: amount } });
   });
 
+  // curl -XPOST localhost:3000/wallets/new | python -m json.tool
   app.post('/wallets/new', async function(req, res) {
     // generate new wallet and provide to user
     let wallet = await makeWallet();
     res.status(200).send({ wallet });
   });
 
+  // curl -XGET localhost:3000/wallets/1Nd85AnFYDtaQAG6vF9FVWXFWksG5HuA3M | python -m json.tool
   app.get('/wallets/:address', async function (req, res) {
     let walletData = await getWalletData(req.params.address);
     let { utxo, balance } = walletData;
