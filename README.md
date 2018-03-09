@@ -26,7 +26,7 @@ npm insall
 Simply run the start-up script:
 
 ```
-npm start [public-address]
+npm start
 ```
 
 This will add your computer to the pool of computers running NodeCoin. You should see a connection message, after which the program will sync with other computers.
