@@ -58,7 +58,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!!lastBlock) {
           blocksToSend = await BlockModel.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
-          message = ['BLOCKHEADERS', ...blocksToSend.map(blk => blk.hash)).join(DELIMITER);
+          message = ['BLOCKHEADERS', ...blocksToSend.map(blk => blk.hash) ].join(DELIMITER);
           client.write(message);
         }
         break;

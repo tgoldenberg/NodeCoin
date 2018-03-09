@@ -2673,9 +2673,282 @@ exports.default = connectToDB;
 
 /***/ }),
 /* 54 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-throw new Error("Module build failed: SyntaxError: Unexpected token, expected , (61:73)\n\n\u001b[0m \u001b[90m 59 | \u001b[39m        \u001b[36mif\u001b[39m (\u001b[33m!\u001b[39m\u001b[33m!\u001b[39mlastBlock) {\n \u001b[90m 60 | \u001b[39m          blocksToSend \u001b[33m=\u001b[39m await \u001b[33mBlockModel\u001b[39m\u001b[33m.\u001b[39mfind({ timestamp\u001b[33m:\u001b[39m { $gte\u001b[33m:\u001b[39m lastBlock\u001b[33m.\u001b[39mtimestamp } })\u001b[33m.\u001b[39mlimit(\u001b[35m50\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 61 | \u001b[39m          message \u001b[33m=\u001b[39m [\u001b[32m'BLOCKHEADERS'\u001b[39m\u001b[33m,\u001b[39m \u001b[33m...\u001b[39mblocksToSend\u001b[33m.\u001b[39mmap(blk \u001b[33m=>\u001b[39m blk\u001b[33m.\u001b[39mhash))\u001b[33m.\u001b[39mjoin(\u001b[33mDELIMITER\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    | \u001b[39m                                                                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 62 | \u001b[39m          client\u001b[33m.\u001b[39mwrite(message)\u001b[33m;\u001b[39m\n \u001b[90m 63 | \u001b[39m        }\n \u001b[90m 64 | \u001b[39m        \u001b[36mbreak\u001b[39m\u001b[33m;\u001b[39m\u001b[0m\n");
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var connectWithPeer = function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(peer, lastBlockHash, version) {
+    var _this = this;
+
+    var IS_CONNECTED, IS_VERSION_COMPATIBLE, HAS_MORE_BLOCKS, port, client;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            IS_CONNECTED = false;
+            IS_VERSION_COMPATIBLE = false;
+            HAS_MORE_BLOCKS = false;
+            // console.log('> Connecting with peer: ', peer, lastBlockHash, version);
+
+            port = DEFAULT_PORT;
+            client = new _net2.default.Socket();
+
+            client.connect(port, peer.ip, function () {
+              console.log('> Connected to peer: ', peer);
+              IS_CONNECTED = true;
+              var type = 'VERSION';
+              client.write([type, version, lastBlockHash].join(DELIMITER));
+
+              // connect client to peer in Redux store
+              _store2.default.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client: client });
+            });
+
+            client.on('data', function () {
+              var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(data) {
+                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, allPeers, unfetchedHeaders, headers, peerIdx, header, block, savedBlock, newBlock, _store$getState, _allPeers, _unfetchedHeaders, _peer, msg;
+
+                return regeneratorRuntime.wrap(function _callee$(_context) {
+                  while (1) {
+                    switch (_context.prev = _context.next) {
+                      case 0:
+                        _data$toString$split = data.toString().split(' '), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
+
+                        console.log('> Received: '.yellow, data.toString());
+                        version = void 0, blockHeaderHash = void 0, lastBlock = void 0, savedLastBlock = void 0, savedLastBlockHash = void 0;
+                        blocksToSend = void 0, message = void 0, allPeers = void 0, unfetchedHeaders = void 0;
+                        headers = void 0, peerIdx = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
+                        _context.t0 = type;
+                        _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 72;
+                        break;
+
+                      case 8:
+                        version = args[0];
+                        blockHeaderHash = args[1];
+
+                        if (!(version !== '1')) {
+                          _context.next = 12;
+                          break;
+                        }
+
+                        return _context.abrupt('break', 72);
+
+                      case 12:
+                        IS_VERSION_COMPATIBLE = true;
+                        // check db for what block height received block hash is
+                        _context.next = 15;
+                        return _Block2.default.findOne({ hash: blockHeaderHash });
+
+                      case 15:
+                        lastBlock = _context.sent;
+
+                        if (lastBlock) {
+                          _context.next = 21;
+                          break;
+                        }
+
+                        // send getblocks message
+                        savedLastBlock = _store2.default.getState().lastBlock;
+                        savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
+                        client.write(['GETBLOCKS', savedLastBlockHash].join(DELIMITER));
+                        return _context.abrupt('break', 72);
+
+                      case 21:
+                        console.log('> Synced with peer'.blue);
+                        return _context.abrupt('break', 72);
+
+                      case 23:
+                        blockHeaderHash = args[0];
+                        _context.next = 26;
+                        return _Block2.default.findOne({ hash: blockHeaderHash });
+
+                      case 26:
+                        lastBlock = _context.sent;
+
+                        if (!lastBlock) {
+                          _context.next = 33;
+                          break;
+                        }
+
+                        _context.next = 30;
+                        return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+
+                      case 30:
+                        blocksToSend = _context.sent;
+
+                        message = ['BLOCKHEADERS'].concat(_toConsumableArray(blocksToSend.map(function (blk) {
+                          return blk.hash;
+                        }))).join(DELIMITER);
+                        client.write(message);
+
+                      case 33:
+                        return _context.abrupt('break', 72);
+
+                      case 34:
+                        // add to unfetchedHeaders
+                        _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
+                        _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, _unfetchedHeaders = _store$getState.unfetchedHeaders;
+
+                        headers = Array.from(_unfetchedHeaders);
+                        peerIdx = 0;
+
+                      case 38:
+                        if (!headers.length) {
+                          _context.next = 49;
+                          break;
+                        }
+
+                        // assign header to peer
+                        _peer = _allPeers[peerIdx];
+                        // connect with peer if no connection
+
+                        if (!_peer.client) {
+                          // await connectWithPeer(peer, lastBlockHash, version);
+                        }
+                        header = headers.shift(); // dequeue a header
+                        client.write('REQUESTBLOCK' + DELIMITER + header);
+                        _context.next = 45;
+                        return (0, _utils.wait)(1);
+
+                      case 45:
+                        // wait 1 second
+                        // if peer doesn't respond within a period or doesn't have the block, move to next peer
+                        // if peer gives block, verify the block (if possible) and add to MongoDB
+
+                        // move from unfetched => loading
+                        _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
+                        peerIdx = _allPeers.length % (peerIdx + 1);
+                        _context.next = 38;
+                        break;
+
+                      case 49:
+                        return _context.abrupt('break', 72);
+
+                      case 50:
+                        // find the requested block and send as a JSON-serialized string
+                        header = args[0];
+                        _context.next = 53;
+                        return _Block2.default.findOne({ hash: header });
+
+                      case 53:
+                        block = _context.sent;
+
+                        if (block) {
+                          msg = JSON.stringify(block);
+
+                          client.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
+                        }
+                        return _context.abrupt('break', 72);
+
+                      case 56:
+                        block = JSON.parse(args[0]);
+                        // check if already have
+                        _context.next = 59;
+                        return _Block2.default.findOne({ hash: block.hash });
+
+                      case 59:
+                        savedBlock = _context.sent;
+
+                        if (!savedBlock) {
+                          _context.next = 62;
+                          break;
+                        }
+
+                        return _context.abrupt('break', 72);
+
+                      case 62:
+                        // if don't have, does the previousHash match our lastBlock.hash?
+                        lastBlock = _store2.default.getState().lastBlock;
+
+                        if (lastBlock) {
+                          _context.next = 65;
+                          break;
+                        }
+
+                        return _context.abrupt('break', 72);
+
+                      case 65:
+                        if (!(block.previousHash === lastBlock.header.previousHash)) {
+                          _context.next = 72;
+                          break;
+                        }
+
+                        // add block to blockchain
+                        newBlock = new _Block2.default(block);
+                        _context.next = 69;
+                        return newBlock.save();
+
+                      case 69:
+                        // remove from orphan and unfetched / loading pools
+                        _store2.default.dispatch({ type: 'NEW_BLOCK', block: formatBlock(newBlock) });
+                        _context.next = 72;
+                        break;
+
+                      case 72:
+                      case 'end':
+                        return _context.stop();
+                    }
+                  }
+                }, _callee, _this);
+              }));
+
+              return function (_x4) {
+                return _ref2.apply(this, arguments);
+              };
+            }()
+            // if not, add to orphan transactions
+            );
+
+            client.on('close', function () {
+              console.log('> Connection closed');
+            });
+
+          case 8:
+          case 'end':
+            return _context2.stop();
+        }
+      }
+    }, _callee2, this);
+  }));
+
+  return function connectWithPeer(_x, _x2, _x3) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+__webpack_require__(5);
+
+var _Block = __webpack_require__(16);
+
+var _Block2 = _interopRequireDefault(_Block);
+
+var _net = __webpack_require__(23);
+
+var _net2 = _interopRequireDefault(_net);
+
+var _store = __webpack_require__(6);
+
+var _store2 = _interopRequireDefault(_store);
+
+var _utils = __webpack_require__(150);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+var DEFAULT_PORT = 8334;
+var DELIMITER = '~~~~~';
+
+exports.default = connectWithPeer;
 
 /***/ }),
 /* 55 */
