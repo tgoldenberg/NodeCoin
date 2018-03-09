@@ -39,8 +39,8 @@ function handleConnection(conn) {
   conn.on('error', onConnError);
 
   async function onConnData(d) {
-    let [ type, ...args ] = d.split(' ');
-    console.log(`> Received from: ${remoteAddr} `.yellow, d);
+    let [ type, ...args ] = d.split(DELIMITER);
+    console.log(`> Received from: ${remoteAddr} `.yellow, d.replace(DELIMITER, ' '));
     let version, lastBlockHash, state, lastBlock, peerLastBlock;
     let blockHeaderHash, blocksToSend, message;
     let allPeers, unfetchedHeaders, peerIdx, headers, header, block;

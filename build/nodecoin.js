@@ -2277,9 +2277,9 @@ function handleConnection(conn) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              _d$split = d.split(' '), _d$split2 = _toArray(_d$split), type = _d$split2[0], args = _d$split2.slice(1);
+              _d$split = d.split(DELIMITER), _d$split2 = _toArray(_d$split), type = _d$split2[0], args = _d$split2.slice(1);
 
-              console.log(('> Received from: ' + remoteAddr + ' ').yellow, d);
+              console.log(('> Received from: ' + remoteAddr + ' ').yellow, d.replace(DELIMITER, ' '));
               version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0, peerLastBlock = void 0;
               blockHeaderHash = void 0, blocksToSend = void 0, message = void 0;
               allPeers = void 0, unfetchedHeaders = void 0, peerIdx = void 0, headers = void 0, header = void 0, block = void 0;
@@ -2717,9 +2717,9 @@ var connectWithPeer = function () {
                   while (1) {
                     switch (_context.prev = _context.next) {
                       case 0:
-                        _data$toString$split = data.toString().split(' '), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
+                        _data$toString$split = data.toString().split(DELIMITER), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
 
-                        console.log('> Received: '.yellow, data.toString());
+                        console.log('> Received: '.yellow, data.toString().replace(DELIMITER, ' '));
                         version = void 0, blockHeaderHash = void 0, lastBlock = void 0, savedLastBlock = void 0, savedLastBlockHash = void 0;
                         blocksToSend = void 0, message = void 0, allPeers = void 0, unfetchedHeaders = void 0;
                         headers = void 0, peerIdx = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;

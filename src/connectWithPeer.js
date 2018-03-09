@@ -26,8 +26,8 @@ async function connectWithPeer(peer, lastBlockHash, version) {
   });
 
   client.on('data', async data => {
-    let [ type, ...args ] = data.toString().split(' ');
-    console.log('> Received: '.yellow, data.toString());
+    let [ type, ...args ] = data.toString().split(DELIMITER);
+    console.log('> Received: '.yellow, data.toString().replace(DELIMITER, ' '));
     let version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash;
     let blocksToSend, message, allPeers, unfetchedHeaders;
     let headers, peerIdx, header, block, savedBlock, newBlock;
