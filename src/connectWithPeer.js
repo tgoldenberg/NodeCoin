@@ -18,11 +18,14 @@ async function connectWithPeer(peer, lastBlockHash, version) {
     IS_CONNECTED = true;
     let type = 'VERSION';
     client.write([ type, version, lastBlockHash ].join(' '));
+
+    // connect client to peer in Redux store
+    store.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client });
   });
 
   client.on('data', async data => {
     let [ type, ...args ] = data.toString().split(' ');
-    console.log('> Received: ', data.toString());
+    console.log('> Received: '.yellow, data.toString());
     let version, blockHeaderHash;
     switch(type) {
       // Initial swapping of version number of last block hash

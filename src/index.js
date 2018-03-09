@@ -65,6 +65,12 @@ function handleConnection(conn) {
       // Peer sends us list of block headers
       case 'BLOCKHEADERS':
         console.log('> Block headers');
+        // add to unfetchedHeaders
+        // for each header, assign to a peer
+        // if peer doesn't respond within a period or doesn't have the block, move to next peer
+        // if peer gives block, verify the block (if possible) and add to MongoDB
+        // remove header from unfetchedHeaders
+
     }
   }
   function onConnClose() {
@@ -137,11 +143,16 @@ function startup() {
     });
 
     // MEMBER ADDED
-    channel.bind('pusher:member_added', function(member){
+    channel.bind('pusher:member_added', async function(member) {
+      console.log('> Member added: '.gray, member);
       let allPeers = store.getState().allPeers;
       allPeers.push({ ip: member.id });
       store.dispatch({ type: 'SET_PEERS', allPeers });
+      let lastBlock = store.getState().lastBlock;
+      let lastBlockHash = lastBlock.getBlockHeaderHash();
+      let version = lastBlock.header.version;
       // TODO: send ping to new member to exchange headers
+      await connectWithPeer({ ip: member.id }, lastBlockHash, version);
     });
 
     // MEMBER REMOVED

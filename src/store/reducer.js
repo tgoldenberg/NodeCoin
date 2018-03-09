@@ -1,3 +1,5 @@
+import findIndex from 'lodash/findIndex';
+
 const initialState = {
   /*
     this checks at start, connect to local mongo and load number of blocks -
@@ -15,6 +17,7 @@ const initialState = {
   difficulty: 0,
   numBlocks: 0,
   // Mempool
+  unfetchedHeaders: [ ],
   newTransactions: [ ],
   orphanTransactions: [ ],
 };
@@ -35,6 +38,16 @@ const nodeCoin = (state = initialState, action) => {
       };
     case 'SET_PEERS':
       return { ...state, allPeers: action.allPeers };
+    case 'CONNECT_PEER':
+      let peerIdx = findIndex(state.allPeers, ({ ip }) => ip === action.ip);
+      return {
+        ...state,
+        allPeers: peerIdx === -1 ? state.allPeers : [
+          ...state.allPeers.slice(0, peerIdx),
+          { ip: action.ip, client: action.client },
+          ...state.allPeers.slice(peerIdx + 1),
+        ],
+      }
     default:
       return state;
   }

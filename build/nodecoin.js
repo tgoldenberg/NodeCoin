@@ -238,9 +238,9 @@ store.dispatch = addLoggingToDispatch(store);
 function addLoggingToDispatch(store) {
   var rawDispatch = store.dispatch;
   return function (action) {
-    console.log(('> Action: ' + action.type).yellow);
+    console.log('> Action: '.gray, action.type, '(Keys: ', Object.keys(action).join(', ') + ')');
     // console.log('> prev state'.gray, store.getState().lastBlock);
-    console.log(('> Keys: ' + Object.keys(action).join(', ')).green);
+    // console.log(`> `.green);
     var returnValue = rawDispatch(action);
     // console.log('> next state'.green, store.getState());
     // console.log(action.type.green);
@@ -2360,29 +2360,29 @@ function handleConnection(conn) {
 var allPeers = [];
 
 function startup() {
-  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4() {
     var _this = this;
 
     var ipAddr, dbConnection, server, client, _ref3, numBlocks, lastBlock, channel;
 
-    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+    return regeneratorRuntime.wrap(function _callee4$(_context4) {
       while (1) {
-        switch (_context3.prev = _context3.next) {
+        switch (_context4.prev = _context4.next) {
           case 0:
-            _context3.next = 2;
+            _context4.next = 2;
             return (0, _findIPAddress2.default)();
 
           case 2:
-            ipAddr = _context3.sent;
+            ipAddr = _context4.sent;
 
             console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
             // connect to local instance of MongoDB
-            _context3.next = 6;
+            _context4.next = 6;
             return (0, _connectToDB2.default)();
 
           case 6:
-            dbConnection = _context3.sent;
+            dbConnection = _context4.sent;
 
             console.log('> Connected to local MongoDB'.gray);
 
@@ -2408,11 +2408,11 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context3.next = 14;
+            _context4.next = 14;
             return (0, _syncBlocksWithStore2.default)();
 
           case 14:
-            _ref3 = _context3.sent;
+            _ref3 = _context4.sent;
             numBlocks = _ref3.numBlocks;
             lastBlock = _ref3.lastBlock;
 
@@ -2477,12 +2477,38 @@ function startup() {
             }());
 
             // MEMBER ADDED
-            channel.bind('pusher:member_added', function (member) {
-              var allPeers = _store2.default.getState().allPeers;
-              allPeers.push({ ip: member.id });
-              _store2.default.dispatch({ type: 'SET_PEERS', allPeers: allPeers });
-              // TODO: send ping to new member to exchange headers
-            });
+            channel.bind('pusher:member_added', function () {
+              var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(member) {
+                var allPeers, lastBlock, lastBlockHash, version;
+                return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                  while (1) {
+                    switch (_context3.prev = _context3.next) {
+                      case 0:
+                        console.log('> Member added: '.gray, member);
+                        allPeers = _store2.default.getState().allPeers;
+
+                        allPeers.push({ ip: member.id });
+                        _store2.default.dispatch({ type: 'SET_PEERS', allPeers: allPeers });
+                        lastBlock = _store2.default.getState().lastBlock;
+                        lastBlockHash = lastBlock.getBlockHeaderHash();
+                        version = lastBlock.header.version;
+                        // TODO: send ping to new member to exchange headers
+
+                        _context3.next = 9;
+                        return (0, _connectWithPeer2.default)({ ip: member.id }, lastBlockHash, version);
+
+                      case 9:
+                      case 'end':
+                        return _context3.stop();
+                    }
+                  }
+                }, _callee3, this);
+              }));
+
+              return function (_x3) {
+                return _ref5.apply(this, arguments);
+              };
+            }());
 
             // MEMBER REMOVED
             channel.bind('pusher:member_removed', function (member) {
@@ -2500,10 +2526,10 @@ function startup() {
 
           case 22:
           case 'end':
-            return _context3.stop();
+            return _context4.stop();
         }
       }
-    }, _callee3, this);
+    }, _callee4, this);
   })));
 }
 
@@ -2618,6 +2644,9 @@ var connectWithPeer = function () {
               IS_CONNECTED = true;
               var type = 'VERSION';
               client.write([type, version, lastBlockHash].join(' '));
+
+              // connect client to peer in Redux store
+              _store2.default.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client: client });
             });
 
             client.on('data', function () {
@@ -2630,7 +2659,7 @@ var connectWithPeer = function () {
                       case 0:
                         _data$toString$split = data.toString().split(' '), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
 
-                        console.log('> Received: ', data.toString());
+                        console.log('> Received: '.yellow, data.toString());
                         version = void 0, blockHeaderHash = void 0;
                         _context.t0 = type;
                         _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 21 : _context.t0 === 'BLOCKHEADERS' ? 32 : 34;
@@ -2774,6 +2803,14 @@ module.exports = require("bluebird");
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
+var _findIndex = __webpack_require__(144);
+
+var _findIndex2 = _interopRequireDefault(_findIndex);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 var initialState = {
   /*
     this checks at start, connect to local mongo and load number of blocks -
@@ -2791,6 +2828,7 @@ var initialState = {
   difficulty: 0,
   numBlocks: 0,
   // Mempool
+  unfetchedHeaders: [],
   newTransactions: [],
   orphanTransactions: []
 };
@@ -2812,6 +2850,14 @@ var nodeCoin = function nodeCoin() {
       });
     case 'SET_PEERS':
       return _extends({}, state, { allPeers: action.allPeers });
+    case 'CONNECT_PEER':
+      var peerIdx = (0, _findIndex2.default)(state.allPeers, function (_ref) {
+        var ip = _ref.ip;
+        return ip === action.ip;
+      });
+      return _extends({}, state, {
+        allPeers: peerIdx === -1 ? state.allPeers : [].concat(_toConsumableArray(state.allPeers.slice(0, peerIdx)), [{ ip: action.ip, client: action.client }], _toConsumableArray(state.allPeers.slice(peerIdx + 1)))
+      });
     default:
       return state;
   }
