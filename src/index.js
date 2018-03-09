@@ -152,7 +152,8 @@ function startup() {
       let lastBlockHash = lastBlock.getBlockHeaderHash();
       let version = lastBlock.header.version;
       // TODO: send ping to new member to exchange headers
-      await connectWithPeer({ ip: member.id }, lastBlockHash, version);
+      // wait 30 seconds before initiating connection
+      // await connectWithPeer({ ip: member.id }, lastBlockHash, version);
     });
 
     // MEMBER REMOVED

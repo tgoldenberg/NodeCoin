@@ -2493,11 +2493,10 @@ function startup() {
                         lastBlockHash = lastBlock.getBlockHeaderHash();
                         version = lastBlock.header.version;
                         // TODO: send ping to new member to exchange headers
+                        // wait 30 seconds before initiating connection
+                        // await connectWithPeer({ ip: member.id }, lastBlockHash, version);
 
-                        _context3.next = 9;
-                        return (0, _connectWithPeer2.default)({ ip: member.id }, lastBlockHash, version);
-
-                      case 9:
+                      case 7:
                       case 'end':
                         return _context3.stop();
                     }
