@@ -2274,10 +2274,10 @@ function handleConnection(conn) {
             case 0:
               _d$split = d.split(' '), _d$split2 = _toArray(_d$split), type = _d$split2[0], args = _d$split2.slice(1);
 
-              console.log('> Connection data from: ' + remoteAddr, d);
+              console.log('> Received from: ' + remoteAddr + ' ', d);
               version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 17 : 27;
+              _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 16 : _context.t0 === 'BLOCKHEADERS' ? 26 : 27;
               break;
 
             case 6:
@@ -2295,36 +2295,38 @@ function handleConnection(conn) {
             case 13:
               peerLastBlock = _context.sent;
 
-              console.log('> Check last block: ', peerLastBlock, lastBlockHash);
               if (!peerLastBlock) {
                 // send getblocks message
                 conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(' '));
               }
               return _context.abrupt('break', 27);
 
-            case 17:
+            case 16:
               blockHeaderHash = args[0];
-              _context.next = 20;
+              _context.next = 19;
               return _Block2.default.findOne({ hash: blockHeaderHash });
 
-            case 20:
+            case 19:
               lastBlock = _context.sent;
 
               if (!lastBlock) {
-                _context.next = 27;
+                _context.next = 26;
                 break;
               }
 
-              _context.next = 24;
+              _context.next = 23;
               return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
 
-            case 24:
+            case 23:
               blocksToSend = _context.sent;
               message = 'BLOCKHEADERS ' + blocksToSend.map(function (blk) {
                 return blk.hash;
               }).join(' ');
 
               conn.write(message);
+
+            case 26:
+              console.log('> Block headers');
 
             case 27:
             case 'end':
@@ -2631,7 +2633,7 @@ var connectWithPeer = function () {
                         console.log('> Received: ', data.toString());
                         version = void 0, blockHeaderHash = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 22 : _context.t0 === 'BLOCKHEADERS' ? 32 : 34;
+                        _context.next = _context.t0 === 'VERSION' ? 6 : _context.t0 === 'GETBLOCKS' ? 21 : _context.t0 === 'BLOCKHEADERS' ? 32 : 34;
                         break;
 
                       case 6:
@@ -2647,16 +2649,15 @@ var connectWithPeer = function () {
 
                       case 10:
                         IS_VERSION_COMPATIBLE = true;
-                        console.log('> Received block hash: ', blockHeaderHash);
                         // check db for what block height received block hash is
-                        _context.next = 14;
+                        _context.next = 13;
                         return _Block2.default.findOne({ hash: blockHeaderHash });
 
-                      case 14:
+                      case 13:
                         lastBlock = _context.sent;
 
                         if (lastBlock) {
-                          _context.next = 20;
+                          _context.next = 19;
                           break;
                         }
 
@@ -2667,33 +2668,36 @@ var connectWithPeer = function () {
                         client.write(['GETBLOCKS', savedLastBlockHash].join(' '));
                         return _context.abrupt('break', 34);
 
-                      case 20:
+                      case 19:
                         console.log('> Synced with peer'.blue);
                         return _context.abrupt('break', 34);
 
-                      case 22:
+                      case 21:
                         blockHeaderHash = args[0];
-                        _context.next = 25;
+                        _context.next = 24;
                         return _Block2.default.findOne({ hash: blockHeaderHash });
 
-                      case 25:
+                      case 24:
                         lastBlock = _context.sent;
 
                         if (!lastBlock) {
-                          _context.next = 32;
+                          _context.next = 31;
                           break;
                         }
 
-                        _context.next = 29;
+                        _context.next = 28;
                         return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
 
-                      case 29:
+                      case 28:
                         blocksToSend = _context.sent;
                         message = 'BLOCKHEADERS ' + blocksToSend.map(function (blk) {
                           return blk.hash;
                         }).join(' ');
 
                         client.write(message);
+
+                      case 31:
+                        return _context.abrupt('break', 34);
 
                       case 32:
                         blockHeaders = args;
@@ -2711,7 +2715,7 @@ var connectWithPeer = function () {
               return function (_x4) {
                 return _ref2.apply(this, arguments);
               };
-            }() // iterate through peers and ask for specific block 
+            }() // iterate through peers and ask for specific block
             );
 
             client.on('close', function () {

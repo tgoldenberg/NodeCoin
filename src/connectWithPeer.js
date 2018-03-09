@@ -33,7 +33,6 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           break;
         }
         IS_VERSION_COMPATIBLE = true;
-        console.log('> Received block hash: ', blockHeaderHash);
         // check db for what block height received block hash is
         let lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
         if (!lastBlock) {
@@ -55,12 +54,13 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           let message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
           client.write(message);
         }
+        break;
 
       // Receive block headers from peer
       case 'BLOCKHEADERS':
         let blockHeaders = args;
         console.log('> New block headers: ', blockHeaders);
-        // iterate through peers and ask for specific block 
+        // iterate through peers and ask for specific block
     }
   });
 

@@ -38,7 +38,7 @@ function handleConnection(conn) {
 
   async function onConnData(d) {
     let [ type, ...args ] = d.split(' ');
-    console.log(`> Connection data from: ${remoteAddr}`, d);
+    console.log(`> Received from: ${remoteAddr} `, d);
     let version, lastBlockHash, state, lastBlock;
     switch(type) {
       // Initial message swapping version numbers and last block header hash
@@ -49,11 +49,11 @@ function handleConnection(conn) {
 
         // Check if we have the last block header transmitted
         let peerLastBlock = await BlockModel.findOne({ hash: lastBlockHash });
-        console.log('> Check last block: ', peerLastBlock, lastBlockHash);
         if (!peerLastBlock) { // send getblocks message
           conn.write([ 'GETBLOCKS', lastBlock.getBlockHeaderHash() ].join(' '));
         }
         break;
+      // Peer asks for our latest blocks
       case 'GETBLOCKS':
         let blockHeaderHash = args[0];
         lastBlock = await BlockModel.findOne({ hash: blockHeaderHash });
@@ -62,6 +62,9 @@ function handleConnection(conn) {
           let message = 'BLOCKHEADERS ' + blocksToSend.map(blk => blk.hash).join(' ');
           conn.write(message);
         }
+      // Peer sends us list of block headers
+      case 'BLOCKHEADERS':
+        console.log('> Block headers');
     }
   }
   function onConnClose() {
