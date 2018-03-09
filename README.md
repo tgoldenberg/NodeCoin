@@ -9,6 +9,14 @@ Implementation of Bitcoin / cryptocurrency using NodeJS
 
 * [Pycoin - Bitcoin implementation in Python](https://github.com/ricmoo/pycoind/blob/master/README.md#node-management-pycoind-node)
 
+* [First Commit by Satoshi Nakamoto](https://github.com/bitcoin/bitcoin/tree/4405b78d6059e536c36974088a8ed4d9f0f29898)
+
+* [Research into Elliptic Curve Cryptography](http://www.nicolascourtois.com/bitcoin/thesis_Di_Wang.pdf)
+
+* [Basic TCP/IP Networking in Node JS](https://blog.yld.io/2016/02/23/building-a-tcp-service-using-node-js/#.WqKWdpM-dap)
+
+* [Mastering Bitcoin - great book on Bitcoin protocols](https://bitcoinbook.info/)
+
 #### Getting Started
 
 The following dependencies must be installed before running:
