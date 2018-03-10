@@ -1,9 +1,8 @@
-import 'colors';
 import 'babel-polyfill';
+import 'colors';
 
 import { getAddress, makeWallet } from './address';
 import { getWalletData, getWallets } from 'utils/getWalletData';
-import { lockTransaction, unlockTransaction } from 'utils/validateSignature';
 
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
@@ -16,12 +15,11 @@ import express from 'express';
 import find from 'lodash/find';
 import findIPAddress from 'utils/findIPAddress';
 import ip from 'ip';
-import mongoose from 'mongoose';
 import net from 'net';
-import network from 'network';
 import { seedBlocks } from '__mocks__/blocks';
 import store from 'store/store';
 import syncBlocksWithStore from 'db/syncBlocksWithStore';
+import { unlockTransaction } from 'utils/validateSignature';
 import { wait } from 'utils';
 
 const request = axios.create({
@@ -78,7 +76,9 @@ function handleConnection(conn) {
         peerLastBlock = await BlockModel.findOne({ hash: lastBlockHash });
         if (!peerLastBlock) { // send getblocks message
           conn.write([ 'GETBLOCKS', lastBlock.getBlockHeaderHash() ].join(DELIMITER));
+          break;
         }
+        store.dispatch({ type: 'SYNC_PEER', ip: ip });
         break;
       // Peer asks for our latest blocks
       case 'GETBLOCKS':

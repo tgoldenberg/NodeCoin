@@ -37,6 +37,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
     let version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash;
     let blocksToSend, message, allPeers, unfetchedHeaders;
     let headers, peerIdx, header, block, savedBlock, newBlock;
+    let numBlocksToFetch = 0;
     switch(type) {
       // Initial swapping of version number of last block hash
       case 'VERSION':
@@ -74,6 +75,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
       case 'BLOCKHEADERS':
         // add to unfetchedHeaders
         store.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
+        numBlocksToFetch = args.length;
         let { allPeers, unfetchedHeaders } = store.getState();
         headers = Array.from(unfetchedHeaders);
         peerIdx = 0;
@@ -89,7 +91,6 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           await wait(1); // wait 1 second
           // if peer doesn't respond within a period or doesn't have the block, move to next peer
           // if peer gives block, verify the block (if possible) and add to MongoDB
-
           // move from unfetched => loading
           store.dispatch({ type: 'LOADING_BLOCK', header });
           peerIdx = allPeers.length % (peerIdx + 1);
@@ -124,6 +125,10 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           await newBlock.save();
           // remove from orphan and unfetched / loading pools
           store.dispatch({ type: 'NEW_BLOCK', block: formatBlock(newBlock) });
+          numBlocksToFetch -= 1;
+          if (numBlocksToFetch === 0) {
+            // RESTART
+          }
         } else {
           // if not, add to orphan transactions
         }
