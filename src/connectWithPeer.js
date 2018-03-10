@@ -11,19 +11,23 @@ const DELIMITER = '~~~~~'
 
 let reg = new RegExp(DELIMITER, 'gi');
 
+// First establish TCP/IP connection with peer
+// If cannot establish connection or version is incompatible, set "peer.unreachable" to true
+// exchange VERSION headers
+// exchange blocks if missing blocks
+// once receive blocks, start again with VERSION header until fully synced
+
 async function connectWithPeer(peer, lastBlockHash, version) {
-  let IS_CONNECTED = false;
   let IS_VERSION_COMPATIBLE = false;
   let HAS_MORE_BLOCKS = false;
   // console.log('> Connecting with peer: ', peer, lastBlockHash, version);
   const port = DEFAULT_PORT;
   const client = new net.Socket();
+  // PEER CONNECTED
   client.connect(port, peer.ip, () => {
     console.log('> Connected to peer: ', peer);
-    IS_CONNECTED = true;
     let type = 'VERSION';
     client.write([ type, version, lastBlockHash ].join(DELIMITER));
-    // PEER CONNECTED
     store.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client });
   });
 
@@ -51,7 +55,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           client.write([ 'GETBLOCKS', savedLastBlockHash ].join(DELIMITER));
           break;
         }
-        console.log('> Synced with peer'.blue);
+        store.dispatch({ type: 'SYNC_PEER', ip: peer.ip });
         return true;
         break;
 

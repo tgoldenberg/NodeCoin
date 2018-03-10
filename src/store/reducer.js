@@ -81,6 +81,17 @@ const nodeCoin = (state = initialState, action) => {
         unfetchedHeaders: newUnfetchedHeaders,
         loadingHeaders: newLoadingHeaders,
       };
+    case 'SYNC_PEER':
+      peerIdx = findIndex(state.allPeers, ({ ip }) => ip === action.ip);
+      return {
+        ...state,
+        allPeers: peerIdx === -1 ? state.allPeers : [
+          ...state.allPeers.slice(0, peerIdx),
+          { ...state.allPeers[peerIdx], synced: true, connected: true },
+          ...state.allPeers.slice(peerIdx + 1),
+        ],
+      };
+
     default:
       return state;
   }

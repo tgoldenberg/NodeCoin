@@ -307,7 +307,7 @@ function startup() {
         if (!peer.connected) {
           await connectWithPeer({ ip: member.id }, lastBlockHash, version);
         }
-      });
+      }, 10 * 1000);
     });
 
     // MEMBER REMOVED
@@ -326,6 +326,9 @@ function startup() {
 
     channel.bind('transaction:new', function(data) {
       console.log('> transaction:new: ', data.tx.hash);
+      // is client synced?
+      let allPeers = store.getState().allPeers;
+      console.log('> Peers: ', allPeers);
       // validate transaction
       // add to memory pool of valid transactions
     });

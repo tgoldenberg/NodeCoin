@@ -3092,7 +3092,7 @@ function startup() {
                               }
                             }
                           }, _callee7, _this2);
-                        })));
+                        })), 10 * 1000);
 
                       case 8:
                       case 'end':
@@ -3123,6 +3123,9 @@ function startup() {
 
             channel.bind('transaction:new', function (data) {
               console.log('> transaction:new: ', data.tx.hash);
+              // is client synced?
+              var allPeers = _store2.default.getState().allPeers;
+              console.log('> Peers: ', allPeers);
               // validate transaction
               // add to memory pool of valid transactions
             });
@@ -6340,29 +6343,33 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+// First establish TCP/IP connection with peer
+// If cannot establish connection or version is incompatible, set "peer.unreachable" to true
+// exchange VERSION headers
+// exchange blocks if missing blocks
+// once receive blocks, start again with VERSION header until fully synced
+
 var connectWithPeer = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(peer, lastBlockHash, version) {
     var _this = this;
 
-    var IS_CONNECTED, IS_VERSION_COMPATIBLE, HAS_MORE_BLOCKS, port, client;
+    var IS_VERSION_COMPATIBLE, HAS_MORE_BLOCKS, port, client;
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
-            IS_CONNECTED = false;
             IS_VERSION_COMPATIBLE = false;
             HAS_MORE_BLOCKS = false;
             // console.log('> Connecting with peer: ', peer, lastBlockHash, version);
 
             port = DEFAULT_PORT;
             client = new _net2.default.Socket();
+            // PEER CONNECTED
 
             client.connect(port, peer.ip, function () {
               console.log('> Connected to peer: ', peer);
-              IS_CONNECTED = true;
               var type = 'VERSION';
               client.write([type, version, lastBlockHash].join(DELIMITER));
-              // PEER CONNECTED
               _store2.default.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client: client });
             });
 
@@ -6416,7 +6423,7 @@ var connectWithPeer = function () {
                         return _context.abrupt('break', 73);
 
                       case 21:
-                        console.log('> Synced with peer'.blue);
+                        _store2.default.dispatch({ type: 'SYNC_PEER', ip: peer.ip });
                         return _context.abrupt('return', true);
 
                       case 24:
@@ -6571,7 +6578,7 @@ var connectWithPeer = function () {
               console.error(err);
             });
 
-          case 10:
+          case 9:
           case 'end':
             return _context2.stop();
         }
@@ -6613,9 +6620,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 var DEFAULT_PORT = 8334;
 var DELIMITER = '~~~~~';
 
-var reg = new RegExp(DELIMITER, 'gi');
-
-exports.default = connectWithPeer;
+var reg = new RegExp(DELIMITER, 'gi');exports.default = connectWithPeer;
 
 /***/ }),
 /* 151 */
@@ -6710,6 +6715,15 @@ var nodeCoin = function nodeCoin() {
         unfetchedHeaders: newUnfetchedHeaders,
         loadingHeaders: newLoadingHeaders
       });
+    case 'SYNC_PEER':
+      peerIdx = (0, _findIndex2.default)(state.allPeers, function (_ref2) {
+        var ip = _ref2.ip;
+        return ip === action.ip;
+      });
+      return _extends({}, state, {
+        allPeers: peerIdx === -1 ? state.allPeers : [].concat(_toConsumableArray(state.allPeers.slice(0, peerIdx)), [_extends({}, state.allPeers[peerIdx], { synced: true, connected: true })], _toConsumableArray(state.allPeers.slice(peerIdx + 1)))
+      });
+
     default:
       return state;
   }
