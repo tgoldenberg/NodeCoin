@@ -46,7 +46,10 @@ let reg = new RegExp(DELIMITER, 'gi');
 
 function handleConnection(conn) {
   const remoteAddr = `${conn.remoteAddress}:${conn.remotePort}`;
+  const [ ip, port ] = conn.remoteAddr.split(':');
   console.log(`> New client connection from ${remoteAddr}`.blue);
+  // PEER CONNECTED
+  store.dispatch({ type: 'CONNECT_PEER', ip, client, port });
 
   conn.setEncoding('utf8');
   conn.on('data', onConnData);
@@ -293,7 +296,13 @@ function startup() {
       let version = lastBlock.header.version;
       // TODO: send ping to new member to exchange headers
       // wait 30 seconds before initiating connection
-      // await connectWithPeer({ ip: member.id }, lastBlockHash, version);
+      setTimeout(async () => {
+        let allPeers = store.getState().allPeers;
+        let peer = find(allPeers, ({ ip }) => ip === member.id);
+        if (!peer.connected) {
+          await connectWithPeer({ ip: member.id }, lastBlockHash, version);
+        }
+      });
     });
 
     // MEMBER REMOVED

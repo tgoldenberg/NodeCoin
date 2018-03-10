@@ -2663,7 +2663,15 @@ function handleConnection(conn) {
   }();
 
   var remoteAddr = conn.remoteAddress + ':' + conn.remotePort;
+
+  var _conn$remoteAddr$spli = conn.remoteAddr.split(':'),
+      _conn$remoteAddr$spli2 = _slicedToArray(_conn$remoteAddr$spli, 2),
+      ip = _conn$remoteAddr$spli2[0],
+      port = _conn$remoteAddr$spli2[1];
+
   console.log(('> New client connection from ' + remoteAddr).blue);
+  // PEER CONNECTED
+  _store2.default.dispatch({ type: 'CONNECT_PEER', ip: ip, client: client, port: port });
 
   conn.setEncoding('utf8');
   conn.on('data', onConnData);
@@ -2896,40 +2904,40 @@ function startup() {
     };
   }());
 
-  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
     var _this = this;
 
     var ipAddr, dbConnection, server, client, _ref7, numBlocks, lastBlock, channel;
 
-    return regeneratorRuntime.wrap(function _callee8$(_context8) {
+    return regeneratorRuntime.wrap(function _callee9$(_context9) {
       while (1) {
-        switch (_context8.prev = _context8.next) {
+        switch (_context9.prev = _context9.next) {
           case 0:
-            _context8.next = 2;
+            _context9.next = 2;
             return (0, _findIPAddress2.default)();
 
           case 2:
-            ipAddr = _context8.sent;
+            ipAddr = _context9.sent;
 
             console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
             // connect to local instance of MongoDB
-            _context8.next = 6;
+            _context9.next = 6;
             return (0, _connectToDB2.default)();
 
           case 6:
-            dbConnection = _context8.sent;
+            dbConnection = _context9.sent;
 
             console.log('> Connected to local MongoDB'.gray);
 
             // seed blocks
 
             if (!(process.env.SEED_BLOCKS === 'true')) {
-              _context8.next = 11;
+              _context9.next = 11;
               break;
             }
 
-            _context8.next = 11;
+            _context9.next = 11;
             return (0, _blocks.seedBlocks)();
 
           case 11:
@@ -2954,11 +2962,11 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context8.next = 17;
+            _context9.next = 17;
             return (0, _syncBlocksWithStore2.default)();
 
           case 17:
-            _ref7 = _context8.sent;
+            _ref7 = _context9.sent;
             numBlocks = _ref7.numBlocks;
             lastBlock = _ref7.lastBlock;
 
@@ -3029,11 +3037,13 @@ function startup() {
 
             // MEMBER ADDED
             channel.bind('pusher:member_added', function () {
-              var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(member) {
+              var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(member) {
+                var _this2 = this;
+
                 var allPeers, lastBlock, lastBlockHash, version;
-                return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                return regeneratorRuntime.wrap(function _callee8$(_context8) {
                   while (1) {
-                    switch (_context7.prev = _context7.next) {
+                    switch (_context8.prev = _context8.next) {
                       case 0:
                         console.log('> Member added: '.gray, member);
                         allPeers = _store2.default.getState().allPeers;
@@ -3050,14 +3060,41 @@ function startup() {
                         version = lastBlock.header.version;
                         // TODO: send ping to new member to exchange headers
                         // wait 30 seconds before initiating connection
-                        // await connectWithPeer({ ip: member.id }, lastBlockHash, version);
 
-                      case 7:
+                        setTimeout(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+                          var allPeers, peer;
+                          return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                            while (1) {
+                              switch (_context7.prev = _context7.next) {
+                                case 0:
+                                  allPeers = _store2.default.getState().allPeers;
+                                  peer = (0, _find2.default)(allPeers, function (_ref11) {
+                                    var ip = _ref11.ip;
+                                    return ip === member.id;
+                                  });
+
+                                  if (peer.connected) {
+                                    _context7.next = 5;
+                                    break;
+                                  }
+
+                                  _context7.next = 5;
+                                  return (0, _connectWithPeer2.default)({ ip: member.id }, lastBlockHash, version);
+
+                                case 5:
+                                case 'end':
+                                  return _context7.stop();
+                              }
+                            }
+                          }, _callee7, _this2);
+                        })));
+
+                      case 8:
                       case 'end':
-                        return _context7.stop();
+                        return _context8.stop();
                     }
                   }
-                }, _callee7, this);
+                }, _callee8, this);
               }));
 
               return function (_x11) {
@@ -3095,10 +3132,10 @@ function startup() {
 
           case 27:
           case 'end':
-            return _context8.stop();
+            return _context9.stop();
         }
       }
-    }, _callee8, this);
+    }, _callee9, this);
   })));
 }
 
