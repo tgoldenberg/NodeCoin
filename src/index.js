@@ -8,6 +8,7 @@ import { lockTransaction, unlockTransaction } from 'utils/validateSignature';
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
 import SHA256 from 'js-sha256';
+import axios from 'axios';
 import bodyParser from 'body-parser';
 import connectToDB from './connectToDB';
 import connectWithPeer from './connectWithPeer';
@@ -22,6 +23,12 @@ import { seedBlocks } from '__mocks__/blocks';
 import store from 'store/store';
 import syncBlocksWithStore from 'db/syncBlocksWithStore';
 import { wait } from 'utils';
+
+const request = axios.create({
+  validateStatus: (status) => true,
+  responseType: 'json',
+  timeout: 10000,
+});
 
 require('dotenv').config();
 
@@ -94,7 +101,6 @@ function handleConnection(conn) {
           await wait(1); // wait 1 second
           // if peer doesn't respond within a period or doesn't have the block, move to next peer
           // if peer gives block, verify the block (if possible) and add to MongoDB
-
           // move from unfetched => loading
           store.dispatch({ type: 'LOADING_BLOCK', header });
           peerIdx = allPeers.length % (peerIdx + 1);
@@ -107,6 +113,7 @@ function handleConnection(conn) {
         if (block) {
           conn.write(`SENDBLOCK${DELIMITER}` + JSON.stringify(block));
         }
+        break;
     }
   }
   function onConnClose() {
@@ -180,7 +187,15 @@ function startup() {
       vout,
     };
     // broadcast to network
-    res.status(200).send({ transaction, spentTxs });
+    // let url = 'http://localhost:3001/transaction';
+    let url = 'https://pusher-presence-auth.herokuapp.com/transaction';
+    let body = {
+      tx: transaction,
+      timestamp: Date.now(),
+    };
+    let response = await request.post(url, body);
+    console.log('> Send transaction response: '.yellow, response.data);
+    res.status(200).send(response.data);
   });
 
   // curl -XPOST localhost:3000/wallets/new | python -m json.tool
@@ -223,6 +238,7 @@ function startup() {
       auth: { params: { ip_addr: ipAddr, port: 8334 } },
       cluster: 'us2',
       authEndpoint: 'https://pusher-presence-auth.herokuapp.com/pusher/auth',
+      // authEndpoint: 'http://localhost:3001/pusher/auth',
       encrypted: true
     });
 
@@ -282,6 +298,20 @@ function startup() {
       });
       store.dispatch({ type: 'SET_PEERS', allPeers: newAllPeers });
       // TODO: stop any ongoing requests with peer
+    });
+
+    channel.bind('transaction:new', function(data) {
+      console.log('> transaction:new: ', data.tx.hash);
+      // validate transaction
+      // add to memory pool of valid transactions
+    });
+
+    channel.bind('block:new', function(data) {
+      console.log('> block:new: ', data);
+      // validate block
+      // stop mining operation
+      // add block to MongoDB and local state as "lastBlock"
+      // start operating for next block
     });
   });
 }
