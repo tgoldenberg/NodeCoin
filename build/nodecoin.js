@@ -2664,10 +2664,10 @@ function handleConnection(conn) {
 
   var remoteAddr = conn.remoteAddress + ':' + conn.remotePort;
 
-  var _conn$remoteAddr$spli = conn.remoteAddr.split(':'),
-      _conn$remoteAddr$spli2 = _slicedToArray(_conn$remoteAddr$spli, 2),
-      ip = _conn$remoteAddr$spli2[0],
-      port = _conn$remoteAddr$spli2[1];
+  var _conn$remoteAddress$s = conn.remoteAddress.split(':'),
+      _conn$remoteAddress$s2 = _slicedToArray(_conn$remoteAddress$s, 2),
+      ip = _conn$remoteAddress$s2[0],
+      port = _conn$remoteAddress$s2[1];
 
   console.log(('> New client connection from ' + remoteAddr).blue);
   // PEER CONNECTED

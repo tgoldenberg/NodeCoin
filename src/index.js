@@ -46,7 +46,7 @@ let reg = new RegExp(DELIMITER, 'gi');
 
 function handleConnection(conn) {
   const remoteAddr = `${conn.remoteAddress}:${conn.remotePort}`;
-  const [ ip, port ] = conn.remoteAddr.split(':');
+  const [ ip, port ] = conn.remoteAddress.split(':');
   console.log(`> New client connection from ${remoteAddr}`.blue);
   // PEER CONNECTED
   store.dispatch({ type: 'CONNECT_PEER', ip, client, port });
