@@ -2662,16 +2662,21 @@ function handleConnection(conn) {
     };
   }();
 
-  var remoteAddr = conn.remoteAddress + ':' + conn.remotePort;
+  var remoteAddr = conn.remoteAddr + ':' + conn.remotePort;
 
-  var _conn$remoteAddress$s = conn.remoteAddress.split(':'),
-      _conn$remoteAddress$s2 = _slicedToArray(_conn$remoteAddress$s, 2),
-      ip = _conn$remoteAddress$s2[0],
-      port = _conn$remoteAddress$s2[1];
+  var _conn$remoteAddr$spli = conn.remoteAddr.split(':'),
+      _conn$remoteAddr$spli2 = _slicedToArray(_conn$remoteAddr$spli, 2),
+      ip = _conn$remoteAddr$spli2[0],
+      port = _conn$remoteAddr$spli2[1];
 
   console.log(('> New client connection from ' + remoteAddr).blue);
   // PEER CONNECTED
-  _store2.default.dispatch({ type: 'CONNECT_PEER', ip: ip, client: client, port: port });
+  _store2.default.dispatch({
+    type: 'CONNECT_PEER',
+    client: conn,
+    ip: ip,
+    port: port
+  });
 
   conn.setEncoding('utf8');
   conn.on('data', onConnData);
