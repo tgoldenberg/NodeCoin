@@ -23,8 +23,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
     IS_CONNECTED = true;
     let type = 'VERSION';
     client.write([ type, version, lastBlockHash ].join(DELIMITER));
-
-    // connect client to peer in Redux store
+    // PEER CONNECTED
     store.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client });
   });
 
@@ -53,6 +52,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           break;
         }
         console.log('> Synced with peer'.blue);
+        return true;
         break;
 
       // Peer requests block headers for up to 50 blocks
@@ -114,7 +114,6 @@ async function connectWithPeer(peer, lastBlockHash, version) {
         if (!lastBlock) {
           break;
         }
-        console.log('> Prev hash : ', lastBlock.getBlockHeaderHash(), block.previousHash);
         if (block.previousHash === lastBlock.getBlockHeaderHash()) {
           // add block to blockchain
           newBlock = new BlockModel(block);
@@ -129,7 +128,13 @@ async function connectWithPeer(peer, lastBlockHash, version) {
 
   client.on('close', () => {
     console.log('> Connection closed');
-  })
+  });
+  client.on('timeout', () => {
+    console.log('> Connection timed out ');
+  });
+  client.on('error', (err) => {
+    console.error(err);
+  });
 }
 
 export default connectWithPeer;

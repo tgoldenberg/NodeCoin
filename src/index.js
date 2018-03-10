@@ -254,7 +254,12 @@ function startup() {
       allPeers = [ ];
       channel.members.each(member => {
         if (member.id !== ipAddr) {
-          allPeers.push({ ip: member.id });
+          allPeers.push({
+            ip: member.id,
+            synced: false,
+            connected: false,
+            client: null
+          });
         }
       });
       allPeers = allPeers.slice(0, MAX_PEERS);
@@ -276,7 +281,12 @@ function startup() {
     channel.bind('pusher:member_added', async function(member) {
       console.log('> Member added: '.gray, member);
       let allPeers = store.getState().allPeers;
-      allPeers.push({ ip: member.id });
+      allPeers.push({
+        ip: member.id,
+        connected: false,
+        client: null,
+        synced: false
+      });
       store.dispatch({ type: 'SET_PEERS', allPeers });
       let lastBlock = store.getState().lastBlock;
       let lastBlockHash = lastBlock.getBlockHeaderHash();

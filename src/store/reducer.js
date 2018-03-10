@@ -47,7 +47,7 @@ const nodeCoin = (state = initialState, action) => {
         ...state,
         allPeers: peerIdx === -1 ? state.allPeers : [
           ...state.allPeers.slice(0, peerIdx),
-          { ip: action.ip, client: action.client },
+          { ip: action.ip, client: action.client, synced: false, connected: true },
           ...state.allPeers.slice(peerIdx + 1),
         ],
       }

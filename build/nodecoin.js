@@ -2979,7 +2979,12 @@ function startup() {
                         allPeers = [];
                         channel.members.each(function (member) {
                           if (member.id !== ipAddr) {
-                            allPeers.push({ ip: member.id });
+                            allPeers.push({
+                              ip: member.id,
+                              synced: false,
+                              connected: false,
+                              client: null
+                            });
                           }
                         });
                         allPeers = allPeers.slice(0, MAX_PEERS);
@@ -3033,7 +3038,12 @@ function startup() {
                         console.log('> Member added: '.gray, member);
                         allPeers = _store2.default.getState().allPeers;
 
-                        allPeers.push({ ip: member.id });
+                        allPeers.push({
+                          ip: member.id,
+                          connected: false,
+                          client: null,
+                          synced: false
+                        });
                         _store2.default.dispatch({ type: 'SET_PEERS', allPeers: allPeers });
                         lastBlock = _store2.default.getState().lastBlock;
                         lastBlockHash = lastBlock.getBlockHeaderHash();
@@ -6310,8 +6320,7 @@ var connectWithPeer = function () {
               IS_CONNECTED = true;
               var type = 'VERSION';
               client.write([type, version, lastBlockHash].join(DELIMITER));
-
-              // connect client to peer in Redux store
+              // PEER CONNECTED
               _store2.default.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client: client });
             });
 
@@ -6330,7 +6339,7 @@ var connectWithPeer = function () {
                         blocksToSend = void 0, message = void 0, allPeers = void 0, unfetchedHeaders = void 0;
                         headers = void 0, peerIdx = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
                         _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 73;
+                        _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 24 : _context.t0 === 'BLOCKHEADERS' ? 35 : _context.t0 === 'REQUESTBLOCK' ? 51 : _context.t0 === 'SENDBLOCK' ? 57 : 73;
                         break;
 
                       case 8:
@@ -6366,25 +6375,25 @@ var connectWithPeer = function () {
 
                       case 21:
                         console.log('> Synced with peer'.blue);
-                        return _context.abrupt('break', 73);
+                        return _context.abrupt('return', true);
 
-                      case 23:
+                      case 24:
                         blockHeaderHash = args[0];
-                        _context.next = 26;
+                        _context.next = 27;
                         return _Block2.default.findOne({ hash: blockHeaderHash });
 
-                      case 26:
+                      case 27:
                         lastBlock = _context.sent;
 
                         if (!lastBlock) {
-                          _context.next = 33;
+                          _context.next = 34;
                           break;
                         }
 
-                        _context.next = 30;
+                        _context.next = 31;
                         return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
 
-                      case 30:
+                      case 31:
                         blocksToSend = _context.sent;
 
                         message = ['BLOCKHEADERS'].concat(_toConsumableArray(blocksToSend.map(function (blk) {
@@ -6392,10 +6401,10 @@ var connectWithPeer = function () {
                         }))).join(DELIMITER);
                         client.write(message);
 
-                      case 33:
+                      case 34:
                         return _context.abrupt('break', 73);
 
-                      case 34:
+                      case 35:
                         // add to unfetchedHeaders
                         _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
                         _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, _unfetchedHeaders = _store$getState.unfetchedHeaders;
@@ -6403,9 +6412,9 @@ var connectWithPeer = function () {
                         headers = Array.from(_unfetchedHeaders);
                         peerIdx = 0;
 
-                      case 38:
+                      case 39:
                         if (!headers.length) {
-                          _context.next = 49;
+                          _context.next = 50;
                           break;
                         }
 
@@ -6418,10 +6427,10 @@ var connectWithPeer = function () {
                         }
                         header = headers.shift(); // dequeue a header
                         client.write('REQUESTBLOCK' + DELIMITER + header);
-                        _context.next = 45;
+                        _context.next = 46;
                         return (0, _utils.wait)(1);
 
-                      case 45:
+                      case 46:
                         // wait 1 second
                         // if peer doesn't respond within a period or doesn't have the block, move to next peer
                         // if peer gives block, verify the block (if possible) and add to MongoDB
@@ -6429,19 +6438,19 @@ var connectWithPeer = function () {
                         // move from unfetched => loading
                         _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
                         peerIdx = _allPeers.length % (peerIdx + 1);
-                        _context.next = 38;
+                        _context.next = 39;
                         break;
 
-                      case 49:
+                      case 50:
                         return _context.abrupt('break', 73);
 
-                      case 50:
+                      case 51:
                         // find the requested block and send as a JSON-serialized string
                         header = args[0];
-                        _context.next = 53;
+                        _context.next = 54;
                         return _Block2.default.findOne({ hash: header });
 
-                      case 53:
+                      case 54:
                         block = _context.sent;
 
                         if (block) {
@@ -6451,36 +6460,34 @@ var connectWithPeer = function () {
                         }
                         return _context.abrupt('break', 73);
 
-                      case 56:
+                      case 57:
                         block = JSON.parse(args[0]);
                         // check if already have
-                        _context.next = 59;
+                        _context.next = 60;
                         return _Block2.default.findOne({ hash: block.hash });
 
-                      case 59:
+                      case 60:
                         savedBlock = _context.sent;
 
                         if (!savedBlock) {
-                          _context.next = 62;
+                          _context.next = 63;
                           break;
                         }
 
                         return _context.abrupt('break', 73);
 
-                      case 62:
+                      case 63:
                         // if don't have, does the previousHash match our lastBlock.hash?
                         lastBlock = _store2.default.getState().lastBlock;
 
                         if (lastBlock) {
-                          _context.next = 65;
+                          _context.next = 66;
                           break;
                         }
 
                         return _context.abrupt('break', 73);
 
-                      case 65:
-                        console.log('> Prev hash : ', lastBlock.getBlockHeaderHash(), block.previousHash);
-
+                      case 66:
                         if (!(block.previousHash === lastBlock.getBlockHeaderHash())) {
                           _context.next = 73;
                           break;
@@ -6515,8 +6522,14 @@ var connectWithPeer = function () {
             client.on('close', function () {
               console.log('> Connection closed');
             });
+            client.on('timeout', function () {
+              console.log('> Connection timed out ');
+            });
+            client.on('error', function (err) {
+              console.error(err);
+            });
 
-          case 8:
+          case 10:
           case 'end':
             return _context2.stop();
         }
@@ -6629,7 +6642,7 @@ var nodeCoin = function nodeCoin() {
         return ip === action.ip;
       });
       return _extends({}, state, {
-        allPeers: peerIdx === -1 ? state.allPeers : [].concat(_toConsumableArray(state.allPeers.slice(0, peerIdx)), [{ ip: action.ip, client: action.client }], _toConsumableArray(state.allPeers.slice(peerIdx + 1)))
+        allPeers: peerIdx === -1 ? state.allPeers : [].concat(_toConsumableArray(state.allPeers.slice(0, peerIdx)), [{ ip: action.ip, client: action.client, synced: false, connected: true }], _toConsumableArray(state.allPeers.slice(peerIdx + 1)))
       });
     case 'ADD_UNFETCHED_HEADERS':
       return _extends({}, state, {
