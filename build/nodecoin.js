@@ -2662,12 +2662,12 @@ function handleConnection(conn) {
     };
   }();
 
-  var remoteAddr = conn.remoteAddr + ':' + conn.remotePort;
+  var remoteAddr = conn.remoteAddress + ':' + conn.remotePort;
 
-  var _conn$remoteAddr$spli = conn.remoteAddr.split(':'),
-      _conn$remoteAddr$spli2 = _slicedToArray(_conn$remoteAddr$spli, 2),
-      ip = _conn$remoteAddr$spli2[0],
-      port = _conn$remoteAddr$spli2[1];
+  var _remoteAddr$split = remoteAddr.split(':'),
+      _remoteAddr$split2 = _slicedToArray(_remoteAddr$split, 2),
+      ip = _remoteAddr$split2[0],
+      port = _remoteAddr$split2[1];
 
   console.log(('> New client connection from ' + remoteAddr).blue);
   // PEER CONNECTED
