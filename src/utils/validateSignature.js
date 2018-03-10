@@ -39,6 +39,14 @@ export function verifyUnlock(message, publicAddress, signature) {
   }
 }
 
+let privateKey = '0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347';
+let message = '5b28c8abc6dd6ecdb7e7704d348ab9f0485e5a115997fada69f9b4883964c82f';
+let publicKey = '044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba';
+let scriptSig = '3046022100a035ca83d2feaf8ac1747304b5a4bf0201ddb1482bf9e4f2a1908c432c951ed8022100a9d4abe7d462cbf0b6803ca7cad5ed653ef944c7a4b331d70883f13d9bc8995a';
+
+console.log('> Signing tx: ', unlockTransaction(message, publicKey, privateKey));
+console.log('> Verifying unlock: ', verifyUnlock(message, publicKey, scriptSig));
+
 export function testVerification(publicKeyScript, privateKey) {
   const [ message, publicKey ] = publicKeyScript.split(' ');
   const signature = unlockTransaction(message, publicKey, privateKey);

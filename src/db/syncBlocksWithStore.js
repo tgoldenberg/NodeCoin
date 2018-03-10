@@ -12,7 +12,7 @@ const COINBASE_REWARD = 50 * COIN;
 const MIN_FEES = 5;
 const GENESIS_PREVIOUS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 
-async function isValidBlock(block, prevBlock) {
+export async function isValidBlock(block, prevBlock) {
   const { txs } = block;
   for (let i = 0; i < txs.length; i++) {
     let isValid = await isValidTransaction(txs[i]);
@@ -43,7 +43,7 @@ async function isValidBlock(block, prevBlock) {
   return true;
 }
 
-async function isValidTransaction(tx, blockHeaderHash) {
+export async function isValidTransaction(tx, blockHeaderHash) {
   // verify has "vin" and "vout" as Arrays
   if (!tx.vin || !tx.vin.length || !tx.vout || !tx.vout.length) {
     return false;
@@ -67,6 +67,7 @@ async function isValidTransaction(tx, blockHeaderHash) {
     }
     // find previous UTXO
     let prevTxBlock = await BlockModel.findOne({ 'txs.hash': txin.prevout });
+    console.log('> Prev tx block: ', prevTxBlock);
     if (!prevTxBlock) {
       return false;
     }
@@ -83,11 +84,13 @@ async function isValidTransaction(tx, blockHeaderHash) {
     // verify signature
     let publicKeyScript = prevTx.vout[txin.n].scriptPubKey;
     const [ message, publicKey ] = publicKeyScript.split(' ');
+    console.log('> Verify unlock: ', message, publicKey, txin.scriptSig);
     let isVerified = verifyUnlock(message, publicKey, txin.scriptSig);
     if (!isVerified) {
       return false;
     }
   }
+  console.log('> Verified inputs');
 
   // check transaction outputs
   for (let i = 0; i < tx.vout.length; i++) {
@@ -101,7 +104,7 @@ async function isValidTransaction(tx, blockHeaderHash) {
   return true;
 }
 
-async function syncBlocksWithStore() {
+export async function syncBlocksWithStore() {
   console.log('> Setting up and verifying block chain...'.gray);
   let blocks = await BlockModel.find({ });
   let lastBlock = blocks[blocks.length - 1];
@@ -147,5 +150,3 @@ export function formatBlock(block) {
   newBlock.setHeader(block);
   return newBlock;
 }
-
-export default syncBlocksWithStore;

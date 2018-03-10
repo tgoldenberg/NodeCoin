@@ -318,6 +318,14 @@ function verifyUnlock(message, publicAddress, signature) {
   }
 }
 
+var privateKey = '0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347';
+var message = '5b28c8abc6dd6ecdb7e7704d348ab9f0485e5a115997fada69f9b4883964c82f';
+var publicKey = '044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba';
+var scriptSig = '3046022100a035ca83d2feaf8ac1747304b5a4bf0201ddb1482bf9e4f2a1908c432c951ed8022100a9d4abe7d462cbf0b6803ca7cad5ed653ef944c7a4b331d70883f13d9bc8995a';
+
+console.log('> Signing tx: ', unlockTransaction(message, publicKey, privateKey));
+console.log('> Verifying unlock: ', verifyUnlock(message, publicKey, scriptSig));
+
 function testVerification(publicKeyScript, privateKey) {
   var _publicKeyScript$spli = publicKeyScript.split(' '),
       _publicKeyScript$spli2 = _slicedToArray(_publicKeyScript$spli, 2),
@@ -841,12 +849,13 @@ module.exports = isKey;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.syncBlocksWithStore = exports.isValidTransaction = exports.isValidBlock = undefined;
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var isValidBlock = function () {
+var isValidBlock = exports.isValidBlock = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(block, prevBlock) {
     var txs, i, isValid, prevHash, difficulty, target;
     return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -938,7 +947,7 @@ var isValidBlock = function () {
   };
 }();
 
-var isValidTransaction = function () {
+var isValidTransaction = exports.isValidTransaction = function () {
   var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(tx, blockHeaderHash) {
     var _this = this;
 
@@ -1006,8 +1015,10 @@ var isValidTransaction = function () {
                     case 9:
                       prevTxBlock = _context2.sent;
 
+                      console.log('> Prev tx block: ', prevTxBlock);
+
                       if (prevTxBlock) {
-                        _context2.next = 12;
+                        _context2.next = 13;
                         break;
                       }
 
@@ -1015,14 +1026,14 @@ var isValidTransaction = function () {
                         v: false
                       });
 
-                    case 12:
+                    case 13:
                       prevTx = (0, _find2.default)(prevTxBlock.txs, function (_ref3) {
                         var hash = _ref3.hash;
                         return hash === txin.prevout;
                       });
 
                       if (prevTx) {
-                        _context2.next = 15;
+                        _context2.next = 16;
                         break;
                       }
 
@@ -1030,17 +1041,17 @@ var isValidTransaction = function () {
                         v: false
                       });
 
-                    case 15:
+                    case 16:
                       txinValue += prevTx.vout[txin.n].nValue;
                       // ensure that prevout is UXTO - prevent double spending
-                      _context2.next = 18;
+                      _context2.next = 19;
                       return _Block4.default.find({ "txs.vin.prevout": txin.prevout });
 
-                    case 18:
+                    case 19:
                       alreadySpentTxs = _context2.sent;
 
                       if (!(alreadySpentTxs.length > 1)) {
-                        _context2.next = 21;
+                        _context2.next = 22;
                         break;
                       }
 
@@ -1048,14 +1059,16 @@ var isValidTransaction = function () {
                         v: false
                       });
 
-                    case 21:
+                    case 22:
                       // verify signature
                       publicKeyScript = prevTx.vout[txin.n].scriptPubKey;
                       _publicKeyScript$spli = publicKeyScript.split(' '), _publicKeyScript$spli2 = _slicedToArray(_publicKeyScript$spli, 2), message = _publicKeyScript$spli2[0], publicKey = _publicKeyScript$spli2[1];
+
+                      console.log('> Verify unlock: ', message, publicKey, txin.scriptSig);
                       isVerified = (0, _validateSignature.verifyUnlock)(message, publicKey, txin.scriptSig);
 
                       if (isVerified) {
-                        _context2.next = 26;
+                        _context2.next = 28;
                         break;
                       }
 
@@ -1063,7 +1076,7 @@ var isValidTransaction = function () {
                         v: false
                       });
 
-                    case 26:
+                    case 28:
                     case 'end':
                       return _context2.stop();
                   }
@@ -1096,36 +1109,39 @@ var isValidTransaction = function () {
             break;
 
           case 15:
+            console.log('> Verified inputs');
+
+            // check transaction outputs
             i = 0;
 
-          case 16:
+          case 17:
             if (!(i < tx.vout.length)) {
-              _context3.next = 24;
+              _context3.next = 25;
               break;
             }
 
             txout = tx.vout[i];
 
             if (!(typeof txout.nValue != 'number' || typeof txout.scriptPubKey != 'string')) {
-              _context3.next = 20;
+              _context3.next = 21;
               break;
             }
 
             return _context3.abrupt('return', false);
 
-          case 20:
+          case 21:
             txoutValue += txout.nValue;
 
-          case 21:
+          case 22:
             i++;
-            _context3.next = 16;
+            _context3.next = 17;
             break;
 
-          case 24:
+          case 25:
             totalFees = txinValue - txoutValue;
             return _context3.abrupt('return', true);
 
-          case 26:
+          case 27:
           case 'end':
             return _context3.stop();
         }
@@ -1138,7 +1154,7 @@ var isValidTransaction = function () {
   };
 }();
 
-var syncBlocksWithStore = function () {
+var syncBlocksWithStore = exports.syncBlocksWithStore = function () {
   var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
     var blocks, lastBlock, numBlocks, areBlocksValid, i, block, prevBlock, isValid, _block, newBlock, _lastBlock, difficulty, nonce;
 
@@ -1272,8 +1288,6 @@ function formatBlock(block) {
   newBlock.setHeader(block);
   return newBlock;
 }
-
-exports.default = syncBlocksWithStore;
 
 /***/ }),
 /* 26 */
@@ -2209,7 +2223,7 @@ exports.seedBlocks = exports.myWallet = undefined;
 
 var seedBlocks = exports.seedBlocks = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-    var genesisBlock, savedGenesisBlock, remaining, prev, amount, header, blockHeaderHash, target, block, txId, transactions, newBlock, newBlock2;
+    var genesisBlock, savedGenesisBlock, remaining, prev, amount, header, blockHeaderHash, target, block, transactions, newBlock, newBlock2;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -2242,12 +2256,12 @@ var seedBlocks = exports.seedBlocks = function () {
               blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
             }
             block = new _Block2.default(header, []);
-            txId = (0, _jsSha2.default)(block.getBlockHeaderHash() + '0');
+            // let txId = SHA256(block.getBlockHeaderHash() + '0');
 
             remaining -= amount * COIN;
             transactions = [{
               vin: [{ n: 'COINBASE', prevout: null }],
-              vout: [{ nValue: COINBASE_REWARD, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, myWallet.publicKey) }]
+              vout: [{ nValue: COINBASE_REWARD, scriptPubKey: (0, _validateSignature.lockTransaction)(COINBASE_MSG, myWallet.publicKey) }]
             }, {
               vin: [{ n: 0, prevout: prev.txs[0].hash, scriptSig: (0, _validateSignature.unlockTransaction)(prev.txs[0].hash, myWallet.publicKey, myWallet.privateKey) }],
               vout: [{ nValue: amount * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, friendWallet.pulicKey) }, { nValue: remaining, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, myWallet.publicKey) }]
@@ -2259,10 +2273,10 @@ var seedBlocks = exports.seedBlocks = function () {
             newBlock = new _Block4.default(block.getDBFormat());
 
             console.log('> New block 2: '.blue, newBlock.hash);
-            _context.next = 23;
+            _context.next = 22;
             return newBlock.save();
 
-          case 23:
+          case 22:
 
             // BLOCK 3
             prev = (0, _syncBlocksWithStore.formatBlock)(newBlock);
@@ -2279,7 +2293,7 @@ var seedBlocks = exports.seedBlocks = function () {
             remaining -= amount * COIN;
             transactions = [{
               vin: [{ n: 'COINBASE', prevout: null }],
-              vout: [{ nValue: COINBASE_REWARD, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, myWallet.publicKey) }]
+              vout: [{ nValue: COINBASE_REWARD, scriptPubKey: (0, _validateSignature.lockTransaction)(COINBASE_MSG, myWallet.publicKey) }]
             }, {
               vin: [{ n: 1, prevout: prev.txs[1].hash, scriptSig: (0, _validateSignature.unlockTransaction)(prev.txs[0].hash, myWallet.publicKey, myWallet.privateKey) }],
               vout: [{ nValue: amount * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, friendWallet.pulicKey) }, { nValue: remaining, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, myWallet.publicKey) }]
@@ -2290,13 +2304,13 @@ var seedBlocks = exports.seedBlocks = function () {
             newBlock2 = new _Block4.default(block.getDBFormat());
 
             console.log('> New block 3: '.blue, newBlock2.hash);
-            _context.next = 38;
+            _context.next = 37;
             return newBlock2.save();
 
-          case 38:
+          case 37:
             return _context.abrupt('return', savedGenesisBlock);
 
-          case 39:
+          case 38:
           case 'end':
             return _context.stop();
         }
@@ -2338,6 +2352,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 var COIN = 100000000;
 var COINBASE_REWARD = 50 * COIN;
+var COINBASE_MSG = (0, _jsSha2.default)('00000000');
 
 var myWallet = exports.myWallet = {
   privateKey: '0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347',
@@ -2428,6 +2443,8 @@ var _address = __webpack_require__(26);
 
 var _getWalletData = __webpack_require__(60);
 
+var _syncBlocksWithStore = __webpack_require__(25);
+
 var _Block = __webpack_require__(3);
 
 var _Block2 = _interopRequireDefault(_Block);
@@ -2482,9 +2499,9 @@ var _store = __webpack_require__(17);
 
 var _store2 = _interopRequireDefault(_store);
 
-var _syncBlocksWithStore = __webpack_require__(25);
+var _uniq = __webpack_require__(157);
 
-var _syncBlocksWithStore2 = _interopRequireDefault(_syncBlocksWithStore);
+var _uniq2 = _interopRequireDefault(_uniq);
 
 var _validateSignature = __webpack_require__(6);
 
@@ -2517,6 +2534,7 @@ var COIN = 100000000;
 var DEFAULT_PORT = 8334; // default port for net connections
 var MAX_PEERS = 25;
 var DELIMITER = '~~~~~';
+var MIN_TX_PER_BLOCK = 2;
 
 var reg = new RegExp(DELIMITER, 'gi');
 
@@ -2789,7 +2807,7 @@ function startup() {
               vin.push({
                 prevout: tx.txid,
                 n: tx.n,
-                scriptSig: (0, _validateSignature.unlockTransaction)(tx.id, publicKey, privateKey)
+                scriptSig: (0, _validateSignature.unlockTransaction)(tx.msg, publicKey, privateKey)
               });
               vout.push({
                 scriptPubKey: tx.txid + ' ' + toAddress,
@@ -2908,40 +2926,40 @@ function startup() {
     };
   }());
 
-  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
     var _this = this;
 
     var ipAddr, dbConnection, server, client, _ref7, numBlocks, lastBlock, channel;
 
-    return regeneratorRuntime.wrap(function _callee9$(_context9) {
+    return regeneratorRuntime.wrap(function _callee10$(_context10) {
       while (1) {
-        switch (_context9.prev = _context9.next) {
+        switch (_context10.prev = _context10.next) {
           case 0:
-            _context9.next = 2;
+            _context10.next = 2;
             return (0, _findIPAddress2.default)();
 
           case 2:
-            ipAddr = _context9.sent;
+            ipAddr = _context10.sent;
 
             console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
             // connect to local instance of MongoDB
-            _context9.next = 6;
+            _context10.next = 6;
             return (0, _connectToDB2.default)();
 
           case 6:
-            dbConnection = _context9.sent;
+            dbConnection = _context10.sent;
 
             console.log('> Connected to local MongoDB'.gray);
 
             // seed blocks
 
             if (!(process.env.SEED_BLOCKS === 'true')) {
-              _context9.next = 11;
+              _context10.next = 11;
               break;
             }
 
-            _context9.next = 11;
+            _context10.next = 11;
             return (0, _blocks.seedBlocks)();
 
           case 11:
@@ -2966,11 +2984,11 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context9.next = 17;
-            return (0, _syncBlocksWithStore2.default)();
+            _context10.next = 17;
+            return (0, _syncBlocksWithStore.syncBlocksWithStore)();
 
           case 17:
-            _ref7 = _context9.sent;
+            _ref7 = _context10.sent;
             numBlocks = _ref7.numBlocks;
             lastBlock = _ref7.lastBlock;
 
@@ -3120,17 +3138,57 @@ function startup() {
               // TODO: stop any ongoing requests with peer
             });
 
-            channel.bind('transaction:new', function (data) {
-              console.log('> transaction:new: ', data.tx.hash);
-              // is client synced?
-              var allPeers = _store2.default.getState().allPeers;
-              console.log('> Peers: ', allPeers);
-              // validate transaction
-              // add to memory pool of valid transactions
-            });
+            channel.bind('transaction:new', function () {
+              var _ref12 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(data) {
+                var isValid, allPeers, validPeers, allPeersSynced, isSynced;
+                return regeneratorRuntime.wrap(function _callee9$(_context9) {
+                  while (1) {
+                    switch (_context9.prev = _context9.next) {
+                      case 0:
+                        console.log('> transaction:new: ', data.tx);
+                        // validate transaction
+                        _context9.next = 3;
+                        return (0, _syncBlocksWithStore.isValidTransaction)(data.tx);
+
+                      case 3:
+                        isValid = _context9.sent;
+
+                        console.log('> Is tx valid: ', isValid);
+
+                        // is client synced?
+                        allPeers = _store2.default.getState().allPeers;
+                        validPeers = allPeers.filter(function (peer) {
+                          return !peer.unreachable && !peer.wrongVersion;
+                        });
+                        allPeersSynced = (0, _uniq2.default)(validPeers.map(function (_ref13) {
+                          var synced = _ref13.synced;
+                          return synced;
+                        }));
+                        isSynced = allPeersSynced.length === 1 && allPeersSynced[0];
+
+                        console.log('> Is node synced: ', isSynced);
+                        if (isSynced) {
+                          // check if previous hash is lastBlock
+                        } else {}
+
+                        // add to memory pool of valid transactions
+
+                      case 11:
+                      case 'end':
+                        return _context9.stop();
+                    }
+                  }
+                }, _callee9, _this);
+              }));
+
+              return function (_x12) {
+                return _ref12.apply(this, arguments);
+              };
+            }());
 
             channel.bind('block:new', function (data) {
               console.log('> block:new: ', data);
+
               // validate block
               // stop mining operation
               // add block to MongoDB and local state as "lastBlock"
@@ -3139,10 +3197,10 @@ function startup() {
 
           case 27:
           case 'end':
-            return _context9.stop();
+            return _context10.stop();
         }
       }
-    }, _callee9, this);
+    }, _callee10, this);
   })));
 }
 
@@ -3329,7 +3387,7 @@ var getWalletData = exports.getWalletData = function () {
   var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(address) {
     var _this2 = this;
 
-    var balance, utxoMap, blocks, i, block, j, tx, _loop2, k, txout, txAddress, utxo;
+    var balance, utxoMap, blocks, i, block, j, tx, _loop2, k, txout, txAddress, msg, utxo;
 
     return regeneratorRuntime.wrap(function _callee2$(_context4) {
       while (1) {
@@ -3429,7 +3487,9 @@ var getWalletData = exports.getWalletData = function () {
 
               if (txAddress == address) {
                 balance += txout.nValue / COIN;
-                utxoMap[tx.hash] = { nValue: txout.nValue / COIN, n: k };
+                msg = txout.scriptPubKey.split(' ')[0];
+
+                utxoMap[tx.hash] = { nValue: txout.nValue / COIN, n: k, msg: msg };
               }
             }
 
@@ -3448,7 +3508,8 @@ var getWalletData = exports.getWalletData = function () {
               return {
                 txid: txid,
                 nValue: utxoMap[txid].nValue,
-                n: utxoMap[txid].n
+                n: utxoMap[txid].n,
+                msg: utxoMap[txid].msg
               };
             });
             return _context4.abrupt('return', { utxo: utxo, balance: balance });
@@ -6807,6 +6868,287 @@ module.exports = require("ip");
 /***/ (function(module, exports) {
 
 module.exports = require("dotenv");
+
+/***/ }),
+/* 157 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseUniq = __webpack_require__(158);
+
+/**
+ * Creates a duplicate-free version of an array, using
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * for equality comparisons, in which only the first occurrence of each element
+ * is kept. The order of result values is determined by the order they occur
+ * in the array.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Array
+ * @param {Array} array The array to inspect.
+ * @returns {Array} Returns the new duplicate free array.
+ * @example
+ *
+ * _.uniq([2, 1, 2]);
+ * // => [2, 1]
+ */
+function uniq(array) {
+  return (array && array.length) ? baseUniq(array) : [];
+}
+
+module.exports = uniq;
+
+
+/***/ }),
+/* 158 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var SetCache = __webpack_require__(94),
+    arrayIncludes = __webpack_require__(159),
+    arrayIncludesWith = __webpack_require__(163),
+    cacheHas = __webpack_require__(98),
+    createSet = __webpack_require__(164),
+    setToArray = __webpack_require__(102);
+
+/** Used as the size to enable large array optimizations. */
+var LARGE_ARRAY_SIZE = 200;
+
+/**
+ * The base implementation of `_.uniqBy` without support for iteratee shorthands.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {Function} [iteratee] The iteratee invoked per element.
+ * @param {Function} [comparator] The comparator invoked per element.
+ * @returns {Array} Returns the new duplicate free array.
+ */
+function baseUniq(array, iteratee, comparator) {
+  var index = -1,
+      includes = arrayIncludes,
+      length = array.length,
+      isCommon = true,
+      result = [],
+      seen = result;
+
+  if (comparator) {
+    isCommon = false;
+    includes = arrayIncludesWith;
+  }
+  else if (length >= LARGE_ARRAY_SIZE) {
+    var set = iteratee ? null : createSet(array);
+    if (set) {
+      return setToArray(set);
+    }
+    isCommon = false;
+    includes = cacheHas;
+    seen = new SetCache;
+  }
+  else {
+    seen = iteratee ? [] : result;
+  }
+  outer:
+  while (++index < length) {
+    var value = array[index],
+        computed = iteratee ? iteratee(value) : value;
+
+    value = (comparator || value !== 0) ? value : 0;
+    if (isCommon && computed === computed) {
+      var seenIndex = seen.length;
+      while (seenIndex--) {
+        if (seen[seenIndex] === computed) {
+          continue outer;
+        }
+      }
+      if (iteratee) {
+        seen.push(computed);
+      }
+      result.push(value);
+    }
+    else if (!includes(seen, computed, comparator)) {
+      if (seen !== result) {
+        seen.push(computed);
+      }
+      result.push(value);
+    }
+  }
+  return result;
+}
+
+module.exports = baseUniq;
+
+
+/***/ }),
+/* 159 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseIndexOf = __webpack_require__(160);
+
+/**
+ * A specialized version of `_.includes` for arrays without support for
+ * specifying an index to search from.
+ *
+ * @private
+ * @param {Array} [array] The array to inspect.
+ * @param {*} target The value to search for.
+ * @returns {boolean} Returns `true` if `target` is found, else `false`.
+ */
+function arrayIncludes(array, value) {
+  var length = array == null ? 0 : array.length;
+  return !!length && baseIndexOf(array, value, 0) > -1;
+}
+
+module.exports = arrayIncludes;
+
+
+/***/ }),
+/* 160 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseFindIndex = __webpack_require__(142),
+    baseIsNaN = __webpack_require__(161),
+    strictIndexOf = __webpack_require__(162);
+
+/**
+ * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} value The value to search for.
+ * @param {number} fromIndex The index to search from.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function baseIndexOf(array, value, fromIndex) {
+  return value === value
+    ? strictIndexOf(array, value, fromIndex)
+    : baseFindIndex(array, baseIsNaN, fromIndex);
+}
+
+module.exports = baseIndexOf;
+
+
+/***/ }),
+/* 161 */
+/***/ (function(module, exports) {
+
+/**
+ * The base implementation of `_.isNaN` without support for number objects.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
+ */
+function baseIsNaN(value) {
+  return value !== value;
+}
+
+module.exports = baseIsNaN;
+
+
+/***/ }),
+/* 162 */
+/***/ (function(module, exports) {
+
+/**
+ * A specialized version of `_.indexOf` which performs strict equality
+ * comparisons of values, i.e. `===`.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} value The value to search for.
+ * @param {number} fromIndex The index to search from.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function strictIndexOf(array, value, fromIndex) {
+  var index = fromIndex - 1,
+      length = array.length;
+
+  while (++index < length) {
+    if (array[index] === value) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+module.exports = strictIndexOf;
+
+
+/***/ }),
+/* 163 */
+/***/ (function(module, exports) {
+
+/**
+ * This function is like `arrayIncludes` except that it accepts a comparator.
+ *
+ * @private
+ * @param {Array} [array] The array to inspect.
+ * @param {*} target The value to search for.
+ * @param {Function} comparator The comparator invoked per element.
+ * @returns {boolean} Returns `true` if `target` is found, else `false`.
+ */
+function arrayIncludesWith(array, value, comparator) {
+  var index = -1,
+      length = array == null ? 0 : array.length;
+
+  while (++index < length) {
+    if (comparator(value, array[index])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+module.exports = arrayIncludesWith;
+
+
+/***/ }),
+/* 164 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Set = __webpack_require__(124),
+    noop = __webpack_require__(165),
+    setToArray = __webpack_require__(102);
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/**
+ * Creates a set object of `values`.
+ *
+ * @private
+ * @param {Array} values The values to add to the set.
+ * @returns {Object} Returns the new set.
+ */
+var createSet = !(Set && (1 / setToArray(new Set([,-0]))[1]) == INFINITY) ? noop : function(values) {
+  return new Set(values);
+};
+
+module.exports = createSet;
+
+
+/***/ }),
+/* 165 */
+/***/ (function(module, exports) {
+
+/**
+ * This method returns `undefined`.
+ *
+ * @static
+ * @memberOf _
+ * @since 2.3.0
+ * @category Util
+ * @example
+ *
+ * _.times(2, _.noop);
+ * // => [undefined, undefined]
+ */
+function noop() {
+  // No operation performed.
+}
+
+module.exports = noop;
+
 
 /***/ })
 /******/ ]);

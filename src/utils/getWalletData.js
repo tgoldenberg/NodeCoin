@@ -81,7 +81,8 @@ export async function getWalletData(address) {
         let txAddress = getAddress(txout.scriptPubKey.split(' ')[1]);
         if (txAddress == address) {
           balance += txout.nValue / COIN;
-          utxoMap[tx.hash] = { nValue: txout.nValue / COIN, n: k };
+          let msg = txout.scriptPubKey.split(' ')[0];
+          utxoMap[tx.hash] = { nValue: txout.nValue / COIN, n: k, msg };
         }
       }
     }
@@ -91,6 +92,7 @@ export async function getWalletData(address) {
       txid: txid,
       nValue: utxoMap[txid].nValue,
       n: utxoMap[txid].n,
+      msg: utxoMap[txid].msg,
     };
   })
   return { utxo, balance };

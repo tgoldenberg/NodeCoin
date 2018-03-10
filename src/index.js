@@ -3,6 +3,7 @@ import 'colors';
 
 import { getAddress, makeWallet } from './address';
 import { getWalletData, getWallets } from 'utils/getWalletData';
+import { isValidTransaction, syncBlocksWithStore } from 'db/syncBlocksWithStore';
 
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
@@ -18,7 +19,7 @@ import ip from 'ip';
 import net from 'net';
 import { seedBlocks } from '__mocks__/blocks';
 import store from 'store/store';
-import syncBlocksWithStore from 'db/syncBlocksWithStore';
+import uniq from 'lodash/uniq';
 import { unlockTransaction } from 'utils/validateSignature';
 import { wait } from 'utils';
 
@@ -39,6 +40,7 @@ const COIN = 100000000;
 const DEFAULT_PORT = 8334; // default port for net connections
 const MAX_PEERS = 25;
 const DELIMITER = '~~~~~';
+const MIN_TX_PER_BLOCK = 2;
 
 let reg = new RegExp(DELIMITER, 'gi');
 
@@ -167,6 +169,7 @@ function startup() {
     // get rid of spare change
     for (let i = 0; i < utxo.length; i++) {
       let tx = utxo[i];
+
       let remainder = tx.nValue - remaining;
       let spent = Math.min(remaining, tx.nValue);
       remaining -= spent;
@@ -174,7 +177,7 @@ function startup() {
       vin.push({
         prevout: tx.txid,
         n: tx.n,
-        scriptSig: unlockTransaction(tx.id, publicKey, privateKey),
+        scriptSig: unlockTransaction(tx.msg, publicKey, privateKey),
       });
       vout.push({
         scriptPubKey: `${tx.txid} ${toAddress}`,
@@ -324,17 +327,30 @@ function startup() {
       // TODO: stop any ongoing requests with peer
     });
 
-    channel.bind('transaction:new', function(data) {
-      console.log('> transaction:new: ', data.tx.hash);
+    channel.bind('transaction:new', async (data) => {
+      console.log('> transaction:new: ', data.tx);
+      // validate transaction
+      const isValid = await isValidTransaction(data.tx);
+      console.log('> Is tx valid: ', isValid);
+
       // is client synced?
       let allPeers = store.getState().allPeers;
-      console.log('> Peers: ', allPeers);
-      // validate transaction
+      let validPeers = allPeers.filter(peer => (!peer.unreachable && !peer.wrongVersion));
+      let allPeersSynced = uniq(validPeers.map(({ synced }) => synced));
+      let isSynced = allPeersSynced.length === 1 && allPeersSynced[0];
+      console.log('> Is node synced: ', isSynced);
+      if (isSynced) {
+        // check if previous hash is lastBlock
+      } else {
+
+      }
+
       // add to memory pool of valid transactions
     });
 
     channel.bind('block:new', function(data) {
       console.log('> block:new: ', data);
+
       // validate block
       // stop mining operation
       // add block to MongoDB and local state as "lastBlock"

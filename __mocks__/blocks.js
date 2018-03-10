@@ -8,6 +8,7 @@ import uuid from 'uuid';
 
 const COIN = 100000000;
 const COINBASE_REWARD = 50 * COIN;
+const COINBASE_MSG = SHA256('00000000')
 
 export const myWallet = {
   privateKey: '0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347',
@@ -47,12 +48,12 @@ export async function seedBlocks() {
     blockHeaderHash = SHA256(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
   }
   let block = new BlockClass(header, [ ]);
-  let txId = SHA256(block.getBlockHeaderHash() + '0');
+  // let txId = SHA256(block.getBlockHeaderHash() + '0');
   remaining -= (amount * COIN);
   let transactions = [
     {
       vin: [ { n: 'COINBASE', prevout: null } ],
-      vout: [ { nValue: COINBASE_REWARD, scriptPubKey: lockTransaction(txId, myWallet.publicKey) } ]
+      vout: [ { nValue: COINBASE_REWARD, scriptPubKey: lockTransaction(COINBASE_MSG, myWallet.publicKey) } ]
     },
     {
       vin: [ { n: 0, prevout: prev.txs[0].hash, scriptSig: unlockTransaction(prev.txs[0].hash, myWallet.publicKey, myWallet.privateKey) } ],
@@ -83,7 +84,7 @@ export async function seedBlocks() {
   transactions = [
     {
       vin: [ { n: 'COINBASE', prevout: null } ],
-      vout: [ { nValue: COINBASE_REWARD, scriptPubKey: lockTransaction(txId, myWallet.publicKey) } ]
+      vout: [ { nValue: COINBASE_REWARD, scriptPubKey: lockTransaction(COINBASE_MSG, myWallet.publicKey) } ]
     },
     {
       vin: [
