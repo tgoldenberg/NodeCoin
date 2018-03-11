@@ -3985,7 +3985,7 @@ function startup() {
 
             channel.bind('block:new', function () {
               var _ref14 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(data) {
-                var isSynced, lastBlock, isValid;
+                var isSynced, lastBlock, isValid, newBlock, formattedLastBlock;
                 return regeneratorRuntime.wrap(function _callee11$(_context11) {
                   while (1) {
                     switch (_context11.prev = _context11.next) {
@@ -4011,12 +4011,30 @@ function startup() {
 
                         console.log('> Is valid block: ', isValid);
                         // add block to MongoDB and local state as "lastBlock"
+
+                        if (!isValid) {
+                          _context11.next = 20;
+                          break;
+                        }
+
                         // stop mining operation
+                        _store2.default.dispatch({ type: 'STOP_MINING' });
+
+                        newBlock = new _Block4.default(data.block);
+                        _context11.next = 16;
+                        return newBlock.save();
+
+                      case 16:
+
+                        // set as new "lastBlock"
+                        formattedLastBlock = new _Block2.default(newBlock, newBlock.txs);
+
+                        _store2.default.dispatch({ type: 'ADD_BLOCK', block: formattedLastBlock });
                         // start operating for next block
-                        _context11.next = 13;
+                        _context11.next = 20;
                         return (0, _startMining.startMining)();
 
-                      case 13:
+                      case 20:
                       case 'end':
                         return _context11.stop();
                     }
@@ -4111,6 +4129,11 @@ var nodeCoin = function nodeCoin() {
         dbLoaded: true,
         lastBlock: action.lastBlock,
         numBlocks: action.numBlocks
+      });
+    case 'ADD_BLOCK':
+      return _extends({}, state, {
+        lastBlock: action.block,
+        numBlocks: state.numBlocks + 1
       });
     case 'SET_DIFFICULTY':
       return _extends({}, state, {

@@ -404,9 +404,19 @@ function startup() {
 
       console.log('> Is valid block: ', isValid)
       // add block to MongoDB and local state as "lastBlock"
-      // stop mining operation
-      // start operating for next block
-      await startMining();
+      if (isValid) {
+        // stop mining operation
+        store.dispatch({ type: 'STOP_MINING' });
+
+        let newBlock = new BlockModel(data.block);
+        await newBlock.save();
+
+        // set as new "lastBlock"
+        let formattedLastBlock = new BlockClass(newBlock, newBlock.txs);
+        store.dispatch({ type: 'ADD_BLOCK', block: formattedLastBlock });
+        // start operating for next block
+        await startMining();
+      }
     });
   });
 }

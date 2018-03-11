@@ -37,6 +37,12 @@ const nodeCoin = (state = initialState, action) => {
         lastBlock: action.lastBlock,
         numBlocks: action.numBlocks,
       };
+    case 'ADD_BLOCK':
+      return {
+        ...state,
+        lastBlock: action.block,
+        numBlocks: state.numBlocks + 1,
+      };
     case 'SET_DIFFICULTY':
       return {
         ...state,
