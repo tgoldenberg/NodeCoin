@@ -204,7 +204,7 @@ function startup() {
     };
     // broadcast to network
     // let url = 'http://localhost:3001/transaction';
-    let url = 'https://pusher-presence-auth.herokuapp.com/transaction';
+    let url = 'https://pusher-presence-auth.herokuapp.com/transactions/new';
     let body = {
       tx: transaction,
       timestamp: Date.now(),

@@ -4,10 +4,17 @@ import BlockClass from 'classes/Block';
 import BlockModel from 'models/Block';
 import { EventEmitter } from 'events';
 import SHA256 from 'js-sha256';
+import axios from 'axios';
 import { isNodeSynced } from '../connectWithPeer';
 import { isValidTransaction } from 'db/syncBlocksWithStore';
 import store from 'store/store';
 import uuid from 'uuid';
+
+const request = axios.create({
+  validateStatus: (status) => true,
+  responseType: 'json',
+  timeout: 10000,
+});
 
 const MIN_TX_PER_BLOCK = 1;
 
@@ -67,9 +74,13 @@ export async function startMining() {
   }
   let finalBlock = new BlockClass(header, finalizedTxs);
   console.log('> Finalized block: ', finalBlock);
-  // submit new block with nonce and txs
   // set "isMining" => false
   store.dispatch({ type: 'STOP_MINING' });
+  // submit new block with nonce and txs
+  let url = 'https://pusher-presence-auth.herokuapp.com/blocks/new';
+  let body = { block: finalBlock.getDBFormat() };
+  let response = await request.post(url, body);
+  console.log('> Send block response: '.yellow, response.data);
   return true;
 }
 
