@@ -2,9 +2,9 @@ import 'babel-polyfill';
 import 'colors';
 
 import { connectWithPeer, isNodeSynced } from './connectWithPeer';
+import { formatBlock, isValidBlock, isValidTransaction, syncBlocksWithStore } from 'db/syncBlocksWithStore';
 import { getAddress, makeWallet } from './address';
 import { getWalletData, getWallets } from 'utils/getWalletData';
-import { isValidBlock, isValidTransaction, syncBlocksWithStore } from 'db/syncBlocksWithStore';
 
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
@@ -152,7 +152,7 @@ function handleConnection(conn) {
             // set "isSynced" => true
             // start mining
           } else {
-            
+
           }
         } else {
           // if not, add to orphan transactions

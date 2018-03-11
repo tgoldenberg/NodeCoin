@@ -3112,11 +3112,11 @@ __webpack_require__(4);
 
 var _connectWithPeer = __webpack_require__(28);
 
+var _syncBlocksWithStore = __webpack_require__(10);
+
 var _address = __webpack_require__(61);
 
 var _getWalletData = __webpack_require__(159);
-
-var _syncBlocksWithStore = __webpack_require__(10);
 
 var _Block = __webpack_require__(2);
 
@@ -3381,7 +3381,7 @@ function handleConnection(conn) {
 
             case 69:
               // remove from orphan and unfetched / loading pools
-              _store2.default.dispatch({ type: 'NEW_BLOCK', block: formatBlock(newBlock) });
+              _store2.default.dispatch({ type: 'NEW_BLOCK', block: (0, _syncBlocksWithStore.formatBlock)(newBlock) });
               numBlocksToFetch = _store2.default.getState().unfetchedHeaders.size;
 
               if (numBlocksToFetch === 0) {
