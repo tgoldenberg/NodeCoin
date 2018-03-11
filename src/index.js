@@ -311,7 +311,7 @@ function startup() {
 
     // SUCCESSFULLY JOINED
     channel.bind('pusher:subscription_succeeded', async (members) => {
-      console.log('> Subscription succeeded: ', members);
+      console.log('> pusher:subscription_succeeded: ', members);
       allPeers = [ ];
       channel.members.each(member => {
         if (member.id !== ipAddr) {
@@ -340,7 +340,7 @@ function startup() {
 
     // MEMBER ADDED
     channel.bind('pusher:member_added', async function(member) {
-      console.log('> Member added: '.gray, member);
+      console.log('> pusher:member_added: '.gray, member);
       let allPeers = store.getState().allPeers;
       allPeers.push({
         ip: member.id,
@@ -365,7 +365,7 @@ function startup() {
 
     // MEMBER REMOVED
     channel.bind('pusher:member_removed', function(member){
-      console.log('> Member removed: ', member);
+      console.log('> pusher:member_removed: ', member);
       let allPeers = store.getState().allPeers;
       let newAllPeers = [ ];
       allPeers.forEach(peer => {
@@ -396,13 +396,12 @@ function startup() {
       const isSynced = await isNodeSynced();
       // validate block
       const lastBlock = await BlockModel.findOne({ }).sort({ timestamp: -1 }).limit(1);
-      console.log('> Prev block: ', lastBlock);
 
       const isValid = await isValidBlock(
         new BlockClass(data.block, data.block.txs),
         new BlockClass(lastBlock, lastBlock.txs),
       );
-      
+
       console.log('> Is valid block: ', isValid)
       // add block to MongoDB and local state as "lastBlock"
       // stop mining operation

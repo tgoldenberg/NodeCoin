@@ -161,6 +161,7 @@ export async function connectWithPeer(peer, lastBlockHash, version) {
       console.error(err);
     });
   } catch (e) {
-    console.warn(e);
+    // console.warn(e);
+    console.log('> Peer could not connect');
   }
 }

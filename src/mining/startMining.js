@@ -69,6 +69,12 @@ export async function startMining() {
   let target = Math.pow(2, 256 - header.difficulty);
   console.log('> Calculating nonce....'.yellow);
   while (parseInt(blockHeaderHash, 16) > target) {
+    // check that lastBlock has not changed
+    let currentLastBlockHash = store.getState().lastBlock.getBlockHeaderHash();
+    if (currentLastBlockHash !== lastBlock.hash) {
+      await startMining();
+      return false;
+    }
     header.nonce++;
     blockHeaderHash = SHA256(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
   }

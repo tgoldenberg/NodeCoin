@@ -1734,7 +1734,8 @@ var connectWithPeer = exports.connectWithPeer = function () {
                 console.error(err);
               });
             } catch (e) {
-              console.warn(e);
+              // console.warn(e);
+              console.log('> Peer could not connect');
             }
 
           case 4:
@@ -2785,7 +2786,7 @@ exports.emitter = exports.startMining = undefined;
 
 var startMining = exports.startMining = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-    var isSynced, txs, numTxs, finalizedTxs, i, tx, lastBlock, header, blockHeaderHash, target, finalBlock, url, body, response;
+    var isSynced, txs, numTxs, finalizedTxs, i, tx, lastBlock, header, blockHeaderHash, target, currentLastBlockHash, finalBlock, url, body, response;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -2860,10 +2861,34 @@ var startMining = exports.startMining = function () {
             target = Math.pow(2, 256 - header.difficulty);
 
             console.log('> Calculating nonce....'.yellow);
-            while (parseInt(blockHeaderHash, 16) > target) {
-              header.nonce++;
-              blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+
+          case 23:
+            if (!(parseInt(blockHeaderHash, 16) > target)) {
+              _context.next = 33;
+              break;
             }
+
+            // check that lastBlock has not changed
+            currentLastBlockHash = _store2.default.getState().lastBlock.getBlockHeaderHash();
+
+            if (!(currentLastBlockHash !== lastBlock.hash)) {
+              _context.next = 29;
+              break;
+            }
+
+            _context.next = 28;
+            return startMining();
+
+          case 28:
+            return _context.abrupt('return', false);
+
+          case 29:
+            header.nonce++;
+            blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+            _context.next = 23;
+            break;
+
+          case 33:
             finalBlock = new _Block2.default(header, finalizedTxs);
 
             console.log('> Finalized block: ', finalBlock);
@@ -2872,16 +2897,16 @@ var startMining = exports.startMining = function () {
             // submit new block with nonce and txs
             url = 'https://pusher-presence-auth.herokuapp.com/blocks/new';
             body = { block: finalBlock.getDBFormat() };
-            _context.next = 31;
+            _context.next = 40;
             return request.post(url, body);
 
-          case 31:
+          case 40:
             response = _context.sent;
 
             console.log('> Send block response: '.yellow, response.data);
             return _context.abrupt('return', true);
 
-          case 34:
+          case 43:
           case 'end':
             return _context.stop();
         }
@@ -3780,7 +3805,7 @@ function startup() {
                   while (1) {
                     switch (_context7.prev = _context7.next) {
                       case 0:
-                        console.log('> Subscription succeeded: ', members);
+                        console.log('> pusher:subscription_succeeded: ', members);
                         allPeers = [];
                         channel.members.each(function (member) {
                           if (member.id !== ipAddr) {
@@ -3842,7 +3867,7 @@ function startup() {
                   while (1) {
                     switch (_context9.prev = _context9.next) {
                       case 0:
-                        console.log('> Member added: '.gray, member);
+                        console.log('> pusher:member_added: '.gray, member);
                         allPeers = _store2.default.getState().allPeers;
 
                         allPeers.push({
@@ -3901,7 +3926,7 @@ function startup() {
 
             // MEMBER REMOVED
             channel.bind('pusher:member_removed', function (member) {
-              console.log('> Member removed: ', member);
+              console.log('> pusher:member_removed: ', member);
               var allPeers = _store2.default.getState().allPeers;
               var newAllPeers = [];
               allPeers.forEach(function (peer) {
@@ -3977,13 +4002,10 @@ function startup() {
 
                       case 6:
                         lastBlock = _context11.sent;
-
-                        console.log('> Prev block: ', lastBlock);
-
-                        _context11.next = 10;
+                        _context11.next = 9;
                         return (0, _syncBlocksWithStore.isValidBlock)(new _Block2.default(data.block, data.block.txs), new _Block2.default(lastBlock, lastBlock.txs));
 
-                      case 10:
+                      case 9:
                         isValid = _context11.sent;
 
 
@@ -3991,10 +4013,10 @@ function startup() {
                         // add block to MongoDB and local state as "lastBlock"
                         // stop mining operation
                         // start operating for next block
-                        _context11.next = 14;
+                        _context11.next = 13;
                         return (0, _startMining.startMining)();
 
-                      case 14:
+                      case 13:
                       case 'end':
                         return _context11.stop();
                     }
