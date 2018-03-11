@@ -354,6 +354,7 @@ function startup() {
       if (isValid) {
         // add to memory pool of valid transactions
         store.dispatch({ type: 'NEW_TX', tx: data.tx });
+        await isNodeSynced();
       } else {
         console.log('> Invalid tx: ', data.tx.hash);
       }

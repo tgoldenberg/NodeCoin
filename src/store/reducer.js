@@ -18,6 +18,7 @@ const initialState = {
   numBlocks: 0,
   // Mempool
   memoryPool: [ ], // list of valid transactions (txs)
+  pendingBlockTxs: [ ],
   unfetchedHeaders: new Set(),
   loadingHeaders: new Set(),
   orphanTransactions: new Set(),
@@ -100,6 +101,8 @@ const nodeCoin = (state = initialState, action) => {
       };
     case 'START_MINING':
       return { ...state, isMining: true };
+    case 'STOP_MINING':
+      return { ...state, isMining: false };
     default:
       return state;
   }

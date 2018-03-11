@@ -3308,14 +3308,24 @@ function startup() {
                       case 3:
                         isValid = _context10.sent;
 
-                        if (isValid) {
-                          // add to memory pool of valid transactions
-                          _store2.default.dispatch({ type: 'NEW_TX', tx: data.tx });
-                        } else {
-                          console.log('> Invalid tx: ', data.tx.hash);
+                        if (!isValid) {
+                          _context10.next = 10;
+                          break;
                         }
 
-                      case 5:
+                        // add to memory pool of valid transactions
+                        _store2.default.dispatch({ type: 'NEW_TX', tx: data.tx });
+                        _context10.next = 8;
+                        return (0, _connectWithPeer.isNodeSynced)();
+
+                      case 8:
+                        _context10.next = 11;
+                        break;
+
+                      case 10:
+                        console.log('> Invalid tx: ', data.tx.hash);
+
+                      case 11:
                       case 'end':
                         return _context10.stop();
                     }
@@ -6416,6 +6426,7 @@ var initialState = {
   numBlocks: 0,
   // Mempool
   memoryPool: [], // list of valid transactions (txs)
+  pendingBlockTxs: [],
   unfetchedHeaders: new Set(),
   loadingHeaders: new Set(),
   orphanTransactions: new Set(),
@@ -6491,6 +6502,8 @@ var nodeCoin = function nodeCoin() {
       });
     case 'START_MINING':
       return _extends({}, state, { isMining: true });
+    case 'STOP_MINING':
+      return _extends({}, state, { isMining: false });
     default:
       return state;
   }
@@ -7004,7 +7017,7 @@ exports.emitter = exports.startMining = undefined;
 
 var startMining = exports.startMining = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-    var isSynced;
+    var isSynced, txs, numTxs, finalizedTxs, i, tx, lastBlock, header, blockHeaderHash, target, finalBlock;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -7017,7 +7030,81 @@ var startMining = exports.startMining = function () {
           case 3:
             isSynced = _context.sent;
 
-          case 4:
+            if (isSynced) {
+              _context.next = 7;
+              break;
+            }
+
+            // set "isMining" => false
+            _store2.default.dispatch({ type: 'STOP_MINING' });
+            return _context.abrupt('return', false);
+
+          case 7:
+            // collect transactions from memory pool
+            txs = _store2.default.getState().memoryPool;
+            numTxs = txs.length;
+
+            // ensure that transaction size > MIN_TX_PER_BLOCK
+
+            if (!(numTxs < 0 || numTxs < MIN_TX_PER_BLOCK)) {
+              _context.next = 13;
+              break;
+            }
+
+            console.log('> Waiting for txs to mine...');
+
+            setTimeout(startMining, 10 * 1000); // check back in 10 seconds
+            return _context.abrupt('return', false);
+
+          case 13:
+
+            // verify all transactions in order - if any are invalid, remove from block
+            console.log('> Validating txs for block....'.yellow);
+            finalizedTxs = [];
+
+            for (i = 0; i < numTxs; i++) {
+              tx = txs[i];
+
+              if ((0, _syncBlocksWithStore.isValidTransaction)(tx)) {
+                finalizedTxs.push(tx);
+                // add to pendingBlockTxs
+              } else {
+                  // remove from txs
+                }
+            }
+            // get last block
+            _context.next = 18;
+            return _Block4.default.findOne({}).sort({ timestamp: -1 }).limit(1);
+
+          case 18:
+            lastBlock = _context.sent;
+
+            // set block header and implement nonce
+            header = {
+              version: 1,
+              previousHash: lastBlock.hash,
+              merkleHash: (0, _uuid2.default)(),
+              timestamp: new Date().getTime(),
+              difficulty: lastBlock.difficulty,
+              nonce: 0
+            };
+            blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+            target = Math.pow(2, 256 - header.difficulty);
+
+            console.log('> Calculating nonce....'.yellow);
+            while (parseInt(blockHeaderHash, 16) > target) {
+              header.nonce++;
+              blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
+            }
+            finalBlock = new _Block2.default(header, finalizedTxs);
+
+            console.log('> Finalized block: ', finalBlock);
+            // submit new block with nonce and txs
+            // set "isMining" => false
+            _store2.default.dispatch({ type: 'STOP_MINING' });
+            return _context.abrupt('return', true);
+
+          case 28:
           case 'end':
             return _context.stop();
         }
@@ -7030,17 +7117,39 @@ var startMining = exports.startMining = function () {
   };
 }();
 
+__webpack_require__(8);
+
+var _Block = __webpack_require__(53);
+
+var _Block2 = _interopRequireDefault(_Block);
+
+var _Block3 = __webpack_require__(3);
+
+var _Block4 = _interopRequireDefault(_Block3);
+
 var _events = __webpack_require__(167);
 
+var _jsSha = __webpack_require__(17);
+
+var _jsSha2 = _interopRequireDefault(_jsSha);
+
 var _connectWithPeer = __webpack_require__(151);
+
+var _syncBlocksWithStore = __webpack_require__(25);
 
 var _store = __webpack_require__(7);
 
 var _store2 = _interopRequireDefault(_store);
 
+var _uuid = __webpack_require__(55);
+
+var _uuid2 = _interopRequireDefault(_uuid);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+var MIN_TX_PER_BLOCK = 1;
 
 var emitter = exports.emitter = new _events.EventEmitter();
 
