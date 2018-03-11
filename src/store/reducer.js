@@ -21,6 +21,8 @@ const initialState = {
   unfetchedHeaders: new Set(),
   loadingHeaders: new Set(),
   orphanTransactions: new Set(),
+  // Mining
+  isMining: false,
 };
 
 let newUnfetchedHeaders, newLoadingHeaders, peerIdx, newMemoryPool;
@@ -96,6 +98,8 @@ const nodeCoin = (state = initialState, action) => {
         ...state,
         memoryPool: [ ...state.memoryPool, action.tx ],
       };
+    case 'START_MINING':
+      return { ...state, isMining: true };
     default:
       return state;
   }

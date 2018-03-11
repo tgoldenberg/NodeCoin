@@ -6418,7 +6418,9 @@ var initialState = {
   memoryPool: [], // list of valid transactions (txs)
   unfetchedHeaders: new Set(),
   loadingHeaders: new Set(),
-  orphanTransactions: new Set()
+  orphanTransactions: new Set(),
+  // Mining
+  isMining: false
 };
 
 var newUnfetchedHeaders = void 0,
@@ -6487,6 +6489,8 @@ var nodeCoin = function nodeCoin() {
       return _extends({}, state, {
         memoryPool: [].concat(_toConsumableArray(state.memoryPool), [action.tx])
       });
+    case 'START_MINING':
+      return _extends({}, state, { isMining: true });
     default:
       return state;
   }
@@ -6584,12 +6588,13 @@ exports.connectWithPeer = exports.isNodeSynced = undefined;
 
 var isNodeSynced = exports.isNodeSynced = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-    var allPeers, validPeers, allPeersSynced, isSynced;
+    var _store$getState, allPeers, isMining, validPeers, allPeersSynced, isSynced;
+
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            allPeers = _store2.default.getState().allPeers;
+            _store$getState = _store2.default.getState(), allPeers = _store$getState.allPeers, isMining = _store$getState.isMining;
             validPeers = allPeers.filter(function (peer) {
               return !peer.unreachable && !peer.wrongVersion;
             });
@@ -6599,18 +6604,19 @@ var isNodeSynced = exports.isNodeSynced = function () {
             }));
             isSynced = allPeersSynced.length === 1 && allPeersSynced[0];
 
-            if (!isSynced) {
-              _context.next = 7;
+            if (!(isSynced && !isMining)) {
+              _context.next = 8;
               break;
             }
 
-            _context.next = 7;
+            _store2.default.dispatch({ type: 'START_MINING' });
+            _context.next = 8;
             return (0, _startMining.startMining)();
 
-          case 7:
+          case 8:
             return _context.abrupt('return', isSynced);
 
-          case 8:
+          case 9:
           case 'end':
             return _context.stop();
         }
@@ -6655,7 +6661,7 @@ var connectWithPeer = exports.connectWithPeer = function () {
 
             client.on('data', function () {
               var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(data) {
-                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, allPeers, unfetchedHeaders, headers, peerIdx, header, block, savedBlock, newBlock, numBlocksToFetch, _store$getState, _allPeers, _unfetchedHeaders, _peer, msg;
+                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, allPeers, unfetchedHeaders, headers, peerIdx, header, block, savedBlock, newBlock, numBlocksToFetch, _store$getState2, _allPeers, _unfetchedHeaders, _peer, msg;
 
                 return regeneratorRuntime.wrap(function _callee2$(_context2) {
                   while (1) {
@@ -6742,7 +6748,7 @@ var connectWithPeer = exports.connectWithPeer = function () {
                         // add to unfetchedHeaders
                         _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
                         numBlocksToFetch = args.length;
-                        _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, _unfetchedHeaders = _store$getState.unfetchedHeaders;
+                        _store$getState2 = _store2.default.getState(), _allPeers = _store$getState2.allPeers, _unfetchedHeaders = _store$getState2.unfetchedHeaders;
 
                         headers = Array.from(_unfetchedHeaders);
                         peerIdx = 0;
@@ -6994,28 +7000,24 @@ module.exports = require("ip");
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.startMining = undefined;
+exports.emitter = exports.startMining = undefined;
 
 var startMining = exports.startMining = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+    var isSynced;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
             console.log('> Starting mining new block: ');
             // check that all peers are synced
+            _context.next = 3;
+            return (0, _connectWithPeer.isNodeSynced)();
 
-            // collect transactions from memory pool
+          case 3:
+            isSynced = _context.sent;
 
-            // ensure that transaction size > MIN_TX_PER_BLOCK
-
-            // verify all transactions in order - if any are invalid, remove from block
-
-            // set block header and implement nonce
-
-            // submit new block with nonce and txs
-
-          case 1:
+          case 4:
           case 'end':
             return _context.stop();
         }
@@ -7028,6 +7030,10 @@ var startMining = exports.startMining = function () {
   };
 }();
 
+var _events = __webpack_require__(167);
+
+var _connectWithPeer = __webpack_require__(151);
+
 var _store = __webpack_require__(7);
 
 var _store2 = _interopRequireDefault(_store);
@@ -7035,6 +7041,12 @@ var _store2 = _interopRequireDefault(_store);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+var emitter = exports.emitter = new _events.EventEmitter();
+
+emitter.on('event:new_block', function (data) {});
+
+emitter.on('event:node_synced', function (data) {});
 
 /***/ }),
 /* 157 */
@@ -7322,6 +7334,12 @@ module.exports = noop;
 /***/ (function(module, exports) {
 
 module.exports = require("dotenv");
+
+/***/ }),
+/* 167 */
+/***/ (function(module, exports) {
+
+module.exports = require("events");
 
 /***/ })
 /******/ ]);

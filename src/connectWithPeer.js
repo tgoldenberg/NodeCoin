@@ -14,11 +14,12 @@ const DELIMITER = '~~~~~'
 let reg = new RegExp(DELIMITER, 'gi');
 
 export async function isNodeSynced() {
-  let allPeers = store.getState().allPeers;
+  let { allPeers, isMining } = store.getState();
   let validPeers = allPeers.filter(peer => (!peer.unreachable && !peer.wrongVersion));
   let allPeersSynced = uniq(validPeers.map(({ synced }) => synced));
   let isSynced = allPeersSynced.length === 1 && allPeersSynced[0];
-  if (isSynced) {
+  if (isSynced && !isMining) {
+    store.dispatch({ type: 'START_MINING' });
     await startMining();
   }
   return isSynced;
