@@ -11,13 +11,24 @@ const DELIMITER = '~~~~~'
 
 let reg = new RegExp(DELIMITER, 'gi');
 
+export async function isNodeSynced() {
+  let allPeers = store.getState().allPeers;
+  let validPeers = allPeers.filter(peer => (!peer.unreachable && !peer.wrongVersion));
+  let allPeersSynced = uniq(validPeers.map(({ synced }) => synced));
+  let isSynced = allPeersSynced.length === 1 && allPeersSynced[0];
+  if (isSynced) {
+    await startMining();
+  }
+  return isSynced;
+}
+
 // First establish TCP/IP connection with peer
 // If cannot establish connection or version is incompatible, set "peer.unreachable" to true
 // exchange VERSION headers
 // exchange blocks if missing blocks
 // once receive blocks, start again with VERSION header until fully synced
 
-async function connectWithPeer(peer, lastBlockHash, version) {
+export async function connectWithPeer(peer, lastBlockHash, version) {
   let IS_VERSION_COMPATIBLE = false;
   let HAS_MORE_BLOCKS = false;
   // console.log('> Connecting with peer: ', peer, lastBlockHash, version);
@@ -57,6 +68,7 @@ async function connectWithPeer(peer, lastBlockHash, version) {
           break;
         }
         store.dispatch({ type: 'SYNC_PEER', ip: peer.ip });
+        await isNodeSynced();
         return true;
         break;
 
@@ -145,5 +157,3 @@ async function connectWithPeer(peer, lastBlockHash, version) {
     console.error(err);
   });
 }
-
-export default connectWithPeer;

@@ -83,7 +83,6 @@ export async function isValidTransaction(tx, blockHeaderHash) {
     // verify signature
     let publicKeyScript = prevTx.vout[txin.n].scriptPubKey;
     const [ message, publicKey ] = publicKeyScript.split(' ');
-    console.log('> Verify unlock: ', message, publicKey, txin.scriptSig);
     let isVerified = verifyUnlock(message, publicKey, txin.scriptSig);
     if (!isVerified) {
       return false;

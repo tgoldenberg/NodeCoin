@@ -70,14 +70,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 54);
+/******/ 	return __webpack_require__(__webpack_require__.s = 58);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var freeGlobal = __webpack_require__(33);
+var freeGlobal = __webpack_require__(34);
 
 /** Detect free variable `self`. */
 var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
@@ -124,8 +124,8 @@ module.exports = isArray;
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseIsNative = __webpack_require__(75),
-    getValue = __webpack_require__(80);
+var baseIsNative = __webpack_require__(79),
+    getValue = __webpack_require__(84);
 
 /**
  * Gets the native function at `key` of `object`.
@@ -154,13 +154,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _mongoose = __webpack_require__(18);
+var _mongoose = __webpack_require__(29);
 
 var _mongoose2 = _interopRequireDefault(_mongoose);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_mongoose2.default.Promise = __webpack_require__(61);
+_mongoose2.default.Promise = __webpack_require__(65);
 
 var schema = {
   hash: { type: String, required: true },
@@ -184,9 +184,9 @@ exports.default = BlockModel;
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Symbol = __webpack_require__(10),
-    getRawTag = __webpack_require__(76),
-    objectToString = __webpack_require__(77);
+var Symbol = __webpack_require__(11),
+    getRawTag = __webpack_require__(80),
+    objectToString = __webpack_require__(81);
 
 /** `Object#toString` result references. */
 var nullTag = '[object Null]',
@@ -271,7 +271,7 @@ var _ripemd = __webpack_require__(28);
 
 var _ripemd2 = _interopRequireDefault(_ripemd);
 
-var _jsSha = __webpack_require__(16);
+var _jsSha = __webpack_require__(17);
 
 var _jsSha2 = _interopRequireDefault(_jsSha);
 
@@ -361,19 +361,51 @@ function testVerification(publicKeyScript, privateKey) {
 
 /***/ }),
 /* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+__webpack_require__(8);
+
+var reducer = __webpack_require__(145);
+
+var Redux = __webpack_require__(146);
+
+var store = Redux.createStore(reducer);
+
+store.dispatch = addLoggingToDispatch(store);
+
+function addLoggingToDispatch(store) {
+  var rawDispatch = store.dispatch;
+  return function (action) {
+    console.log(('> Action: ' + action.type + ', (Keys:  ' + Object.keys(action).join(', ') + ')').gray);
+    // console.log('> prev state'.gray, store.getState().lastBlock);
+    // console.log(`> `.green);
+    var returnValue = rawDispatch(action);
+    // console.log('> next state'.green, store.getState());
+    // console.log(action.type.green);
+    return returnValue;
+  };
+}
+
+module.exports = store;
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports) {
 
 module.exports = require("colors");
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var listCacheClear = __webpack_require__(65),
-    listCacheDelete = __webpack_require__(66),
-    listCacheGet = __webpack_require__(67),
-    listCacheHas = __webpack_require__(68),
-    listCacheSet = __webpack_require__(69);
+var listCacheClear = __webpack_require__(69),
+    listCacheDelete = __webpack_require__(70),
+    listCacheGet = __webpack_require__(71),
+    listCacheHas = __webpack_require__(72),
+    listCacheSet = __webpack_require__(73);
 
 /**
  * Creates an list cache object.
@@ -404,10 +436,10 @@ module.exports = ListCache;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var eq = __webpack_require__(31);
+var eq = __webpack_require__(32);
 
 /**
  * Gets the index at which the `key` is found in `array` of key-value pairs.
@@ -431,7 +463,7 @@ module.exports = assocIndexOf;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var root = __webpack_require__(0);
@@ -443,7 +475,7 @@ module.exports = Symbol;
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports) {
 
 /**
@@ -480,7 +512,7 @@ module.exports = isObject;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var getNative = __webpack_require__(2);
@@ -492,10 +524,10 @@ module.exports = nativeCreate;
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isKeyable = __webpack_require__(89);
+var isKeyable = __webpack_require__(93);
 
 /**
  * Gets the data for `map`.
@@ -516,7 +548,7 @@ module.exports = getMapData;
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var baseGetTag = __webpack_require__(4),
@@ -551,10 +583,10 @@ module.exports = isSymbol;
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isSymbol = __webpack_require__(14);
+var isSymbol = __webpack_require__(15);
 
 /** Used as references for various `Number` constants. */
 var INFINITY = 1 / 0;
@@ -578,55 +610,17 @@ module.exports = toKey;
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports) {
 
 module.exports = require("js-sha256");
 
 /***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-__webpack_require__(7);
-
-var reducer = __webpack_require__(151);
-
-var Redux = __webpack_require__(152);
-
-var store = Redux.createStore(reducer);
-
-store.dispatch = addLoggingToDispatch(store);
-
-function addLoggingToDispatch(store) {
-  var rawDispatch = store.dispatch;
-  return function (action) {
-    console.log(('> Action: ' + action.type + ', (Keys:  ' + Object.keys(action).join(', ') + ')').gray);
-    // console.log('> prev state'.gray, store.getState().lastBlock);
-    // console.log(`> `.green);
-    var returnValue = rawDispatch(action);
-    // console.log('> next state'.green, store.getState());
-    // console.log(action.type.green);
-    return returnValue;
-  };
-}
-
-module.exports = store;
-
-/***/ }),
 /* 18 */
-/***/ (function(module, exports) {
-
-module.exports = require("mongoose");
-
-/***/ }),
-/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var createFind = __webpack_require__(62),
-    findIndex = __webpack_require__(47);
+var createFind = __webpack_require__(66),
+    findIndex = __webpack_require__(51);
 
 /**
  * Iterates over elements of `collection`, returning the first element
@@ -670,7 +664,7 @@ module.exports = find;
 
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var getNative = __webpack_require__(2),
@@ -683,14 +677,14 @@ module.exports = Map;
 
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var mapCacheClear = __webpack_require__(81),
-    mapCacheDelete = __webpack_require__(88),
-    mapCacheGet = __webpack_require__(90),
-    mapCacheHas = __webpack_require__(91),
-    mapCacheSet = __webpack_require__(92);
+var mapCacheClear = __webpack_require__(85),
+    mapCacheDelete = __webpack_require__(92),
+    mapCacheGet = __webpack_require__(94),
+    mapCacheHas = __webpack_require__(95),
+    mapCacheSet = __webpack_require__(96);
 
 /**
  * Creates a map cache object to store key-value pairs.
@@ -721,12 +715,36 @@ module.exports = MapCache;
 
 
 /***/ }),
+/* 21 */
+/***/ (function(module, exports) {
+
+/**
+ * Converts `set` to an array of its values.
+ *
+ * @private
+ * @param {Object} set The set to convert.
+ * @returns {Array} Returns the values.
+ */
+function setToArray(set) {
+  var index = -1,
+      result = Array(set.size);
+
+  set.forEach(function(value) {
+    result[++index] = value;
+  });
+  return result;
+}
+
+module.exports = setToArray;
+
+
+/***/ }),
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayLikeKeys = __webpack_require__(110),
-    baseKeys = __webpack_require__(117),
-    isArrayLike = __webpack_require__(42);
+var arrayLikeKeys = __webpack_require__(111),
+    baseKeys = __webpack_require__(118),
+    isArrayLike = __webpack_require__(45);
 
 /**
  * Creates an array of the own enumerable property names of `object`.
@@ -809,7 +827,7 @@ module.exports = isLength;
 /***/ (function(module, exports, __webpack_require__) {
 
 var isArray = __webpack_require__(1),
-    isSymbol = __webpack_require__(14);
+    isSymbol = __webpack_require__(15);
 
 /** Used to match property names within property paths. */
 var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
@@ -1061,12 +1079,10 @@ var isValidTransaction = exports.isValidTransaction = function () {
                       // verify signature
                       publicKeyScript = prevTx.vout[txin.n].scriptPubKey;
                       _publicKeyScript$spli = publicKeyScript.split(' '), _publicKeyScript$spli2 = _slicedToArray(_publicKeyScript$spli, 2), message = _publicKeyScript$spli2[0], publicKey = _publicKeyScript$spli2[1];
-
-                      console.log('> Verify unlock: ', message, publicKey, txin.scriptSig);
                       isVerified = (0, _validateSignature.verifyUnlock)(message, publicKey, txin.scriptSig);
 
                       if (isVerified) {
-                        _context2.next = 27;
+                        _context2.next = 26;
                         break;
                       }
 
@@ -1074,7 +1090,7 @@ var isValidTransaction = exports.isValidTransaction = function () {
                         v: false
                       });
 
-                    case 27:
+                    case 26:
                     case 'end':
                       return _context2.stop();
                   }
@@ -1249,11 +1265,11 @@ var syncBlocksWithStore = exports.syncBlocksWithStore = function () {
 
 exports.formatBlock = formatBlock;
 
-__webpack_require__(7);
+__webpack_require__(8);
 
 var _validateSignature = __webpack_require__(6);
 
-var _Block = __webpack_require__(48);
+var _Block = __webpack_require__(53);
 
 var _Block2 = _interopRequireDefault(_Block);
 
@@ -1261,11 +1277,11 @@ var _Block3 = __webpack_require__(3);
 
 var _Block4 = _interopRequireDefault(_Block3);
 
-var _find = __webpack_require__(19);
+var _find = __webpack_require__(18);
 
 var _find2 = _interopRequireDefault(_find);
 
-var _store = __webpack_require__(17);
+var _store = __webpack_require__(7);
 
 var _store2 = _interopRequireDefault(_store);
 
@@ -1298,11 +1314,11 @@ exports.Hash = Hash;
 exports.getAddress = getAddress;
 exports.makeWallet = makeWallet;
 var EC = __webpack_require__(27).ec;
-var secureRandom = __webpack_require__(56);
-var coinstring = __webpack_require__(57);
+var secureRandom = __webpack_require__(60);
+var coinstring = __webpack_require__(61);
 var RIPEMD160 = __webpack_require__(28);
-var secp256k1 = __webpack_require__(58);
-var crypto = __webpack_require__(59);
+var secp256k1 = __webpack_require__(62);
+var crypto = __webpack_require__(63);
 
 var ec = new EC('secp256k1');
 
@@ -1374,9 +1390,15 @@ module.exports = require("ripemd160");
 
 /***/ }),
 /* 29 */
+/***/ (function(module, exports) {
+
+module.exports = require("mongoose");
+
+/***/ }),
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseMatches = __webpack_require__(63),
+var baseMatches = __webpack_require__(67),
     baseMatchesProperty = __webpack_require__(127),
     identity = __webpack_require__(138),
     isArray = __webpack_require__(1),
@@ -1410,15 +1432,15 @@ module.exports = baseIteratee;
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ListCache = __webpack_require__(8),
-    stackClear = __webpack_require__(70),
-    stackDelete = __webpack_require__(71),
-    stackGet = __webpack_require__(72),
-    stackHas = __webpack_require__(73),
-    stackSet = __webpack_require__(74);
+var ListCache = __webpack_require__(9),
+    stackClear = __webpack_require__(74),
+    stackDelete = __webpack_require__(75),
+    stackGet = __webpack_require__(76),
+    stackHas = __webpack_require__(77),
+    stackSet = __webpack_require__(78);
 
 /**
  * Creates a stack cache object to store key-value pairs.
@@ -1443,7 +1465,7 @@ module.exports = Stack;
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports) {
 
 /**
@@ -1486,11 +1508,11 @@ module.exports = eq;
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var baseGetTag = __webpack_require__(4),
-    isObject = __webpack_require__(11);
+    isObject = __webpack_require__(12);
 
 /** `Object#toString` result references. */
 var asyncTag = '[object AsyncFunction]',
@@ -1529,7 +1551,7 @@ module.exports = isFunction;
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports) {
 
 /** Detect free variable `global` from Node.js. */
@@ -1539,7 +1561,7 @@ module.exports = freeGlobal;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports) {
 
 /** Used for built-in method references. */
@@ -1571,10 +1593,10 @@ module.exports = toSource;
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseIsEqualDeep = __webpack_require__(93),
+var baseIsEqualDeep = __webpack_require__(97),
     isObjectLike = __webpack_require__(5);
 
 /**
@@ -1605,12 +1627,12 @@ module.exports = baseIsEqual;
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var SetCache = __webpack_require__(94),
-    arraySome = __webpack_require__(97),
-    cacheHas = __webpack_require__(98);
+var SetCache = __webpack_require__(38),
+    arraySome = __webpack_require__(100),
+    cacheHas = __webpack_require__(39);
 
 /** Used to compose bitmasks for value comparisons. */
 var COMPARE_PARTIAL_FLAG = 1,
@@ -1694,10 +1716,62 @@ module.exports = equalArrays;
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseIsArguments = __webpack_require__(112),
+var MapCache = __webpack_require__(20),
+    setCacheAdd = __webpack_require__(98),
+    setCacheHas = __webpack_require__(99);
+
+/**
+ *
+ * Creates an array cache object to store unique values.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [values] The values to cache.
+ */
+function SetCache(values) {
+  var index = -1,
+      length = values == null ? 0 : values.length;
+
+  this.__data__ = new MapCache;
+  while (++index < length) {
+    this.add(values[index]);
+  }
+}
+
+// Add methods to `SetCache`.
+SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;
+SetCache.prototype.has = setCacheHas;
+
+module.exports = SetCache;
+
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports) {
+
+/**
+ * Checks if a `cache` value for `key` exists.
+ *
+ * @private
+ * @param {Object} cache The cache to query.
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function cacheHas(cache, key) {
+  return cache.has(key);
+}
+
+module.exports = cacheHas;
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var baseIsArguments = __webpack_require__(113),
     isObjectLike = __webpack_require__(5);
 
 /** Used for built-in method references. */
@@ -1736,11 +1810,11 @@ module.exports = isArguments;
 
 
 /***/ }),
-/* 38 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module) {var root = __webpack_require__(0),
-    stubFalse = __webpack_require__(113);
+    stubFalse = __webpack_require__(114);
 
 /** Detect free variable `exports`. */
 var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
@@ -1778,10 +1852,10 @@ var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(39)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(42)(module)))
 
 /***/ }),
-/* 39 */
+/* 42 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -1809,7 +1883,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 40 */
+/* 43 */
 /***/ (function(module, exports) {
 
 /** Used as references for various `Number` constants. */
@@ -1840,12 +1914,12 @@ module.exports = isIndex;
 
 
 /***/ }),
-/* 41 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseIsTypedArray = __webpack_require__(114),
-    baseUnary = __webpack_require__(115),
-    nodeUtil = __webpack_require__(116);
+var baseIsTypedArray = __webpack_require__(115),
+    baseUnary = __webpack_require__(116),
+    nodeUtil = __webpack_require__(117);
 
 /* Node.js helper references. */
 var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
@@ -1873,10 +1947,10 @@ module.exports = isTypedArray;
 
 
 /***/ }),
-/* 42 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isFunction = __webpack_require__(32),
+var isFunction = __webpack_require__(33),
     isLength = __webpack_require__(23);
 
 /**
@@ -1912,10 +1986,23 @@ module.exports = isArrayLike;
 
 
 /***/ }),
-/* 43 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(11);
+var getNative = __webpack_require__(2),
+    root = __webpack_require__(0);
+
+/* Built-in method references that are verified to be native. */
+var Set = getNative(root, 'Set');
+
+module.exports = Set;
+
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(12);
 
 /**
  * Checks if `value` is suitable for strict equality comparisons, i.e. `===`.
@@ -1933,7 +2020,7 @@ module.exports = isStrictComparable;
 
 
 /***/ }),
-/* 44 */
+/* 48 */
 /***/ (function(module, exports) {
 
 /**
@@ -1959,11 +2046,11 @@ module.exports = matchesStrictComparable;
 
 
 /***/ }),
-/* 45 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var castPath = __webpack_require__(46),
-    toKey = __webpack_require__(15);
+var castPath = __webpack_require__(50),
+    toKey = __webpack_require__(16);
 
 /**
  * The base implementation of `_.get` without support for default values.
@@ -1989,7 +2076,7 @@ module.exports = baseGet;
 
 
 /***/ }),
-/* 46 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isArray = __webpack_require__(1),
@@ -2016,12 +2103,12 @@ module.exports = castPath;
 
 
 /***/ }),
-/* 47 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseFindIndex = __webpack_require__(142),
-    baseIteratee = __webpack_require__(29),
-    toInteger = __webpack_require__(143);
+var baseFindIndex = __webpack_require__(52),
+    baseIteratee = __webpack_require__(30),
+    toInteger = __webpack_require__(142);
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
 var nativeMax = Math.max;
@@ -2077,7 +2164,37 @@ module.exports = findIndex;
 
 
 /***/ }),
-/* 48 */
+/* 52 */
+/***/ (function(module, exports) {
+
+/**
+ * The base implementation of `_.findIndex` and `_.findLastIndex` without
+ * support for iteratee shorthands.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {Function} predicate The function invoked per iteration.
+ * @param {number} fromIndex The index to search from.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function baseFindIndex(array, predicate, fromIndex, fromRight) {
+  var length = array.length,
+      index = fromIndex + (fromRight ? 1 : -1);
+
+  while ((fromRight ? index-- : ++index < length)) {
+    if (predicate(array[index], index, array)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+module.exports = baseFindIndex;
+
+
+/***/ }),
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2087,15 +2204,15 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _jsSha = __webpack_require__(16);
+var _jsSha = __webpack_require__(17);
 
 var _jsSha2 = _interopRequireDefault(_jsSha);
 
 var _validateSignature = __webpack_require__(6);
 
-var _blocks = __webpack_require__(49);
+var _blocks = __webpack_require__(54);
 
-var _uuid = __webpack_require__(50);
+var _uuid = __webpack_require__(55);
 
 var _uuid2 = _interopRequireDefault(_uuid);
 
@@ -2103,7 +2220,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var store = __webpack_require__(17);
+var store = __webpack_require__(7);
 
 var MY_PUBLIC_KEY = '044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba';
 var COIN = 100000000;
@@ -2205,7 +2322,7 @@ var Block = function () {
 module.exports = Block;
 
 /***/ }),
-/* 49 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2323,7 +2440,7 @@ var seedBlocks = exports.seedBlocks = function () {
 
 var _validateSignature = __webpack_require__(6);
 
-var _Block = __webpack_require__(48);
+var _Block = __webpack_require__(53);
 
 var _Block2 = _interopRequireDefault(_Block);
 
@@ -2331,13 +2448,13 @@ var _Block3 = __webpack_require__(3);
 
 var _Block4 = _interopRequireDefault(_Block3);
 
-var _jsSha = __webpack_require__(16);
+var _jsSha = __webpack_require__(17);
 
 var _jsSha2 = _interopRequireDefault(_jsSha);
 
 var _syncBlocksWithStore = __webpack_require__(25);
 
-var _uuid = __webpack_require__(50);
+var _uuid = __webpack_require__(55);
 
 var _uuid2 = _interopRequireDefault(_uuid);
 
@@ -2366,19 +2483,19 @@ var friendWallet = {
 };
 
 /***/ }),
-/* 50 */
+/* 55 */
 /***/ (function(module, exports) {
 
 module.exports = require("uuid");
 
 /***/ }),
-/* 51 */
+/* 56 */
 /***/ (function(module, exports) {
 
 module.exports = require("net");
 
 /***/ }),
-/* 52 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2416,13 +2533,7 @@ var wait = exports.wait = function () {
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 /***/ }),
-/* 53 */
-/***/ (function(module, exports) {
-
-module.exports = require("network");
-
-/***/ }),
-/* 54 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2430,13 +2541,15 @@ module.exports = require("network");
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-__webpack_require__(55);
+__webpack_require__(59);
 
-__webpack_require__(7);
+__webpack_require__(8);
+
+var _connectWithPeer = __webpack_require__(151);
 
 var _address = __webpack_require__(26);
 
-var _getWalletData = __webpack_require__(60);
+var _getWalletData = __webpack_require__(64);
 
 var _syncBlocksWithStore = __webpack_require__(25);
 
@@ -2444,39 +2557,35 @@ var _Block = __webpack_require__(3);
 
 var _Block2 = _interopRequireDefault(_Block);
 
-var _pusherJs = __webpack_require__(146);
+var _pusherJs = __webpack_require__(147);
 
 var _pusherJs2 = _interopRequireDefault(_pusherJs);
 
-var _jsSha = __webpack_require__(16);
+var _jsSha = __webpack_require__(17);
 
 var _jsSha2 = _interopRequireDefault(_jsSha);
 
-var _axios = __webpack_require__(147);
+var _axios = __webpack_require__(148);
 
 var _axios2 = _interopRequireDefault(_axios);
 
-var _bodyParser = __webpack_require__(148);
+var _bodyParser = __webpack_require__(149);
 
 var _bodyParser2 = _interopRequireDefault(_bodyParser);
 
-var _connectToDB = __webpack_require__(149);
+var _connectToDB = __webpack_require__(150);
 
 var _connectToDB2 = _interopRequireDefault(_connectToDB);
 
-var _connectWithPeer = __webpack_require__(150);
-
-var _connectWithPeer2 = _interopRequireDefault(_connectWithPeer);
-
-var _express = __webpack_require__(153);
+var _express = __webpack_require__(152);
 
 var _express2 = _interopRequireDefault(_express);
 
-var _find = __webpack_require__(19);
+var _find = __webpack_require__(18);
 
 var _find2 = _interopRequireDefault(_find);
 
-var _findIPAddress = __webpack_require__(154);
+var _findIPAddress = __webpack_require__(153);
 
 var _findIPAddress2 = _interopRequireDefault(_findIPAddress);
 
@@ -2484,13 +2593,15 @@ var _ip = __webpack_require__(155);
 
 var _ip2 = _interopRequireDefault(_ip);
 
-var _net = __webpack_require__(51);
+var _net = __webpack_require__(56);
 
 var _net2 = _interopRequireDefault(_net);
 
-var _blocks = __webpack_require__(49);
+var _blocks = __webpack_require__(54);
 
-var _store = __webpack_require__(17);
+var _startMining = __webpack_require__(156);
+
+var _store = __webpack_require__(7);
 
 var _store2 = _interopRequireDefault(_store);
 
@@ -2500,7 +2611,7 @@ var _uniq2 = _interopRequireDefault(_uniq);
 
 var _validateSignature = __webpack_require__(6);
 
-var _utils = __webpack_require__(52);
+var _utils = __webpack_require__(57);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2518,7 +2629,7 @@ var request = _axios2.default.create({
   timeout: 10000
 });
 
-__webpack_require__(156).config();
+__webpack_require__(166).config();
 
 var app = (0, _express2.default)();
 app.use(_bodyParser2.default.json());
@@ -2549,7 +2660,7 @@ function handleConnection(conn) {
               blockHeaderHash = void 0, blocksToSend = void 0, message = void 0;
               allPeers = void 0, unfetchedHeaders = void 0, peerIdx = void 0, headers = void 0, header = void 0, block = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 21 : _context.t0 === 'BLOCKHEADERS' ? 32 : _context.t0 === 'REQUESTBLOCK' ? 48 : 54;
+              _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : 56;
               break;
 
             case 8:
@@ -2574,29 +2685,33 @@ function handleConnection(conn) {
 
               // send getblocks message
               conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(DELIMITER));
-              return _context.abrupt('break', 54);
+              return _context.abrupt('break', 56);
 
             case 19:
               _store2.default.dispatch({ type: 'SYNC_PEER', ip: ip });
-              return _context.abrupt('break', 54);
+              _context.next = 22;
+              return (0, _connectWithPeer.isNodeSynced)();
 
-            case 21:
+            case 22:
+              return _context.abrupt('break', 56);
+
+            case 23:
               blockHeaderHash = args[0];
-              _context.next = 24;
+              _context.next = 26;
               return _Block2.default.findOne({ hash: blockHeaderHash });
 
-            case 24:
+            case 26:
               lastBlock = _context.sent;
 
               if (!lastBlock) {
-                _context.next = 31;
+                _context.next = 33;
                 break;
               }
 
-              _context.next = 28;
+              _context.next = 30;
               return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
 
-            case 28:
+            case 30:
               blocksToSend = _context.sent;
 
               message = ['BLOCKHEADERS'].concat(_toConsumableArray(blocksToSend.map(function (blk) {
@@ -2604,10 +2719,10 @@ function handleConnection(conn) {
               }))).join(DELIMITER);
               conn.write(message);
 
-            case 31:
-              return _context.abrupt('break', 54);
+            case 33:
+              return _context.abrupt('break', 56);
 
-            case 32:
+            case 34:
               // add to unfetchedHeaders
               _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
               _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, _unfetchedHeaders = _store$getState.unfetchedHeaders;
@@ -2615,9 +2730,9 @@ function handleConnection(conn) {
               headers = Array.from(_unfetchedHeaders);
               peerIdx = 0;
 
-            case 36:
+            case 38:
               if (!headers.length) {
-                _context.next = 47;
+                _context.next = 49;
                 break;
               }
 
@@ -2631,37 +2746,37 @@ function handleConnection(conn) {
               _header = headers.shift(); // dequeue a header
 
               conn.write('REQUESTBLOCK' + DELIMITER + _header);
-              _context.next = 43;
+              _context.next = 45;
               return (0, _utils.wait)(1);
 
-            case 43:
+            case 45:
               // wait 1 second
               // if peer doesn't respond within a period or doesn't have the block, move to next peer
               // if peer gives block, verify the block (if possible) and add to MongoDB
               // move from unfetched => loading
               _store2.default.dispatch({ type: 'LOADING_BLOCK', header: _header });
               peerIdx = _allPeers.length % (peerIdx + 1);
-              _context.next = 36;
+              _context.next = 38;
               break;
 
-            case 47:
-              return _context.abrupt('break', 54);
+            case 49:
+              return _context.abrupt('break', 56);
 
-            case 48:
+            case 50:
               // find the requested block and send as a JSON-serialized string
               header = args[0];
-              _context.next = 51;
+              _context.next = 53;
               return _Block2.default.findOne({ hash: header });
 
-            case 51:
+            case 53:
               block = _context.sent;
 
               if (block) {
                 conn.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
               }
-              return _context.abrupt('break', 54);
+              return _context.abrupt('break', 56);
 
-            case 54:
+            case 56:
             case 'end':
               return _context.stop();
           }
@@ -2736,6 +2851,7 @@ function startup() {
     };
   }());
 
+  // curl -XPOST localhost:3000/send -d publicKey=044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba -d amount=10 -d privateKey=0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347 -d toAddress=0482a39675cdc06766af5192a551b703c5090fc67f6e403dfdb42b60d34f5e3539ad44de9197e7ac09d1db5a60f79552ce5c7984a3fc4643fb1911f3857d6dd34c | python -m json.tool
   app.post('/send', function () {
     var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(req, res) {
       var _req$body, amount, privateKey, publicKey, toAddress, address, walletData, utxo, balance, isLessThanBalance, remaining, vin, vout, spentTxs, i, tx, remainder, spent, transaction, url, body, response;
@@ -2921,40 +3037,84 @@ function startup() {
     };
   }());
 
-  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10() {
+  app.post('/blocks/new', function () {
+    var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(req, res) {
+      var _req$body2, hash, version, previousHash, merkleHash, timestamp, difficulty, nonce, txs, blocksize, newBlock, prevBlock, isValid;
+
+      return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        while (1) {
+          switch (_context6.prev = _context6.next) {
+            case 0:
+              console.log('> New block: ', req.body);
+              _req$body2 = req.body, hash = _req$body2.hash, version = _req$body2.version, previousHash = _req$body2.previousHash, merkleHash = _req$body2.merkleHash, timestamp = _req$body2.timestamp, difficulty = _req$body2.difficulty, nonce = _req$body2.nonce, txs = _req$body2.txs, blocksize = _req$body2.blocksize;
+              // validate block format
+
+              newBlock = new _Block2.default(req.body);
+              _context6.next = 5;
+              return _Block2.default.findOne({}).sort({ timestamp: -1 }).limit(1);
+
+            case 5:
+              prevBlock = _context6.sent;
+              _context6.next = 8;
+              return (0, _syncBlocksWithStore.isValidBlock)(newBlock, prevBlock);
+
+            case 8:
+              isValid = _context6.sent;
+
+              if (isValid) {
+                // broadcast to network
+                res.status(200).send({ sent: true, block: req.body });
+              } else {
+                res.status(500).send({ error: 'Block is not valid.' });
+              }
+
+            case 10:
+            case 'end':
+              return _context6.stop();
+          }
+        }
+      }, _callee6, this);
+    }));
+
+    return function (_x10, _x11) {
+      return _ref6.apply(this, arguments);
+    };
+  }());
+
+  app.listen(process.env.PORT || 3000, _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee12() {
     var _this = this;
 
-    var ipAddr, dbConnection, server, client, _ref7, numBlocks, lastBlock, channel;
+    var ipAddr, dbConnection, server, client, _ref8, numBlocks, lastBlock, channel;
 
-    return regeneratorRuntime.wrap(function _callee10$(_context10) {
+    return regeneratorRuntime.wrap(function _callee12$(_context12) {
       while (1) {
-        switch (_context10.prev = _context10.next) {
+        switch (_context12.prev = _context12.next) {
           case 0:
-            _context10.next = 2;
+            _context12.next = 2;
             return (0, _findIPAddress2.default)();
 
           case 2:
-            ipAddr = _context10.sent;
+            ipAddr = _context12.sent;
 
             console.log('> Server listening on port '.gray, process.env.PORT, ipAddr);
 
             // connect to local instance of MongoDB
-            _context10.next = 6;
+            _context12.next = 6;
             return (0, _connectToDB2.default)();
 
           case 6:
-            dbConnection = _context10.sent;
+            dbConnection = _context12.sent;
 
             console.log('> Connected to local MongoDB'.gray);
 
             // seed blocks
 
             if (!(process.env.SEED_BLOCKS === 'true')) {
-              _context10.next = 11;
+              _context12.next = 11;
               break;
             }
 
-            _context10.next = 11;
+            _context12.next = 11;
             return (0, _blocks.seedBlocks)();
 
           case 11:
@@ -2979,13 +3139,13 @@ function startup() {
 
             // initialize blockchain (MongoDB local)
 
-            _context10.next = 17;
+            _context12.next = 17;
             return (0, _syncBlocksWithStore.syncBlocksWithStore)();
 
           case 17:
-            _ref7 = _context10.sent;
-            numBlocks = _ref7.numBlocks;
-            lastBlock = _ref7.lastBlock;
+            _ref8 = _context12.sent;
+            numBlocks = _ref8.numBlocks;
+            lastBlock = _ref8.lastBlock;
 
 
             console.log('> Subscribing to broadcast changes...'.gray);
@@ -2994,11 +3154,11 @@ function startup() {
             // SUCCESSFULLY JOINED
 
             channel.bind('pusher:subscription_succeeded', function () {
-              var _ref8 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(members) {
+              var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(members) {
                 var lastBlock, lastBlockHash, version, i, peer;
-                return regeneratorRuntime.wrap(function _callee6$(_context6) {
+                return regeneratorRuntime.wrap(function _callee7$(_context7) {
                   while (1) {
-                    switch (_context6.prev = _context6.next) {
+                    switch (_context7.prev = _context7.next) {
                       case 0:
                         console.log('> Subscription succeeded: ', members);
                         allPeers = [];
@@ -3026,41 +3186,41 @@ function startup() {
 
                       case 9:
                         if (!(i < allPeers.length)) {
-                          _context6.next = 16;
+                          _context7.next = 16;
                           break;
                         }
 
                         peer = allPeers[i];
-                        _context6.next = 13;
-                        return (0, _connectWithPeer2.default)(peer, lastBlockHash, version);
+                        _context7.next = 13;
+                        return (0, _connectWithPeer.connectWithPeer)(peer, lastBlockHash, version);
 
                       case 13:
                         i++;
-                        _context6.next = 9;
+                        _context7.next = 9;
                         break;
 
                       case 16:
                       case 'end':
-                        return _context6.stop();
+                        return _context7.stop();
                     }
                   }
-                }, _callee6, _this);
+                }, _callee7, _this);
               }));
 
-              return function (_x10) {
-                return _ref8.apply(this, arguments);
+              return function (_x12) {
+                return _ref9.apply(this, arguments);
               };
             }());
 
             // MEMBER ADDED
             channel.bind('pusher:member_added', function () {
-              var _ref9 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(member) {
+              var _ref10 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(member) {
                 var _this2 = this;
 
                 var allPeers, lastBlock, lastBlockHash, version;
-                return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                return regeneratorRuntime.wrap(function _callee9$(_context9) {
                   while (1) {
-                    switch (_context8.prev = _context8.next) {
+                    switch (_context9.prev = _context9.next) {
                       case 0:
                         console.log('> Member added: '.gray, member);
                         allPeers = _store2.default.getState().allPeers;
@@ -3078,44 +3238,44 @@ function startup() {
                         // TODO: send ping to new member to exchange headers
                         // wait 30 seconds before initiating connection
 
-                        setTimeout(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+                        setTimeout(_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
                           var allPeers, peer;
-                          return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                          return regeneratorRuntime.wrap(function _callee8$(_context8) {
                             while (1) {
-                              switch (_context7.prev = _context7.next) {
+                              switch (_context8.prev = _context8.next) {
                                 case 0:
                                   allPeers = _store2.default.getState().allPeers;
-                                  peer = (0, _find2.default)(allPeers, function (_ref11) {
-                                    var ip = _ref11.ip;
+                                  peer = (0, _find2.default)(allPeers, function (_ref12) {
+                                    var ip = _ref12.ip;
                                     return ip === member.id;
                                   });
 
                                   if (peer.connected) {
-                                    _context7.next = 5;
+                                    _context8.next = 5;
                                     break;
                                   }
 
-                                  _context7.next = 5;
-                                  return (0, _connectWithPeer2.default)({ ip: member.id }, lastBlockHash, version);
+                                  _context8.next = 5;
+                                  return (0, _connectWithPeer.connectWithPeer)({ ip: member.id }, lastBlockHash, version);
 
                                 case 5:
                                 case 'end':
-                                  return _context7.stop();
+                                  return _context8.stop();
                               }
                             }
-                          }, _callee7, _this2);
+                          }, _callee8, _this2);
                         })), 10 * 1000);
 
                       case 8:
                       case 'end':
-                        return _context8.stop();
+                        return _context9.stop();
                     }
                   }
-                }, _callee8, this);
+                }, _callee9, this);
               }));
 
-              return function (_x11) {
-                return _ref9.apply(this, arguments);
+              return function (_x13) {
+                return _ref10.apply(this, arguments);
               };
             }());
 
@@ -3134,105 +3294,128 @@ function startup() {
             });
 
             channel.bind('transaction:new', function () {
-              var _ref12 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(data) {
-                var isValid, allPeers, validPeers, allPeersSynced, isSynced;
-                return regeneratorRuntime.wrap(function _callee9$(_context9) {
+              var _ref13 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(data) {
+                var isValid;
+                return regeneratorRuntime.wrap(function _callee10$(_context10) {
                   while (1) {
-                    switch (_context9.prev = _context9.next) {
+                    switch (_context10.prev = _context10.next) {
                       case 0:
-                        console.log('> transaction:new: ', data.tx);
+                        console.log('> transaction:new: ', data.tx.hash);
                         // validate transaction
-                        _context9.next = 3;
+                        _context10.next = 3;
                         return (0, _syncBlocksWithStore.isValidTransaction)(data.tx);
 
                       case 3:
-                        isValid = _context9.sent;
+                        isValid = _context10.sent;
 
-                        console.log('> Is tx valid: ', isValid);
+                        if (isValid) {
+                          // add to memory pool of valid transactions
+                          _store2.default.dispatch({ type: 'NEW_TX', tx: data.tx });
+                        } else {
+                          console.log('> Invalid tx: ', data.tx.hash);
+                        }
 
-                        // is client synced?
-                        allPeers = _store2.default.getState().allPeers;
-                        validPeers = allPeers.filter(function (peer) {
-                          return !peer.unreachable && !peer.wrongVersion;
-                        });
-                        allPeersSynced = (0, _uniq2.default)(validPeers.map(function (_ref13) {
-                          var synced = _ref13.synced;
-                          return synced;
-                        }));
-                        isSynced = allPeersSynced.length === 1 && allPeersSynced[0];
-
-                        console.log('> Is node synced: ', isSynced);
-                        if (isSynced) {
-                          // check if previous hash is lastBlock
-                        } else {}
-
-                        // add to memory pool of valid transactions
-
-                      case 11:
+                      case 5:
                       case 'end':
-                        return _context9.stop();
+                        return _context10.stop();
                     }
                   }
-                }, _callee9, _this);
+                }, _callee10, _this);
               }));
 
-              return function (_x12) {
-                return _ref12.apply(this, arguments);
+              return function (_x14) {
+                return _ref13.apply(this, arguments);
               };
             }());
 
-            channel.bind('block:new', function (data) {
-              console.log('> block:new: ', data);
+            channel.bind('block:new', function () {
+              var _ref14 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(data) {
+                var isSynced, lastBlock, isValid;
+                return regeneratorRuntime.wrap(function _callee11$(_context11) {
+                  while (1) {
+                    switch (_context11.prev = _context11.next) {
+                      case 0:
+                        console.log('> block:new: ', data);
+                        // is local node synced?
+                        _context11.next = 3;
+                        return (0, _connectWithPeer.isNodeSynced)();
 
-              // validate block
-              // stop mining operation
-              // add block to MongoDB and local state as "lastBlock"
-              // start operating for next block
-            });
+                      case 3:
+                        isSynced = _context11.sent;
+                        _context11.next = 6;
+                        return _Block2.default.findOne({}).sort({ timestamp: -1 }).limit(1);
+
+                      case 6:
+                        lastBlock = _context11.sent;
+                        _context11.next = 9;
+                        return (0, _syncBlocksWithStore.isValidBlock)(data.block, lastBlock);
+
+                      case 9:
+                        isValid = _context11.sent;
+
+                        console.log('> Is valid block: ', isValid);
+                        // add block to MongoDB and local state as "lastBlock"
+                        // stop mining operation
+                        // start operating for next block
+                        _context11.next = 13;
+                        return (0, _startMining.startMining)();
+
+                      case 13:
+                      case 'end':
+                        return _context11.stop();
+                    }
+                  }
+                }, _callee11, _this);
+              }));
+
+              return function (_x15) {
+                return _ref14.apply(this, arguments);
+              };
+            }());
 
           case 27:
           case 'end':
-            return _context10.stop();
+            return _context12.stop();
         }
       }
-    }, _callee10, this);
+    }, _callee12, this);
   })));
 }
 
 startup();
 
 /***/ }),
-/* 55 */
+/* 59 */
 /***/ (function(module, exports) {
 
 module.exports = require("babel-polyfill");
 
 /***/ }),
-/* 56 */
+/* 60 */
 /***/ (function(module, exports) {
 
 module.exports = require("secure-random");
 
 /***/ }),
-/* 57 */
+/* 61 */
 /***/ (function(module, exports) {
 
 module.exports = require("coinstring");
 
 /***/ }),
-/* 58 */
+/* 62 */
 /***/ (function(module, exports) {
 
 module.exports = require("secp256k1");
 
 /***/ }),
-/* 59 */
+/* 63 */
 /***/ (function(module, exports) {
 
 module.exports = require("crypto");
 
 /***/ }),
-/* 60 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3528,7 +3711,7 @@ var _Block = __webpack_require__(3);
 
 var _Block2 = _interopRequireDefault(_Block);
 
-var _find = __webpack_require__(19);
+var _find = __webpack_require__(18);
 
 var _find2 = _interopRequireDefault(_find);
 
@@ -3541,17 +3724,17 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 var COIN = 100000000;
 
 /***/ }),
-/* 61 */
+/* 65 */
 /***/ (function(module, exports) {
 
 module.exports = require("bluebird");
 
 /***/ }),
-/* 62 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseIteratee = __webpack_require__(29),
-    isArrayLike = __webpack_require__(42),
+var baseIteratee = __webpack_require__(30),
+    isArrayLike = __webpack_require__(45),
     keys = __webpack_require__(22);
 
 /**
@@ -3578,12 +3761,12 @@ module.exports = createFind;
 
 
 /***/ }),
-/* 63 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseIsMatch = __webpack_require__(64),
+var baseIsMatch = __webpack_require__(68),
     getMatchData = __webpack_require__(126),
-    matchesStrictComparable = __webpack_require__(44);
+    matchesStrictComparable = __webpack_require__(48);
 
 /**
  * The base implementation of `_.matches` which doesn't clone `source`.
@@ -3606,11 +3789,11 @@ module.exports = baseMatches;
 
 
 /***/ }),
-/* 64 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Stack = __webpack_require__(30),
-    baseIsEqual = __webpack_require__(35);
+var Stack = __webpack_require__(31),
+    baseIsEqual = __webpack_require__(36);
 
 /** Used to compose bitmasks for value comparisons. */
 var COMPARE_PARTIAL_FLAG = 1,
@@ -3674,7 +3857,7 @@ module.exports = baseIsMatch;
 
 
 /***/ }),
-/* 65 */
+/* 69 */
 /***/ (function(module, exports) {
 
 /**
@@ -3693,10 +3876,10 @@ module.exports = listCacheClear;
 
 
 /***/ }),
-/* 66 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(9);
+var assocIndexOf = __webpack_require__(10);
 
 /** Used for built-in method references. */
 var arrayProto = Array.prototype;
@@ -3734,10 +3917,10 @@ module.exports = listCacheDelete;
 
 
 /***/ }),
-/* 67 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(9);
+var assocIndexOf = __webpack_require__(10);
 
 /**
  * Gets the list cache value for `key`.
@@ -3759,10 +3942,10 @@ module.exports = listCacheGet;
 
 
 /***/ }),
-/* 68 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(9);
+var assocIndexOf = __webpack_require__(10);
 
 /**
  * Checks if a list cache value for `key` exists.
@@ -3781,10 +3964,10 @@ module.exports = listCacheHas;
 
 
 /***/ }),
-/* 69 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(9);
+var assocIndexOf = __webpack_require__(10);
 
 /**
  * Sets the list cache `key` to `value`.
@@ -3813,10 +3996,10 @@ module.exports = listCacheSet;
 
 
 /***/ }),
-/* 70 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ListCache = __webpack_require__(8);
+var ListCache = __webpack_require__(9);
 
 /**
  * Removes all key-value entries from the stack.
@@ -3834,7 +4017,7 @@ module.exports = stackClear;
 
 
 /***/ }),
-/* 71 */
+/* 75 */
 /***/ (function(module, exports) {
 
 /**
@@ -3858,7 +4041,7 @@ module.exports = stackDelete;
 
 
 /***/ }),
-/* 72 */
+/* 76 */
 /***/ (function(module, exports) {
 
 /**
@@ -3878,7 +4061,7 @@ module.exports = stackGet;
 
 
 /***/ }),
-/* 73 */
+/* 77 */
 /***/ (function(module, exports) {
 
 /**
@@ -3898,12 +4081,12 @@ module.exports = stackHas;
 
 
 /***/ }),
-/* 74 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ListCache = __webpack_require__(8),
-    Map = __webpack_require__(20),
-    MapCache = __webpack_require__(21);
+var ListCache = __webpack_require__(9),
+    Map = __webpack_require__(19),
+    MapCache = __webpack_require__(20);
 
 /** Used as the size to enable large array optimizations. */
 var LARGE_ARRAY_SIZE = 200;
@@ -3938,13 +4121,13 @@ module.exports = stackSet;
 
 
 /***/ }),
-/* 75 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isFunction = __webpack_require__(32),
-    isMasked = __webpack_require__(78),
-    isObject = __webpack_require__(11),
-    toSource = __webpack_require__(34);
+var isFunction = __webpack_require__(33),
+    isMasked = __webpack_require__(82),
+    isObject = __webpack_require__(12),
+    toSource = __webpack_require__(35);
 
 /**
  * Used to match `RegExp`
@@ -3991,10 +4174,10 @@ module.exports = baseIsNative;
 
 
 /***/ }),
-/* 76 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Symbol = __webpack_require__(10);
+var Symbol = __webpack_require__(11);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -4043,7 +4226,7 @@ module.exports = getRawTag;
 
 
 /***/ }),
-/* 77 */
+/* 81 */
 /***/ (function(module, exports) {
 
 /** Used for built-in method references. */
@@ -4071,10 +4254,10 @@ module.exports = objectToString;
 
 
 /***/ }),
-/* 78 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var coreJsData = __webpack_require__(79);
+var coreJsData = __webpack_require__(83);
 
 /** Used to detect methods masquerading as native. */
 var maskSrcKey = (function() {
@@ -4097,7 +4280,7 @@ module.exports = isMasked;
 
 
 /***/ }),
-/* 79 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var root = __webpack_require__(0);
@@ -4109,7 +4292,7 @@ module.exports = coreJsData;
 
 
 /***/ }),
-/* 80 */
+/* 84 */
 /***/ (function(module, exports) {
 
 /**
@@ -4128,12 +4311,12 @@ module.exports = getValue;
 
 
 /***/ }),
-/* 81 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Hash = __webpack_require__(82),
-    ListCache = __webpack_require__(8),
-    Map = __webpack_require__(20);
+var Hash = __webpack_require__(86),
+    ListCache = __webpack_require__(9),
+    Map = __webpack_require__(19);
 
 /**
  * Removes all key-value entries from the map.
@@ -4155,14 +4338,14 @@ module.exports = mapCacheClear;
 
 
 /***/ }),
-/* 82 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var hashClear = __webpack_require__(83),
-    hashDelete = __webpack_require__(84),
-    hashGet = __webpack_require__(85),
-    hashHas = __webpack_require__(86),
-    hashSet = __webpack_require__(87);
+var hashClear = __webpack_require__(87),
+    hashDelete = __webpack_require__(88),
+    hashGet = __webpack_require__(89),
+    hashHas = __webpack_require__(90),
+    hashSet = __webpack_require__(91);
 
 /**
  * Creates a hash object.
@@ -4193,10 +4376,10 @@ module.exports = Hash;
 
 
 /***/ }),
-/* 83 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(13);
 
 /**
  * Removes all key-value entries from the hash.
@@ -4214,7 +4397,7 @@ module.exports = hashClear;
 
 
 /***/ }),
-/* 84 */
+/* 88 */
 /***/ (function(module, exports) {
 
 /**
@@ -4237,10 +4420,10 @@ module.exports = hashDelete;
 
 
 /***/ }),
-/* 85 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(13);
 
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
@@ -4273,10 +4456,10 @@ module.exports = hashGet;
 
 
 /***/ }),
-/* 86 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(13);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -4302,10 +4485,10 @@ module.exports = hashHas;
 
 
 /***/ }),
-/* 87 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(13);
 
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
@@ -4331,10 +4514,10 @@ module.exports = hashSet;
 
 
 /***/ }),
-/* 88 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(14);
 
 /**
  * Removes `key` and its value from the map.
@@ -4355,7 +4538,7 @@ module.exports = mapCacheDelete;
 
 
 /***/ }),
-/* 89 */
+/* 93 */
 /***/ (function(module, exports) {
 
 /**
@@ -4376,10 +4559,10 @@ module.exports = isKeyable;
 
 
 /***/ }),
-/* 90 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(14);
 
 /**
  * Gets the map value for `key`.
@@ -4398,10 +4581,10 @@ module.exports = mapCacheGet;
 
 
 /***/ }),
-/* 91 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(14);
 
 /**
  * Checks if a map value for `key` exists.
@@ -4420,10 +4603,10 @@ module.exports = mapCacheHas;
 
 
 /***/ }),
-/* 92 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(14);
 
 /**
  * Sets the map `key` to `value`.
@@ -4448,17 +4631,17 @@ module.exports = mapCacheSet;
 
 
 /***/ }),
-/* 93 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Stack = __webpack_require__(30),
-    equalArrays = __webpack_require__(36),
-    equalByTag = __webpack_require__(99),
-    equalObjects = __webpack_require__(103),
-    getTag = __webpack_require__(121),
+var Stack = __webpack_require__(31),
+    equalArrays = __webpack_require__(37),
+    equalByTag = __webpack_require__(101),
+    equalObjects = __webpack_require__(104),
+    getTag = __webpack_require__(122),
     isArray = __webpack_require__(1),
-    isBuffer = __webpack_require__(38),
-    isTypedArray = __webpack_require__(41);
+    isBuffer = __webpack_require__(41),
+    isTypedArray = __webpack_require__(44);
 
 /** Used to compose bitmasks for value comparisons. */
 var COMPARE_PARTIAL_FLAG = 1;
@@ -4537,40 +4720,7 @@ module.exports = baseIsEqualDeep;
 
 
 /***/ }),
-/* 94 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var MapCache = __webpack_require__(21),
-    setCacheAdd = __webpack_require__(95),
-    setCacheHas = __webpack_require__(96);
-
-/**
- *
- * Creates an array cache object to store unique values.
- *
- * @private
- * @constructor
- * @param {Array} [values] The values to cache.
- */
-function SetCache(values) {
-  var index = -1,
-      length = values == null ? 0 : values.length;
-
-  this.__data__ = new MapCache;
-  while (++index < length) {
-    this.add(values[index]);
-  }
-}
-
-// Add methods to `SetCache`.
-SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;
-SetCache.prototype.has = setCacheHas;
-
-module.exports = SetCache;
-
-
-/***/ }),
-/* 95 */
+/* 98 */
 /***/ (function(module, exports) {
 
 /** Used to stand-in for `undefined` hash values. */
@@ -4595,7 +4745,7 @@ module.exports = setCacheAdd;
 
 
 /***/ }),
-/* 96 */
+/* 99 */
 /***/ (function(module, exports) {
 
 /**
@@ -4615,7 +4765,7 @@ module.exports = setCacheHas;
 
 
 /***/ }),
-/* 97 */
+/* 100 */
 /***/ (function(module, exports) {
 
 /**
@@ -4644,34 +4794,15 @@ module.exports = arraySome;
 
 
 /***/ }),
-/* 98 */
-/***/ (function(module, exports) {
-
-/**
- * Checks if a `cache` value for `key` exists.
- *
- * @private
- * @param {Object} cache The cache to query.
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function cacheHas(cache, key) {
-  return cache.has(key);
-}
-
-module.exports = cacheHas;
-
-
-/***/ }),
-/* 99 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Symbol = __webpack_require__(10),
-    Uint8Array = __webpack_require__(100),
-    eq = __webpack_require__(31),
-    equalArrays = __webpack_require__(36),
-    mapToArray = __webpack_require__(101),
-    setToArray = __webpack_require__(102);
+var Symbol = __webpack_require__(11),
+    Uint8Array = __webpack_require__(102),
+    eq = __webpack_require__(32),
+    equalArrays = __webpack_require__(37),
+    mapToArray = __webpack_require__(103),
+    setToArray = __webpack_require__(21);
 
 /** Used to compose bitmasks for value comparisons. */
 var COMPARE_PARTIAL_FLAG = 1,
@@ -4781,7 +4912,7 @@ module.exports = equalByTag;
 
 
 /***/ }),
-/* 100 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var root = __webpack_require__(0);
@@ -4793,7 +4924,7 @@ module.exports = Uint8Array;
 
 
 /***/ }),
-/* 101 */
+/* 103 */
 /***/ (function(module, exports) {
 
 /**
@@ -4817,34 +4948,10 @@ module.exports = mapToArray;
 
 
 /***/ }),
-/* 102 */
-/***/ (function(module, exports) {
-
-/**
- * Converts `set` to an array of its values.
- *
- * @private
- * @param {Object} set The set to convert.
- * @returns {Array} Returns the values.
- */
-function setToArray(set) {
-  var index = -1,
-      result = Array(set.size);
-
-  set.forEach(function(value) {
-    result[++index] = value;
-  });
-  return result;
-}
-
-module.exports = setToArray;
-
-
-/***/ }),
-/* 103 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getAllKeys = __webpack_require__(104);
+var getAllKeys = __webpack_require__(105);
 
 /** Used to compose bitmasks for value comparisons. */
 var COMPARE_PARTIAL_FLAG = 1;
@@ -4936,11 +5043,11 @@ module.exports = equalObjects;
 
 
 /***/ }),
-/* 104 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetAllKeys = __webpack_require__(105),
-    getSymbols = __webpack_require__(107),
+var baseGetAllKeys = __webpack_require__(106),
+    getSymbols = __webpack_require__(108),
     keys = __webpack_require__(22);
 
 /**
@@ -4958,10 +5065,10 @@ module.exports = getAllKeys;
 
 
 /***/ }),
-/* 105 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayPush = __webpack_require__(106),
+var arrayPush = __webpack_require__(107),
     isArray = __webpack_require__(1);
 
 /**
@@ -4984,7 +5091,7 @@ module.exports = baseGetAllKeys;
 
 
 /***/ }),
-/* 106 */
+/* 107 */
 /***/ (function(module, exports) {
 
 /**
@@ -5010,11 +5117,11 @@ module.exports = arrayPush;
 
 
 /***/ }),
-/* 107 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayFilter = __webpack_require__(108),
-    stubArray = __webpack_require__(109);
+var arrayFilter = __webpack_require__(109),
+    stubArray = __webpack_require__(110);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -5046,7 +5153,7 @@ module.exports = getSymbols;
 
 
 /***/ }),
-/* 108 */
+/* 109 */
 /***/ (function(module, exports) {
 
 /**
@@ -5077,7 +5184,7 @@ module.exports = arrayFilter;
 
 
 /***/ }),
-/* 109 */
+/* 110 */
 /***/ (function(module, exports) {
 
 /**
@@ -5106,15 +5213,15 @@ module.exports = stubArray;
 
 
 /***/ }),
-/* 110 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseTimes = __webpack_require__(111),
-    isArguments = __webpack_require__(37),
+var baseTimes = __webpack_require__(112),
+    isArguments = __webpack_require__(40),
     isArray = __webpack_require__(1),
-    isBuffer = __webpack_require__(38),
-    isIndex = __webpack_require__(40),
-    isTypedArray = __webpack_require__(41);
+    isBuffer = __webpack_require__(41),
+    isIndex = __webpack_require__(43),
+    isTypedArray = __webpack_require__(44);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -5161,7 +5268,7 @@ module.exports = arrayLikeKeys;
 
 
 /***/ }),
-/* 111 */
+/* 112 */
 /***/ (function(module, exports) {
 
 /**
@@ -5187,7 +5294,7 @@ module.exports = baseTimes;
 
 
 /***/ }),
-/* 112 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var baseGetTag = __webpack_require__(4),
@@ -5211,7 +5318,7 @@ module.exports = baseIsArguments;
 
 
 /***/ }),
-/* 113 */
+/* 114 */
 /***/ (function(module, exports) {
 
 /**
@@ -5235,7 +5342,7 @@ module.exports = stubFalse;
 
 
 /***/ }),
-/* 114 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var baseGetTag = __webpack_require__(4),
@@ -5301,7 +5408,7 @@ module.exports = baseIsTypedArray;
 
 
 /***/ }),
-/* 115 */
+/* 116 */
 /***/ (function(module, exports) {
 
 /**
@@ -5321,10 +5428,10 @@ module.exports = baseUnary;
 
 
 /***/ }),
-/* 116 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(module) {var freeGlobal = __webpack_require__(33);
+/* WEBPACK VAR INJECTION */(function(module) {var freeGlobal = __webpack_require__(34);
 
 /** Detect free variable `exports`. */
 var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
@@ -5347,14 +5454,14 @@ var nodeUtil = (function() {
 
 module.exports = nodeUtil;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(39)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(42)(module)))
 
 /***/ }),
-/* 117 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isPrototype = __webpack_require__(118),
-    nativeKeys = __webpack_require__(119);
+var isPrototype = __webpack_require__(119),
+    nativeKeys = __webpack_require__(120);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -5386,7 +5493,7 @@ module.exports = baseKeys;
 
 
 /***/ }),
-/* 118 */
+/* 119 */
 /***/ (function(module, exports) {
 
 /** Used for built-in method references. */
@@ -5410,10 +5517,10 @@ module.exports = isPrototype;
 
 
 /***/ }),
-/* 119 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var overArg = __webpack_require__(120);
+var overArg = __webpack_require__(121);
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
 var nativeKeys = overArg(Object.keys, Object);
@@ -5422,7 +5529,7 @@ module.exports = nativeKeys;
 
 
 /***/ }),
-/* 120 */
+/* 121 */
 /***/ (function(module, exports) {
 
 /**
@@ -5443,16 +5550,16 @@ module.exports = overArg;
 
 
 /***/ }),
-/* 121 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var DataView = __webpack_require__(122),
-    Map = __webpack_require__(20),
-    Promise = __webpack_require__(123),
-    Set = __webpack_require__(124),
+var DataView = __webpack_require__(123),
+    Map = __webpack_require__(19),
+    Promise = __webpack_require__(124),
+    Set = __webpack_require__(46),
     WeakMap = __webpack_require__(125),
     baseGetTag = __webpack_require__(4),
-    toSource = __webpack_require__(34);
+    toSource = __webpack_require__(35);
 
 /** `Object#toString` result references. */
 var mapTag = '[object Map]',
@@ -5507,7 +5614,7 @@ module.exports = getTag;
 
 
 /***/ }),
-/* 122 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var getNative = __webpack_require__(2),
@@ -5520,7 +5627,7 @@ module.exports = DataView;
 
 
 /***/ }),
-/* 123 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var getNative = __webpack_require__(2),
@@ -5530,19 +5637,6 @@ var getNative = __webpack_require__(2),
 var Promise = getNative(root, 'Promise');
 
 module.exports = Promise;
-
-
-/***/ }),
-/* 124 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var getNative = __webpack_require__(2),
-    root = __webpack_require__(0);
-
-/* Built-in method references that are verified to be native. */
-var Set = getNative(root, 'Set');
-
-module.exports = Set;
 
 
 /***/ }),
@@ -5562,7 +5656,7 @@ module.exports = WeakMap;
 /* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isStrictComparable = __webpack_require__(43),
+var isStrictComparable = __webpack_require__(47),
     keys = __webpack_require__(22);
 
 /**
@@ -5592,13 +5686,13 @@ module.exports = getMatchData;
 /* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseIsEqual = __webpack_require__(35),
+var baseIsEqual = __webpack_require__(36),
     get = __webpack_require__(128),
     hasIn = __webpack_require__(135),
     isKey = __webpack_require__(24),
-    isStrictComparable = __webpack_require__(43),
-    matchesStrictComparable = __webpack_require__(44),
-    toKey = __webpack_require__(15);
+    isStrictComparable = __webpack_require__(47),
+    matchesStrictComparable = __webpack_require__(48),
+    toKey = __webpack_require__(16);
 
 /** Used to compose bitmasks for value comparisons. */
 var COMPARE_PARTIAL_FLAG = 1,
@@ -5631,7 +5725,7 @@ module.exports = baseMatchesProperty;
 /* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGet = __webpack_require__(45);
+var baseGet = __webpack_require__(49);
 
 /**
  * Gets the value at `path` of `object`. If the resolved value is
@@ -5735,7 +5829,7 @@ module.exports = memoizeCapped;
 /* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var MapCache = __webpack_require__(21);
+var MapCache = __webpack_require__(20);
 
 /** Error message constants. */
 var FUNC_ERROR_TEXT = 'Expected a function';
@@ -5848,10 +5942,10 @@ module.exports = toString;
 /* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Symbol = __webpack_require__(10),
+var Symbol = __webpack_require__(11),
     arrayMap = __webpack_require__(134),
     isArray = __webpack_require__(1),
-    isSymbol = __webpack_require__(14);
+    isSymbol = __webpack_require__(15);
 
 /** Used as references for various `Number` constants. */
 var INFINITY = 1 / 0;
@@ -5977,12 +6071,12 @@ module.exports = baseHasIn;
 /* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var castPath = __webpack_require__(46),
-    isArguments = __webpack_require__(37),
+var castPath = __webpack_require__(50),
+    isArguments = __webpack_require__(40),
     isArray = __webpack_require__(1),
-    isIndex = __webpack_require__(40),
+    isIndex = __webpack_require__(43),
     isLength = __webpack_require__(23),
-    toKey = __webpack_require__(15);
+    toKey = __webpack_require__(16);
 
 /**
  * Checks if `path` exists on `object`.
@@ -6052,7 +6146,7 @@ module.exports = identity;
 var baseProperty = __webpack_require__(140),
     basePropertyDeep = __webpack_require__(141),
     isKey = __webpack_require__(24),
-    toKey = __webpack_require__(15);
+    toKey = __webpack_require__(16);
 
 /**
  * Creates a function that returns the value at `path` of a given object.
@@ -6107,7 +6201,7 @@ module.exports = baseProperty;
 /* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGet = __webpack_require__(45);
+var baseGet = __webpack_require__(49);
 
 /**
  * A specialized version of `baseProperty` which supports deep paths.
@@ -6127,39 +6221,9 @@ module.exports = basePropertyDeep;
 
 /***/ }),
 /* 142 */
-/***/ (function(module, exports) {
-
-/**
- * The base implementation of `_.findIndex` and `_.findLastIndex` without
- * support for iteratee shorthands.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {Function} predicate The function invoked per iteration.
- * @param {number} fromIndex The index to search from.
- * @param {boolean} [fromRight] Specify iterating from right to left.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function baseFindIndex(array, predicate, fromIndex, fromRight) {
-  var length = array.length,
-      index = fromIndex + (fromRight ? 1 : -1);
-
-  while ((fromRight ? index-- : ++index < length)) {
-    if (predicate(array[index], index, array)) {
-      return index;
-    }
-  }
-  return -1;
-}
-
-module.exports = baseFindIndex;
-
-
-/***/ }),
-/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toFinite = __webpack_require__(144);
+var toFinite = __webpack_require__(143);
 
 /**
  * Converts `value` to an integer.
@@ -6198,10 +6262,10 @@ module.exports = toInteger;
 
 
 /***/ }),
-/* 144 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toNumber = __webpack_require__(145);
+var toNumber = __webpack_require__(144);
 
 /** Used as references for various `Number` constants. */
 var INFINITY = 1 / 0,
@@ -6246,11 +6310,11 @@ module.exports = toFinite;
 
 
 /***/ }),
-/* 145 */
+/* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(11),
-    isSymbol = __webpack_require__(14);
+var isObject = __webpack_require__(12),
+    isSymbol = __webpack_require__(15);
 
 /** Used as references for various `Number` constants. */
 var NAN = 0 / 0;
@@ -6318,372 +6382,7 @@ module.exports = toNumber;
 
 
 /***/ }),
-/* 146 */
-/***/ (function(module, exports) {
-
-module.exports = require("pusher-js");
-
-/***/ }),
-/* 147 */
-/***/ (function(module, exports) {
-
-module.exports = require("axios");
-
-/***/ }),
-/* 148 */
-/***/ (function(module, exports) {
-
-module.exports = require("body-parser");
-
-/***/ }),
-/* 149 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var connectToDB = function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-    return regeneratorRuntime.wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            return _context.abrupt('return', new Promise(function (resolve, reject) {
-              _mongoose2.default.connect('mongodb://localhost:27017/nodecoin', function (err) {
-                if (err) {
-                  throw new Error('Error connecting to mongo. ' + err);
-                  reject(err);
-                } else {
-                  // console.log('> Successfully conected to MongoDB 🔐');
-                  resolve(true);
-                }
-              });
-            }));
-
-          case 1:
-          case 'end':
-            return _context.stop();
-        }
-      }
-    }, _callee, this);
-  }));
-
-  return function connectToDB() {
-    return _ref.apply(this, arguments);
-  };
-}();
-
-var _mongoose = __webpack_require__(18);
-
-var _mongoose2 = _interopRequireDefault(_mongoose);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
-exports.default = connectToDB;
-
-/***/ }),
-/* 150 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-// First establish TCP/IP connection with peer
-// If cannot establish connection or version is incompatible, set "peer.unreachable" to true
-// exchange VERSION headers
-// exchange blocks if missing blocks
-// once receive blocks, start again with VERSION header until fully synced
-
-var connectWithPeer = function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(peer, lastBlockHash, version) {
-    var _this = this;
-
-    var IS_VERSION_COMPATIBLE, HAS_MORE_BLOCKS, port, client;
-    return regeneratorRuntime.wrap(function _callee2$(_context2) {
-      while (1) {
-        switch (_context2.prev = _context2.next) {
-          case 0:
-            IS_VERSION_COMPATIBLE = false;
-            HAS_MORE_BLOCKS = false;
-            // console.log('> Connecting with peer: ', peer, lastBlockHash, version);
-
-            port = DEFAULT_PORT;
-            client = new _net2.default.Socket();
-            // PEER CONNECTED
-
-            client.connect(port, peer.ip, function () {
-              console.log('> Connected to peer: ', peer);
-              var type = 'VERSION';
-              client.write([type, version, lastBlockHash].join(DELIMITER));
-              _store2.default.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client: client });
-            });
-
-            client.on('data', function () {
-              var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(data) {
-                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, allPeers, unfetchedHeaders, headers, peerIdx, header, block, savedBlock, newBlock, numBlocksToFetch, _store$getState, _allPeers, _unfetchedHeaders, _peer, msg;
-
-                return regeneratorRuntime.wrap(function _callee$(_context) {
-                  while (1) {
-                    switch (_context.prev = _context.next) {
-                      case 0:
-                        _data$toString$split = data.toString().split(DELIMITER), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
-
-                        console.log('> Received: '.yellow, data.toString().replace(reg, ' '));
-                        version = void 0, blockHeaderHash = void 0, lastBlock = void 0, savedLastBlock = void 0, savedLastBlockHash = void 0;
-                        blocksToSend = void 0, message = void 0, allPeers = void 0, unfetchedHeaders = void 0;
-                        headers = void 0, peerIdx = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
-                        numBlocksToFetch = 0;
-                        _context.t0 = type;
-                        _context.next = _context.t0 === 'VERSION' ? 9 : _context.t0 === 'GETBLOCKS' ? 25 : _context.t0 === 'BLOCKHEADERS' ? 36 : _context.t0 === 'REQUESTBLOCK' ? 53 : _context.t0 === 'SENDBLOCK' ? 59 : 77;
-                        break;
-
-                      case 9:
-                        version = args[0];
-                        blockHeaderHash = args[1];
-
-                        if (!(version !== '1')) {
-                          _context.next = 13;
-                          break;
-                        }
-
-                        return _context.abrupt('break', 77);
-
-                      case 13:
-                        IS_VERSION_COMPATIBLE = true;
-                        // check db for what block height received block hash is
-                        _context.next = 16;
-                        return _Block2.default.findOne({ hash: blockHeaderHash });
-
-                      case 16:
-                        lastBlock = _context.sent;
-
-                        if (lastBlock) {
-                          _context.next = 22;
-                          break;
-                        }
-
-                        // send getblocks message
-                        savedLastBlock = _store2.default.getState().lastBlock;
-                        savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
-                        client.write(['GETBLOCKS', savedLastBlockHash].join(DELIMITER));
-                        return _context.abrupt('break', 77);
-
-                      case 22:
-                        _store2.default.dispatch({ type: 'SYNC_PEER', ip: peer.ip });
-                        return _context.abrupt('return', true);
-
-                      case 25:
-                        blockHeaderHash = args[0];
-                        _context.next = 28;
-                        return _Block2.default.findOne({ hash: blockHeaderHash });
-
-                      case 28:
-                        lastBlock = _context.sent;
-
-                        if (!lastBlock) {
-                          _context.next = 35;
-                          break;
-                        }
-
-                        _context.next = 32;
-                        return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
-
-                      case 32:
-                        blocksToSend = _context.sent;
-
-                        message = ['BLOCKHEADERS'].concat(_toConsumableArray(blocksToSend.map(function (blk) {
-                          return blk.hash;
-                        }))).join(DELIMITER);
-                        client.write(message);
-
-                      case 35:
-                        return _context.abrupt('break', 77);
-
-                      case 36:
-                        // add to unfetchedHeaders
-                        _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
-                        numBlocksToFetch = args.length;
-                        _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, _unfetchedHeaders = _store$getState.unfetchedHeaders;
-
-                        headers = Array.from(_unfetchedHeaders);
-                        peerIdx = 0;
-
-                      case 41:
-                        if (!headers.length) {
-                          _context.next = 52;
-                          break;
-                        }
-
-                        // assign header to peer
-                        _peer = _allPeers[peerIdx];
-                        // connect with peer if no connection
-
-                        if (!_peer.client) {
-                          // await connectWithPeer(peer, lastBlockHash, version);
-                        }
-                        header = headers.shift(); // dequeue a header
-                        client.write('REQUESTBLOCK' + DELIMITER + header);
-                        _context.next = 48;
-                        return (0, _utils.wait)(1);
-
-                      case 48:
-                        // wait 1 second
-                        // if peer doesn't respond within a period or doesn't have the block, move to next peer
-                        // if peer gives block, verify the block (if possible) and add to MongoDB
-                        // move from unfetched => loading
-                        _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
-                        peerIdx = _allPeers.length % (peerIdx + 1);
-                        _context.next = 41;
-                        break;
-
-                      case 52:
-                        return _context.abrupt('break', 77);
-
-                      case 53:
-                        // find the requested block and send as a JSON-serialized string
-                        header = args[0];
-                        _context.next = 56;
-                        return _Block2.default.findOne({ hash: header });
-
-                      case 56:
-                        block = _context.sent;
-
-                        if (block) {
-                          msg = JSON.stringify(block);
-
-                          client.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
-                        }
-                        return _context.abrupt('break', 77);
-
-                      case 59:
-                        block = JSON.parse(args[0]);
-                        // check if already have
-                        _context.next = 62;
-                        return _Block2.default.findOne({ hash: block.hash });
-
-                      case 62:
-                        savedBlock = _context.sent;
-
-                        if (!savedBlock) {
-                          _context.next = 65;
-                          break;
-                        }
-
-                        return _context.abrupt('break', 77);
-
-                      case 65:
-                        // if don't have, does the previousHash match our lastBlock.hash?
-                        lastBlock = _store2.default.getState().lastBlock;
-
-                        if (lastBlock) {
-                          _context.next = 68;
-                          break;
-                        }
-
-                        return _context.abrupt('break', 77);
-
-                      case 68:
-                        if (!(block.previousHash === lastBlock.getBlockHeaderHash())) {
-                          _context.next = 77;
-                          break;
-                        }
-
-                        // add block to blockchain
-                        newBlock = new _Block2.default(block);
-                        _context.next = 72;
-                        return newBlock.save();
-
-                      case 72:
-                        // remove from orphan and unfetched / loading pools
-                        _store2.default.dispatch({ type: 'NEW_BLOCK', block: (0, _syncBlocksWithStore.formatBlock)(newBlock) });
-                        numBlocksToFetch -= 1;
-                        if (numBlocksToFetch === 0) {
-                          // RESTART
-                        }
-                        _context.next = 77;
-                        break;
-
-                      case 77:
-                      case 'end':
-                        return _context.stop();
-                    }
-                  }
-                }, _callee, _this);
-              }));
-
-              return function (_x4) {
-                return _ref2.apply(this, arguments);
-              };
-            }()
-            // if not, add to orphan transactions
-            );
-
-            client.on('close', function () {
-              console.log('> Connection closed');
-            });
-            client.on('timeout', function () {
-              console.log('> Connection timed out ');
-            });
-            client.on('error', function (err) {
-              console.error(err);
-            });
-
-          case 9:
-          case 'end':
-            return _context2.stop();
-        }
-      }
-    }, _callee2, this);
-  }));
-
-  return function connectWithPeer(_x, _x2, _x3) {
-    return _ref.apply(this, arguments);
-  };
-}();
-
-__webpack_require__(7);
-
-var _Block = __webpack_require__(3);
-
-var _Block2 = _interopRequireDefault(_Block);
-
-var _syncBlocksWithStore = __webpack_require__(25);
-
-var _net = __webpack_require__(51);
-
-var _net2 = _interopRequireDefault(_net);
-
-var _store = __webpack_require__(17);
-
-var _store2 = _interopRequireDefault(_store);
-
-var _utils = __webpack_require__(52);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
-
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
-var DEFAULT_PORT = 8334;
-var DELIMITER = '~~~~~';
-
-var reg = new RegExp(DELIMITER, 'gi');exports.default = connectWithPeer;
-
-/***/ }),
-/* 151 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6691,7 +6390,7 @@ var reg = new RegExp(DELIMITER, 'gi');exports.default = connectWithPeer;
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var _findIndex = __webpack_require__(47);
+var _findIndex = __webpack_require__(51);
 
 var _findIndex2 = _interopRequireDefault(_findIndex);
 
@@ -6716,15 +6415,16 @@ var initialState = {
   difficulty: 0,
   numBlocks: 0,
   // Mempool
+  memoryPool: [], // list of valid transactions (txs)
   unfetchedHeaders: new Set(),
   loadingHeaders: new Set(),
-  newTransactions: new Set(),
   orphanTransactions: new Set()
 };
 
 var newUnfetchedHeaders = void 0,
     newLoadingHeaders = void 0,
-    peerIdx = void 0;
+    peerIdx = void 0,
+    newMemoryPool = void 0;
 
 var nodeCoin = function nodeCoin() {
   var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
@@ -6783,7 +6483,10 @@ var nodeCoin = function nodeCoin() {
       return _extends({}, state, {
         allPeers: peerIdx === -1 ? state.allPeers : [].concat(_toConsumableArray(state.allPeers.slice(0, peerIdx)), [_extends({}, state.allPeers[peerIdx], { synced: true, connected: true })], _toConsumableArray(state.allPeers.slice(peerIdx + 1)))
       });
-
+    case 'NEW_TX':
+      return _extends({}, state, {
+        memoryPool: [].concat(_toConsumableArray(state.memoryPool), [action.tx])
+      });
     default:
       return state;
   }
@@ -6792,19 +6495,430 @@ var nodeCoin = function nodeCoin() {
 module.exports = nodeCoin;
 
 /***/ }),
-/* 152 */
+/* 146 */
 /***/ (function(module, exports) {
 
 module.exports = require("redux");
 
 /***/ }),
-/* 153 */
+/* 147 */
+/***/ (function(module, exports) {
+
+module.exports = require("pusher-js");
+
+/***/ }),
+/* 148 */
+/***/ (function(module, exports) {
+
+module.exports = require("axios");
+
+/***/ }),
+/* 149 */
+/***/ (function(module, exports) {
+
+module.exports = require("body-parser");
+
+/***/ }),
+/* 150 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var connectToDB = function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            return _context.abrupt('return', new Promise(function (resolve, reject) {
+              _mongoose2.default.connect('mongodb://localhost:27017/nodecoin', function (err) {
+                if (err) {
+                  throw new Error('Error connecting to mongo. ' + err);
+                  reject(err);
+                } else {
+                  // console.log('> Successfully conected to MongoDB 🔐');
+                  resolve(true);
+                }
+              });
+            }));
+
+          case 1:
+          case 'end':
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+
+  return function connectToDB() {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+var _mongoose = __webpack_require__(29);
+
+var _mongoose2 = _interopRequireDefault(_mongoose);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+exports.default = connectToDB;
+
+/***/ }),
+/* 151 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.connectWithPeer = exports.isNodeSynced = undefined;
+
+var isNodeSynced = exports.isNodeSynced = function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+    var allPeers, validPeers, allPeersSynced, isSynced;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            allPeers = _store2.default.getState().allPeers;
+            validPeers = allPeers.filter(function (peer) {
+              return !peer.unreachable && !peer.wrongVersion;
+            });
+            allPeersSynced = uniq(validPeers.map(function (_ref2) {
+              var synced = _ref2.synced;
+              return synced;
+            }));
+            isSynced = allPeersSynced.length === 1 && allPeersSynced[0];
+
+            if (!isSynced) {
+              _context.next = 7;
+              break;
+            }
+
+            _context.next = 7;
+            return startMining();
+
+          case 7:
+            return _context.abrupt('return', isSynced);
+
+          case 8:
+          case 'end':
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+
+  return function isNodeSynced() {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+// First establish TCP/IP connection with peer
+// If cannot establish connection or version is incompatible, set "peer.unreachable" to true
+// exchange VERSION headers
+// exchange blocks if missing blocks
+// once receive blocks, start again with VERSION header until fully synced
+
+var connectWithPeer = exports.connectWithPeer = function () {
+  var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(peer, lastBlockHash, version) {
+    var _this = this;
+
+    var IS_VERSION_COMPATIBLE, HAS_MORE_BLOCKS, port, client;
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            IS_VERSION_COMPATIBLE = false;
+            HAS_MORE_BLOCKS = false;
+            // console.log('> Connecting with peer: ', peer, lastBlockHash, version);
+
+            port = DEFAULT_PORT;
+            client = new _net2.default.Socket();
+            // PEER CONNECTED
+
+            client.connect(port, peer.ip, function () {
+              console.log('> Connected to peer: ', peer);
+              var type = 'VERSION';
+              client.write([type, version, lastBlockHash].join(DELIMITER));
+              _store2.default.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client: client });
+            });
+
+            client.on('data', function () {
+              var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(data) {
+                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, allPeers, unfetchedHeaders, headers, peerIdx, header, block, savedBlock, newBlock, numBlocksToFetch, _store$getState, _allPeers, _unfetchedHeaders, _peer, msg;
+
+                return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                  while (1) {
+                    switch (_context2.prev = _context2.next) {
+                      case 0:
+                        _data$toString$split = data.toString().split(DELIMITER), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
+
+                        console.log('> Received: '.yellow, data.toString().replace(reg, ' '));
+                        version = void 0, blockHeaderHash = void 0, lastBlock = void 0, savedLastBlock = void 0, savedLastBlockHash = void 0;
+                        blocksToSend = void 0, message = void 0, allPeers = void 0, unfetchedHeaders = void 0;
+                        headers = void 0, peerIdx = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
+                        numBlocksToFetch = 0;
+                        _context2.t0 = type;
+                        _context2.next = _context2.t0 === 'VERSION' ? 9 : _context2.t0 === 'GETBLOCKS' ? 27 : _context2.t0 === 'BLOCKHEADERS' ? 38 : _context2.t0 === 'REQUESTBLOCK' ? 55 : _context2.t0 === 'SENDBLOCK' ? 61 : 79;
+                        break;
+
+                      case 9:
+                        version = args[0];
+                        blockHeaderHash = args[1];
+
+                        if (!(version !== '1')) {
+                          _context2.next = 13;
+                          break;
+                        }
+
+                        return _context2.abrupt('break', 79);
+
+                      case 13:
+                        IS_VERSION_COMPATIBLE = true;
+                        // check db for what block height received block hash is
+                        _context2.next = 16;
+                        return _Block2.default.findOne({ hash: blockHeaderHash });
+
+                      case 16:
+                        lastBlock = _context2.sent;
+
+                        if (lastBlock) {
+                          _context2.next = 22;
+                          break;
+                        }
+
+                        // send getblocks message
+                        savedLastBlock = _store2.default.getState().lastBlock;
+                        savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
+                        client.write(['GETBLOCKS', savedLastBlockHash].join(DELIMITER));
+                        return _context2.abrupt('break', 79);
+
+                      case 22:
+                        _store2.default.dispatch({ type: 'SYNC_PEER', ip: peer.ip });
+                        _context2.next = 25;
+                        return isNodeSynced();
+
+                      case 25:
+                        return _context2.abrupt('return', true);
+
+                      case 27:
+                        blockHeaderHash = args[0];
+                        _context2.next = 30;
+                        return _Block2.default.findOne({ hash: blockHeaderHash });
+
+                      case 30:
+                        lastBlock = _context2.sent;
+
+                        if (!lastBlock) {
+                          _context2.next = 37;
+                          break;
+                        }
+
+                        _context2.next = 34;
+                        return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+
+                      case 34:
+                        blocksToSend = _context2.sent;
+
+                        message = ['BLOCKHEADERS'].concat(_toConsumableArray(blocksToSend.map(function (blk) {
+                          return blk.hash;
+                        }))).join(DELIMITER);
+                        client.write(message);
+
+                      case 37:
+                        return _context2.abrupt('break', 79);
+
+                      case 38:
+                        // add to unfetchedHeaders
+                        _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
+                        numBlocksToFetch = args.length;
+                        _store$getState = _store2.default.getState(), _allPeers = _store$getState.allPeers, _unfetchedHeaders = _store$getState.unfetchedHeaders;
+
+                        headers = Array.from(_unfetchedHeaders);
+                        peerIdx = 0;
+
+                      case 43:
+                        if (!headers.length) {
+                          _context2.next = 54;
+                          break;
+                        }
+
+                        // assign header to peer
+                        _peer = _allPeers[peerIdx];
+                        // connect with peer if no connection
+
+                        if (!_peer.client) {
+                          // await connectWithPeer(peer, lastBlockHash, version);
+                        }
+                        header = headers.shift(); // dequeue a header
+                        client.write('REQUESTBLOCK' + DELIMITER + header);
+                        _context2.next = 50;
+                        return (0, _utils.wait)(1);
+
+                      case 50:
+                        // wait 1 second
+                        // if peer doesn't respond within a period or doesn't have the block, move to next peer
+                        // if peer gives block, verify the block (if possible) and add to MongoDB
+                        // move from unfetched => loading
+                        _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
+                        peerIdx = _allPeers.length % (peerIdx + 1);
+                        _context2.next = 43;
+                        break;
+
+                      case 54:
+                        return _context2.abrupt('break', 79);
+
+                      case 55:
+                        // find the requested block and send as a JSON-serialized string
+                        header = args[0];
+                        _context2.next = 58;
+                        return _Block2.default.findOne({ hash: header });
+
+                      case 58:
+                        block = _context2.sent;
+
+                        if (block) {
+                          msg = JSON.stringify(block);
+
+                          client.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
+                        }
+                        return _context2.abrupt('break', 79);
+
+                      case 61:
+                        block = JSON.parse(args[0]);
+                        // check if already have
+                        _context2.next = 64;
+                        return _Block2.default.findOne({ hash: block.hash });
+
+                      case 64:
+                        savedBlock = _context2.sent;
+
+                        if (!savedBlock) {
+                          _context2.next = 67;
+                          break;
+                        }
+
+                        return _context2.abrupt('break', 79);
+
+                      case 67:
+                        // if don't have, does the previousHash match our lastBlock.hash?
+                        lastBlock = _store2.default.getState().lastBlock;
+
+                        if (lastBlock) {
+                          _context2.next = 70;
+                          break;
+                        }
+
+                        return _context2.abrupt('break', 79);
+
+                      case 70:
+                        if (!(block.previousHash === lastBlock.getBlockHeaderHash())) {
+                          _context2.next = 79;
+                          break;
+                        }
+
+                        // add block to blockchain
+                        newBlock = new _Block2.default(block);
+                        _context2.next = 74;
+                        return newBlock.save();
+
+                      case 74:
+                        // remove from orphan and unfetched / loading pools
+                        _store2.default.dispatch({ type: 'NEW_BLOCK', block: (0, _syncBlocksWithStore.formatBlock)(newBlock) });
+                        numBlocksToFetch -= 1;
+                        if (numBlocksToFetch === 0) {
+                          // RESTART
+                        }
+                        _context2.next = 79;
+                        break;
+
+                      case 79:
+                      case 'end':
+                        return _context2.stop();
+                    }
+                  }
+                }, _callee2, _this);
+              }));
+
+              return function (_x4) {
+                return _ref4.apply(this, arguments);
+              };
+            }()
+            // if not, add to orphan transactions
+            );
+
+            client.on('close', function () {
+              console.log('> Connection closed');
+            });
+            client.on('timeout', function () {
+              console.log('> Connection timed out ');
+            });
+            client.on('error', function (err) {
+              console.error(err);
+            });
+
+          case 9:
+          case 'end':
+            return _context3.stop();
+        }
+      }
+    }, _callee3, this);
+  }));
+
+  return function connectWithPeer(_x, _x2, _x3) {
+    return _ref3.apply(this, arguments);
+  };
+}();
+
+__webpack_require__(8);
+
+var _Block = __webpack_require__(3);
+
+var _Block2 = _interopRequireDefault(_Block);
+
+var _syncBlocksWithStore = __webpack_require__(25);
+
+var _net = __webpack_require__(56);
+
+var _net2 = _interopRequireDefault(_net);
+
+var _store = __webpack_require__(7);
+
+var _store2 = _interopRequireDefault(_store);
+
+var _utils = __webpack_require__(57);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+var DEFAULT_PORT = 8334;
+var DELIMITER = '~~~~~';
+
+var reg = new RegExp(DELIMITER, 'gi');
+
+/***/ }),
+/* 152 */
 /***/ (function(module, exports) {
 
 module.exports = require("express");
 
 /***/ }),
-/* 154 */
+/* 153 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6842,7 +6956,7 @@ var findIPAddress = function () {
   };
 }();
 
-var _network = __webpack_require__(53);
+var _network = __webpack_require__(154);
 
 var _network2 = _interopRequireDefault(_network);
 
@@ -6853,6 +6967,12 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 exports.default = findIPAddress;
 
 /***/ }),
+/* 154 */
+/***/ (function(module, exports) {
+
+module.exports = require("network");
+
+/***/ }),
 /* 155 */
 /***/ (function(module, exports) {
 
@@ -6860,9 +6980,55 @@ module.exports = require("ip");
 
 /***/ }),
 /* 156 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = require("dotenv");
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.startMining = undefined;
+
+var startMining = exports.startMining = function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            console.log('> Starting mining new block: ');
+            // check that all peers are synced
+
+            // collect transactions from memory pool
+
+            // ensure that transaction size > MIN_TX_PER_BLOCK
+
+            // verify all transactions in order - if any are invalid, remove from block
+
+            // set block header and implement nonce
+
+            // submit new block with nonce and txs
+
+          case 1:
+          case 'end':
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+
+  return function startMining() {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+var _store = __webpack_require__(7);
+
+var _store2 = _interopRequireDefault(_store);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 /***/ }),
 /* 157 */
@@ -6899,12 +7065,12 @@ module.exports = uniq;
 /* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var SetCache = __webpack_require__(94),
+var SetCache = __webpack_require__(38),
     arrayIncludes = __webpack_require__(159),
     arrayIncludesWith = __webpack_require__(163),
-    cacheHas = __webpack_require__(98),
+    cacheHas = __webpack_require__(39),
     createSet = __webpack_require__(164),
-    setToArray = __webpack_require__(102);
+    setToArray = __webpack_require__(21);
 
 /** Used as the size to enable large array optimizations. */
 var LARGE_ARRAY_SIZE = 200;
@@ -7000,7 +7166,7 @@ module.exports = arrayIncludes;
 /* 160 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseFindIndex = __webpack_require__(142),
+var baseFindIndex = __webpack_require__(52),
     baseIsNaN = __webpack_require__(161),
     strictIndexOf = __webpack_require__(162);
 
@@ -7101,9 +7267,9 @@ module.exports = arrayIncludesWith;
 /* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Set = __webpack_require__(124),
+var Set = __webpack_require__(46),
     noop = __webpack_require__(165),
-    setToArray = __webpack_require__(102);
+    setToArray = __webpack_require__(21);
 
 /** Used as references for various `Number` constants. */
 var INFINITY = 1 / 0;
@@ -7144,6 +7310,12 @@ function noop() {
 
 module.exports = noop;
 
+
+/***/ }),
+/* 166 */
+/***/ (function(module, exports) {
+
+module.exports = require("dotenv");
 
 /***/ })
 /******/ ]);

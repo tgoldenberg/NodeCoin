@@ -1,9 +1,10 @@
 import 'babel-polyfill';
 import 'colors';
 
+import { connectWithPeer, isNodeSynced } from './connectWithPeer';
 import { getAddress, makeWallet } from './address';
 import { getWalletData, getWallets } from 'utils/getWalletData';
-import { isValidTransaction, syncBlocksWithStore } from 'db/syncBlocksWithStore';
+import { isValidBlock, isValidTransaction, syncBlocksWithStore } from 'db/syncBlocksWithStore';
 
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
@@ -11,13 +12,13 @@ import SHA256 from 'js-sha256';
 import axios from 'axios';
 import bodyParser from 'body-parser';
 import connectToDB from './connectToDB';
-import connectWithPeer from './connectWithPeer';
 import express from 'express';
 import find from 'lodash/find';
 import findIPAddress from 'utils/findIPAddress';
 import ip from 'ip';
 import net from 'net';
 import { seedBlocks } from '__mocks__/blocks';
+import { startMining } from 'mining/startMining';
 import store from 'store/store';
 import uniq from 'lodash/uniq';
 import { unlockTransaction } from 'utils/validateSignature';
@@ -43,6 +44,8 @@ const DELIMITER = '~~~~~';
 const MIN_TX_PER_BLOCK = 2;
 
 let reg = new RegExp(DELIMITER, 'gi');
+
+
 
 function handleConnection(conn) {
   const remoteAddr = `${conn.remoteAddress}:${conn.remotePort}`;
@@ -81,6 +84,7 @@ function handleConnection(conn) {
           break;
         }
         store.dispatch({ type: 'SYNC_PEER', ip: ip });
+        await isNodeSynced();
         break;
       // Peer asks for our latest blocks
       case 'GETBLOCKS':
@@ -145,6 +149,7 @@ function startup() {
     res.status(200).send({ wallets });
   });
 
+  // curl -XPOST localhost:3000/send -d publicKey=044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba -d amount=10 -d privateKey=0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347 -d toAddress=0482a39675cdc06766af5192a551b703c5090fc67f6e403dfdb42b60d34f5e3539ad44de9197e7ac09d1db5a60f79552ce5c7984a3fc4643fb1911f3857d6dd34c | python -m json.tool
   app.post('/send', async function (req, res) {
     let { amount, privateKey, publicKey, toAddress } = req.body;
     if (!amount || !privateKey || !publicKey || !toAddress) {
@@ -222,6 +227,21 @@ function startup() {
     let { utxo, balance } = walletData;
     res.status(200).send({ wallet: { balance }, utxo: utxo });
   });
+
+  app.post('/blocks/new', async function(req, res) {
+    console.log('> New block: ', req.body);
+    const { hash, version, previousHash, merkleHash, timestamp, difficulty, nonce, txs, blocksize } = req.body;
+    // validate block format
+    let newBlock = new BlockModel(req.body);
+    let prevBlock = await BlockModel.findOne({ }).sort({ timestamp: -1 }).limit(1);
+    const isValid = await isValidBlock(newBlock, prevBlock);
+    if (isValid) {
+      // broadcast to network
+      res.status(200).send({ sent: true, block: req.body });
+    } else {
+      res.status(500).send({ error: 'Block is not valid.' });
+    }
+  })
 
   app.listen(process.env.PORT || 3000, async function() {
     const ipAddr = await findIPAddress();
@@ -328,33 +348,29 @@ function startup() {
     });
 
     channel.bind('transaction:new', async (data) => {
-      console.log('> transaction:new: ', data.tx);
+      console.log('> transaction:new: ', data.tx.hash);
       // validate transaction
       const isValid = await isValidTransaction(data.tx);
-      console.log('> Is tx valid: ', isValid);
-
-      // is client synced?
-      let allPeers = store.getState().allPeers;
-      let validPeers = allPeers.filter(peer => (!peer.unreachable && !peer.wrongVersion));
-      let allPeersSynced = uniq(validPeers.map(({ synced }) => synced));
-      let isSynced = allPeersSynced.length === 1 && allPeersSynced[0];
-      console.log('> Is node synced: ', isSynced);
-      if (isSynced) {
-        // check if previous hash is lastBlock
+      if (isValid) {
+        // add to memory pool of valid transactions
+        store.dispatch({ type: 'NEW_TX', tx: data.tx });
       } else {
-
+        console.log('> Invalid tx: ', data.tx.hash);
       }
-
-      // add to memory pool of valid transactions
     });
 
-    channel.bind('block:new', function(data) {
+    channel.bind('block:new', async (data) => {
       console.log('> block:new: ', data);
-
+      // is local node synced?
+      const isSynced = await isNodeSynced();
       // validate block
-      // stop mining operation
+      const lastBlock = await BlockModel.findOne({ }).sort({ timestamp: -1 }).limit(1);
+      const isValid = await isValidBlock(data.block, lastBlock);
+      console.log('> Is valid block: ', isValid)
       // add block to MongoDB and local state as "lastBlock"
+      // stop mining operation
       // start operating for next block
+      await startMining();
     });
   });
 }

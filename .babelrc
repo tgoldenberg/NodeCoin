@@ -11,6 +11,7 @@
         "store": "./src/store",
         "utils": "./src/utils",
         "models": "./src/models",
+        "mining": "./src/mining",
         "db": "./src/db",
         "__mocks__": "./__mocks__"
       },

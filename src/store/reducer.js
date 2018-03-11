@@ -17,13 +17,13 @@ const initialState = {
   difficulty: 0,
   numBlocks: 0,
   // Mempool
+  memoryPool: [ ], // list of valid transactions (txs)
   unfetchedHeaders: new Set(),
   loadingHeaders: new Set(),
-  newTransactions: new Set(),
   orphanTransactions: new Set(),
 };
 
-let newUnfetchedHeaders, newLoadingHeaders, peerIdx;
+let newUnfetchedHeaders, newLoadingHeaders, peerIdx, newMemoryPool;
 
 const nodeCoin = (state = initialState, action) => {
   switch(action.type) {
@@ -91,7 +91,11 @@ const nodeCoin = (state = initialState, action) => {
           ...state.allPeers.slice(peerIdx + 1),
         ],
       };
-
+    case 'NEW_TX':
+      return {
+        ...state,
+        memoryPool: [ ...state.memoryPool, action.tx ],
+      };
     default:
       return state;
   }
