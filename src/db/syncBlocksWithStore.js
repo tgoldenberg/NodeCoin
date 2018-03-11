@@ -67,7 +67,6 @@ export async function isValidTransaction(tx, blockHeaderHash) {
     }
     // find previous UTXO
     let prevTxBlock = await BlockModel.findOne({ 'txs.hash': txin.prevout });
-    console.log('> Prev tx block: ', prevTxBlock);
     if (!prevTxBlock) {
       return false;
     }
@@ -90,7 +89,6 @@ export async function isValidTransaction(tx, blockHeaderHash) {
       return false;
     }
   }
-  console.log('> Verified inputs');
 
   // check transaction outputs
   for (let i = 0; i < tx.vout.length; i++) {

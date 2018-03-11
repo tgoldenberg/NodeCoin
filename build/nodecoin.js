@@ -323,8 +323,8 @@ var message = '5b28c8abc6dd6ecdb7e7704d348ab9f0485e5a115997fada69f9b4883964c82f'
 var publicKey = '044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba';
 var scriptSig = '3046022100a035ca83d2feaf8ac1747304b5a4bf0201ddb1482bf9e4f2a1908c432c951ed8022100a9d4abe7d462cbf0b6803ca7cad5ed653ef944c7a4b331d70883f13d9bc8995a';
 
-console.log('> Signing tx: ', unlockTransaction(message, publicKey, privateKey));
-console.log('> Verifying unlock: ', verifyUnlock(message, publicKey, scriptSig));
+// console.log('> Signing tx: ', unlockTransaction(message, publicKey, privateKey));
+// console.log('> Verifying unlock: ', verifyUnlock(message, publicKey, scriptSig));
 
 function testVerification(publicKeyScript, privateKey) {
   var _publicKeyScript$spli = publicKeyScript.split(' '),
@@ -1015,10 +1015,8 @@ var isValidTransaction = exports.isValidTransaction = function () {
                     case 9:
                       prevTxBlock = _context2.sent;
 
-                      console.log('> Prev tx block: ', prevTxBlock);
-
                       if (prevTxBlock) {
-                        _context2.next = 13;
+                        _context2.next = 12;
                         break;
                       }
 
@@ -1026,14 +1024,14 @@ var isValidTransaction = exports.isValidTransaction = function () {
                         v: false
                       });
 
-                    case 13:
+                    case 12:
                       prevTx = (0, _find2.default)(prevTxBlock.txs, function (_ref3) {
                         var hash = _ref3.hash;
                         return hash === txin.prevout;
                       });
 
                       if (prevTx) {
-                        _context2.next = 16;
+                        _context2.next = 15;
                         break;
                       }
 
@@ -1041,17 +1039,17 @@ var isValidTransaction = exports.isValidTransaction = function () {
                         v: false
                       });
 
-                    case 16:
+                    case 15:
                       txinValue += prevTx.vout[txin.n].nValue;
                       // ensure that prevout is UXTO - prevent double spending
-                      _context2.next = 19;
+                      _context2.next = 18;
                       return _Block4.default.find({ "txs.vin.prevout": txin.prevout });
 
-                    case 19:
+                    case 18:
                       alreadySpentTxs = _context2.sent;
 
                       if (!(alreadySpentTxs.length > 1)) {
-                        _context2.next = 22;
+                        _context2.next = 21;
                         break;
                       }
 
@@ -1059,7 +1057,7 @@ var isValidTransaction = exports.isValidTransaction = function () {
                         v: false
                       });
 
-                    case 22:
+                    case 21:
                       // verify signature
                       publicKeyScript = prevTx.vout[txin.n].scriptPubKey;
                       _publicKeyScript$spli = publicKeyScript.split(' '), _publicKeyScript$spli2 = _slicedToArray(_publicKeyScript$spli, 2), message = _publicKeyScript$spli2[0], publicKey = _publicKeyScript$spli2[1];
@@ -1068,7 +1066,7 @@ var isValidTransaction = exports.isValidTransaction = function () {
                       isVerified = (0, _validateSignature.verifyUnlock)(message, publicKey, txin.scriptSig);
 
                       if (isVerified) {
-                        _context2.next = 28;
+                        _context2.next = 27;
                         break;
                       }
 
@@ -1076,7 +1074,7 @@ var isValidTransaction = exports.isValidTransaction = function () {
                         v: false
                       });
 
-                    case 28:
+                    case 27:
                     case 'end':
                       return _context2.stop();
                   }
@@ -1109,39 +1107,36 @@ var isValidTransaction = exports.isValidTransaction = function () {
             break;
 
           case 15:
-            console.log('> Verified inputs');
-
-            // check transaction outputs
             i = 0;
 
-          case 17:
+          case 16:
             if (!(i < tx.vout.length)) {
-              _context3.next = 25;
+              _context3.next = 24;
               break;
             }
 
             txout = tx.vout[i];
 
             if (!(typeof txout.nValue != 'number' || typeof txout.scriptPubKey != 'string')) {
-              _context3.next = 21;
+              _context3.next = 20;
               break;
             }
 
             return _context3.abrupt('return', false);
 
-          case 21:
+          case 20:
             txoutValue += txout.nValue;
 
-          case 22:
+          case 21:
             i++;
-            _context3.next = 17;
+            _context3.next = 16;
             break;
 
-          case 25:
+          case 24:
             totalFees = txinValue - txoutValue;
             return _context3.abrupt('return', true);
 
-          case 27:
+          case 26:
           case 'end':
             return _context3.stop();
         }
