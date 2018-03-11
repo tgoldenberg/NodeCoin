@@ -395,9 +395,14 @@ function startup() {
       // is local node synced?
       const isSynced = await isNodeSynced();
       // validate block
-      const lastBlock = await BlockModel.find({ }).sort({ timestamp: -1 }).limit(1);
+      const lastBlock = await BlockModel.findOne({ }).sort({ timestamp: -1 }).limit(1);
+      console.log('> Prev block: ', lastBlock);
 
-      const isValid = await isValidBlock(data.block, new BlockClass(lastBlock, lastBlock.txs));
+      const isValid = await isValidBlock(
+        new BlockClass(data.block, data.block.txs),
+        new BlockClass(lastBlock, lastBlock.txs),
+      );
+      
       console.log('> Is valid block: ', isValid)
       // add block to MongoDB and local state as "lastBlock"
       // stop mining operation

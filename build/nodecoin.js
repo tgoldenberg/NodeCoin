@@ -3973,24 +3973,28 @@ function startup() {
                       case 3:
                         isSynced = _context11.sent;
                         _context11.next = 6;
-                        return _Block4.default.find({}).sort({ timestamp: -1 }).limit(1);
+                        return _Block4.default.findOne({}).sort({ timestamp: -1 }).limit(1);
 
                       case 6:
                         lastBlock = _context11.sent;
-                        _context11.next = 9;
-                        return (0, _syncBlocksWithStore.isValidBlock)(data.block, new _Block2.default(lastBlock, lastBlock.txs));
 
-                      case 9:
+                        console.log('> Prev block: ', lastBlock);
+
+                        _context11.next = 10;
+                        return (0, _syncBlocksWithStore.isValidBlock)(new _Block2.default(data.block, data.block.txs), new _Block2.default(lastBlock, lastBlock.txs));
+
+                      case 10:
                         isValid = _context11.sent;
+
 
                         console.log('> Is valid block: ', isValid);
                         // add block to MongoDB and local state as "lastBlock"
                         // stop mining operation
                         // start operating for next block
-                        _context11.next = 13;
+                        _context11.next = 14;
                         return (0, _startMining.startMining)();
 
-                      case 13:
+                      case 14:
                       case 'end':
                         return _context11.stop();
                     }
