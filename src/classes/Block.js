@@ -15,7 +15,7 @@ const GENESIS_TARGET = Math.pow(2, 256 - GENESIS_DIFFICULTY);
 const GENESIS_NONCE = 2620954;
 const GENESIS_TIMESTAMP = 1231006505000; // Jan 3, 2009
 
-class Block {
+export default class Block {
   constructor(header, txs, isGenesis = false) {
     let state = store.getState();
     this.header = {
@@ -28,10 +28,9 @@ class Block {
     };
     this.txs = [ ];
     if (isGenesis) {
-      const txid = SHA256(this.getBlockHeaderHash() + '0');
       const genesisTransaction = {
         vin: [ { n: 'COINBASE', prevout: null } ],
-        vout: [ { nValue: 50 * COIN, scriptPubKey: lockTransaction(txid, MY_PUBLIC_KEY) } ]
+        vout: [ { nValue: 50 * COIN, scriptPubKey: lockTransaction(SHA256('00000000'), MY_PUBLIC_KEY) } ]
       };
       this.addTransaction(genesisTransaction);
     } else {
@@ -69,12 +68,11 @@ class Block {
   }
   addTransaction(transaction) {
     let idx = this.txs.length;
-    this.txs.push({ ...transaction, hash: SHA256(this.getBlockHeaderHash() + idx) });
+    let txid = SHA256(JSON.stringify({ vin: transaction.vin, vout: transaction.vout }));
+    this.txs.push({ ...transaction, hash: txid });
     return this.txs;
   }
 };
 
 // let block = new Block(null, true); // genesis block
 // console.log('> Genesis block: ', block);
-
-module.exports = Block;

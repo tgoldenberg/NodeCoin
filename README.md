@@ -110,3 +110,14 @@ Transactions that are not yet added to the block can be added to the mempool.
 Orphan transactions can be added to the orphan transaction pool.
 
 Further, we can create balances for users (by wallet address)
+
+#### Seed transactions
+
+```
+# send 10 NTC to friend
+curl -XPOST localhost:3000/send -d publicKey=044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba -d amount=10 -d privateKey=0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347 -d toAddress=0482a39675cdc06766af5192a551b703c5090fc67f6e403dfdb42b60d34f5e3539ad44de9197e7ac09d1db5a60f79552ce5c7984a3fc4643fb1911f3857d6dd34c | python -m json.tool
+
+# friend send 2 NTC back
+curl -XPOST localhost:3000/send -d publicKey=0482a39675cdc06766af5192a551b703c5090fc67f6e403dfdb42b60d34f5e3539ad44de9197e7ac09d1db5a60f79552ce5c7984a3fc4643fb1911f3857d6dd34c -d amount=2 -d privateKey=6128428978e30fc034c95b7b091b373b875bdd73a0acf83c09d37bff72361349 -d toAddress=044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba | python -m json.tool
+
+```

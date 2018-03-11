@@ -56,10 +56,10 @@ export async function seedBlocks() {
       vout: [ { nValue: COINBASE_REWARD, scriptPubKey: lockTransaction(COINBASE_MSG, myWallet.publicKey) } ]
     },
     {
-      vin: [ { n: 0, prevout: prev.txs[0].hash, scriptSig: unlockTransaction(prev.txs[0].hash, myWallet.publicKey, myWallet.privateKey) } ],
+      vin: [ { n: 0, prevout: prev.txs[0].hash, scriptSig: unlockTransaction(COINBASE_MSG, myWallet.publicKey, myWallet.privateKey) } ],
       vout: [
-        { nValue: amount * COIN, scriptPubKey: lockTransaction(txId, friendWallet.pulicKey) } ,
-        { nValue: remaining, scriptPubKey: lockTransaction(txId, myWallet.publicKey) }
+        { nValue: amount * COIN, scriptPubKey: lockTransaction(COINBASE_MSG, friendWallet.pulicKey) } ,
+        { nValue: remaining, scriptPubKey: lockTransaction(COINBASE_MSG, myWallet.publicKey) }
       ]
     },
   ]
@@ -79,7 +79,7 @@ export async function seedBlocks() {
     blockHeaderHash = SHA256(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
   }
   block = new BlockClass(header, [ ]);
-  txId = SHA256(block.getBlockHeaderHash() + '0');
+  let txId = COINBASE_MSG;
   remaining -= (amount * COIN);
   transactions = [
     {
@@ -88,11 +88,11 @@ export async function seedBlocks() {
     },
     {
       vin: [
-        { n: 1, prevout: prev.txs[1].hash, scriptSig: unlockTransaction(prev.txs[0].hash, myWallet.publicKey, myWallet.privateKey) }
+        { n: 1, prevout: prev.txs[1].hash, scriptSig: unlockTransaction(COINBASE_MSG, myWallet.publicKey, myWallet.privateKey) }
       ],
       vout: [
-        { nValue: amount * COIN, scriptPubKey: lockTransaction(txId, friendWallet.pulicKey) } ,
-        { nValue: remaining, scriptPubKey: lockTransaction(txId, myWallet.publicKey) }
+        { nValue: amount * COIN, scriptPubKey: lockTransaction(COINBASE_MSG, friendWallet.pulicKey) } ,
+        { nValue: remaining, scriptPubKey: lockTransaction(COINBASE_MSG, myWallet.publicKey) }
       ]
     },
   ];

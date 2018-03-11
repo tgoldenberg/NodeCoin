@@ -59,6 +59,7 @@
     "start-dev": "brew services start mongodb && node build/nodecoin.js",
     "dev": "WEBPACK_ENV=dev webpack --progress --colors --watch",
     "build": "jest && WEBPACK_ENV=build webpack",
+    "seed": "SEED_BLOCKS=true npm start",
     "test": "jest --watch",
     "test-cov": "jest --coverage"
   },

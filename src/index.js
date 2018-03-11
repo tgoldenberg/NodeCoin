@@ -130,7 +130,6 @@ function handleConnection(conn) {
         }
         break;
       case 'SENDBLOCK':
-        console.log('> JSON block: ', args[0]);
         block = JSON.parse(args[0]);
         // check if already have
         savedBlock = await BlockModel.findOne({ hash: block.hash });
@@ -189,9 +188,11 @@ function startup() {
     if (typeof amount === 'string') {
       amount = parseInt(amount);
     }
+    amount *= COIN;
     let address = getAddress(publicKey);
     let walletData = await getWalletData(address);
     let { utxo, balance } = walletData;
+    balance *= COIN;
     utxo = utxo.sort((a, b) => a.nValue < b.nValue);
     // is transaction less than balance?
     let isLessThanBalance = balance > amount;
@@ -216,13 +217,13 @@ function startup() {
         scriptSig: unlockTransaction(tx.msg, publicKey, privateKey),
       });
       vout.push({
-        scriptPubKey: `${tx.txid} ${toAddress}`,
+        scriptPubKey: `${tx.msg} ${toAddress}`,
         nValue: spent,
       });
       if (remainder > 0) {
         // add vout to self of remaining
         vout.push({
-          scriptPubKey: `${tx.txid} ${publicKey}`,
+          scriptPubKey: `${tx.msg} ${publicKey}`,
           nValue: remainder,
         });
         break;

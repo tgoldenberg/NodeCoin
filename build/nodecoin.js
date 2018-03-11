@@ -1065,6 +1065,10 @@ module.exports = toKey;
 "use strict";
 
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1114,10 +1118,9 @@ var Block = function () {
     };
     this.txs = [];
     if (isGenesis) {
-      var txid = (0, _jsSha2.default)(this.getBlockHeaderHash() + '0');
       var genesisTransaction = {
         vin: [{ n: 'COINBASE', prevout: null }],
-        vout: [{ nValue: 50 * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)(txid, MY_PUBLIC_KEY) }]
+        vout: [{ nValue: 50 * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)((0, _jsSha2.default)('00000000'), MY_PUBLIC_KEY) }]
       };
       this.addTransaction(genesisTransaction);
     } else {
@@ -1171,7 +1174,8 @@ var Block = function () {
     key: 'addTransaction',
     value: function addTransaction(transaction) {
       var idx = this.txs.length;
-      this.txs.push(_extends({}, transaction, { hash: (0, _jsSha2.default)(this.getBlockHeaderHash() + idx) }));
+      var txid = (0, _jsSha2.default)(JSON.stringify({ vin: transaction.vin, vout: transaction.vout }));
+      this.txs.push(_extends({}, transaction, { hash: txid }));
       return this.txs;
     }
   }]);
@@ -1179,12 +1183,11 @@ var Block = function () {
   return Block;
 }();
 
+exports.default = Block;
 ;
 
 // let block = new Block(null, true); // genesis block
 // console.log('> Genesis block: ', block);
-
-module.exports = Block;
 
 /***/ }),
 /* 20 */
@@ -1820,7 +1823,7 @@ exports.seedBlocks = exports.myWallet = undefined;
 
 var seedBlocks = exports.seedBlocks = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-    var genesisBlock, savedGenesisBlock, remaining, prev, amount, header, blockHeaderHash, target, block, transactions, newBlock, newBlock2;
+    var genesisBlock, savedGenesisBlock, remaining, prev, amount, header, blockHeaderHash, target, block, transactions, newBlock, txId, newBlock2;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -1860,8 +1863,8 @@ var seedBlocks = exports.seedBlocks = function () {
               vin: [{ n: 'COINBASE', prevout: null }],
               vout: [{ nValue: COINBASE_REWARD, scriptPubKey: (0, _validateSignature.lockTransaction)(COINBASE_MSG, myWallet.publicKey) }]
             }, {
-              vin: [{ n: 0, prevout: prev.txs[0].hash, scriptSig: (0, _validateSignature.unlockTransaction)(prev.txs[0].hash, myWallet.publicKey, myWallet.privateKey) }],
-              vout: [{ nValue: amount * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, friendWallet.pulicKey) }, { nValue: remaining, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, myWallet.publicKey) }]
+              vin: [{ n: 0, prevout: prev.txs[0].hash, scriptSig: (0, _validateSignature.unlockTransaction)(COINBASE_MSG, myWallet.publicKey, myWallet.privateKey) }],
+              vout: [{ nValue: amount * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)(COINBASE_MSG, friendWallet.pulicKey) }, { nValue: remaining, scriptPubKey: (0, _validateSignature.lockTransaction)(COINBASE_MSG, myWallet.publicKey) }]
             }];
 
             transactions.forEach(function (tx) {
@@ -1886,14 +1889,15 @@ var seedBlocks = exports.seedBlocks = function () {
               blockHeaderHash = (0, _jsSha2.default)(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
             }
             block = new _Block2.default(header, []);
-            txId = (0, _jsSha2.default)(block.getBlockHeaderHash() + '0');
+            txId = COINBASE_MSG;
+
             remaining -= amount * COIN;
             transactions = [{
               vin: [{ n: 'COINBASE', prevout: null }],
               vout: [{ nValue: COINBASE_REWARD, scriptPubKey: (0, _validateSignature.lockTransaction)(COINBASE_MSG, myWallet.publicKey) }]
             }, {
-              vin: [{ n: 1, prevout: prev.txs[1].hash, scriptSig: (0, _validateSignature.unlockTransaction)(prev.txs[0].hash, myWallet.publicKey, myWallet.privateKey) }],
-              vout: [{ nValue: amount * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, friendWallet.pulicKey) }, { nValue: remaining, scriptPubKey: (0, _validateSignature.lockTransaction)(txId, myWallet.publicKey) }]
+              vin: [{ n: 1, prevout: prev.txs[1].hash, scriptSig: (0, _validateSignature.unlockTransaction)(COINBASE_MSG, myWallet.publicKey, myWallet.privateKey) }],
+              vout: [{ nValue: amount * COIN, scriptPubKey: (0, _validateSignature.lockTransaction)(COINBASE_MSG, friendWallet.pulicKey) }, { nValue: remaining, scriptPubKey: (0, _validateSignature.lockTransaction)(COINBASE_MSG, myWallet.publicKey) }]
             }];
             transactions.forEach(function (tx) {
               return block.addTransaction(tx);
@@ -3254,7 +3258,7 @@ function handleConnection(conn) {
               blockHeaderHash = void 0, blocksToSend = void 0, message = void 0;
               allPeers = void 0, unfetchedHeaders = void 0, peerIdx = void 0, headers = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 75;
+              _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 74;
               break;
 
             case 8:
@@ -3279,7 +3283,7 @@ function handleConnection(conn) {
 
               // send getblocks message
               conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(DELIMITER));
-              return _context.abrupt('break', 75);
+              return _context.abrupt('break', 74);
 
             case 19:
               _store2.default.dispatch({ type: 'SYNC_PEER', ip: ip });
@@ -3287,7 +3291,7 @@ function handleConnection(conn) {
               return (0, _connectWithPeer.isNodeSynced)();
 
             case 22:
-              return _context.abrupt('break', 75);
+              return _context.abrupt('break', 74);
 
             case 23:
               blockHeaderHash = args[0];
@@ -3314,7 +3318,7 @@ function handleConnection(conn) {
               conn.write(message);
 
             case 33:
-              return _context.abrupt('break', 75);
+              return _context.abrupt('break', 74);
 
             case 34:
               // add to unfetchedHeaders
@@ -3354,7 +3358,7 @@ function handleConnection(conn) {
               break;
 
             case 49:
-              return _context.abrupt('break', 75);
+              return _context.abrupt('break', 74);
 
             case 50:
               // find the requested block and send as a JSON-serialized string
@@ -3368,48 +3372,47 @@ function handleConnection(conn) {
               if (block) {
                 conn.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
               }
-              return _context.abrupt('break', 75);
+              return _context.abrupt('break', 74);
 
             case 56:
-              console.log('> JSON block: ', args[0]);
               block = JSON.parse(args[0]);
               // check if already have
-              _context.next = 60;
+              _context.next = 59;
               return _Block4.default.findOne({ hash: block.hash });
 
-            case 60:
+            case 59:
               savedBlock = _context.sent;
 
               if (!savedBlock) {
-                _context.next = 63;
+                _context.next = 62;
                 break;
               }
 
-              return _context.abrupt('break', 75);
+              return _context.abrupt('break', 74);
 
-            case 63:
+            case 62:
               // if don't have, does the previousHash match our lastBlock.hash?
               lastBlock = _store2.default.getState().lastBlock;
 
               if (lastBlock) {
-                _context.next = 66;
+                _context.next = 65;
                 break;
               }
 
-              return _context.abrupt('break', 75);
+              return _context.abrupt('break', 74);
 
-            case 66:
+            case 65:
               if (!(block.previousHash === lastBlock.getBlockHeaderHash())) {
-                _context.next = 75;
+                _context.next = 74;
                 break;
               }
 
               // add block to blockchain
               newBlock = new _Block4.default(block);
-              _context.next = 70;
+              _context.next = 69;
               return newBlock.save();
 
-            case 70:
+            case 69:
               // remove from orphan and unfetched / loading pools
               _store2.default.dispatch({ type: 'NEW_BLOCK', block: (0, _syncBlocksWithStore.formatBlock)(newBlock) });
               numBlocksToFetch = _store2.default.getState().unfetchedHeaders.size;
@@ -3419,10 +3422,10 @@ function handleConnection(conn) {
                 // set "isSynced" => true
                 // start mining
               } else {}
-              _context.next = 75;
+              _context.next = 74;
               break;
 
-            case 75:
+            case 74:
             case 'end':
               return _context.stop();
           }
@@ -3519,14 +3522,16 @@ function startup() {
               if (typeof amount === 'string') {
                 amount = parseInt(amount);
               }
+              amount *= COIN;
               address = (0, _address.getAddress)(publicKey);
-              _context3.next = 7;
+              _context3.next = 8;
               return (0, _getWalletData.getWalletData)(address);
 
-            case 7:
+            case 8:
               walletData = _context3.sent;
               utxo = walletData.utxo, balance = walletData.balance;
 
+              balance *= COIN;
               utxo = utxo.sort(function (a, b) {
                 return a.nValue < b.nValue;
               });
@@ -3534,13 +3539,13 @@ function startup() {
               isLessThanBalance = balance > amount;
 
               if (isLessThanBalance) {
-                _context3.next = 13;
+                _context3.next = 15;
                 break;
               }
 
               return _context3.abrupt('return', res.status(500).send({ error: 'Balance must be above amount to send.' }));
 
-            case 13:
+            case 15:
               remaining = amount;
               vin = [];
               vout = [];
@@ -3549,9 +3554,9 @@ function startup() {
 
               i = 0;
 
-            case 18:
+            case 20:
               if (!(i < utxo.length)) {
-                _context3.next = 32;
+                _context3.next = 34;
                 break;
               }
 
@@ -3567,28 +3572,28 @@ function startup() {
                 scriptSig: (0, _validateSignature.unlockTransaction)(tx.msg, publicKey, privateKey)
               });
               vout.push({
-                scriptPubKey: tx.txid + ' ' + toAddress,
+                scriptPubKey: tx.msg + ' ' + toAddress,
                 nValue: spent
               });
 
               if (!(remainder > 0)) {
-                _context3.next = 29;
+                _context3.next = 31;
                 break;
               }
 
               // add vout to self of remaining
               vout.push({
-                scriptPubKey: tx.txid + ' ' + publicKey,
+                scriptPubKey: tx.msg + ' ' + publicKey,
                 nValue: remainder
               });
-              return _context3.abrupt('break', 32);
+              return _context3.abrupt('break', 34);
 
-            case 29:
+            case 31:
               i++;
-              _context3.next = 18;
+              _context3.next = 20;
               break;
 
-            case 32:
+            case 34:
               transaction = {
                 hash: (0, _jsSha2.default)(JSON.stringify(vin) + JSON.stringify(vout)),
                 vin: vin,
@@ -3602,16 +3607,16 @@ function startup() {
                 tx: transaction,
                 timestamp: Date.now()
               };
-              _context3.next = 37;
+              _context3.next = 39;
               return request.post(url, body);
 
-            case 37:
+            case 39:
               response = _context3.sent;
 
               console.log('> Send transaction response: '.yellow, response.data);
               res.status(200).send(response.data);
 
-            case 40:
+            case 42:
             case 'end':
               return _context3.stop();
           }
