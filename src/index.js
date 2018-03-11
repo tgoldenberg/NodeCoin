@@ -6,6 +6,7 @@ import { formatBlock, isValidBlock, isValidTransaction, syncBlocksWithStore } fr
 import { getAddress, makeWallet } from './address';
 import { getWalletData, getWallets } from 'utils/getWalletData';
 
+import BlockClass from 'classes/Block';
 import BlockModel from 'models/Block';
 import Client from 'pusher-js';
 import SHA256 from 'js-sha256';
@@ -394,8 +395,9 @@ function startup() {
       // is local node synced?
       const isSynced = await isNodeSynced();
       // validate block
-      const lastBlock = await BlockModel.findOne({ }).sort({ timestamp: -1 }).limit(1);
-      const isValid = await isValidBlock(data.block, lastBlock);
+      const lastBlock = await BlockModel.find({ }).sort({ timestamp: -1 }).limit(1);
+
+      const isValid = await isValidBlock(data.block, new BlockClass(lastBlock, lastBlock.txs));
       console.log('> Is valid block: ', isValid)
       // add block to MongoDB and local state as "lastBlock"
       // stop mining operation

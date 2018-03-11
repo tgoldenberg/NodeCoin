@@ -26,7 +26,7 @@ const initialState = {
   isMining: false,
 };
 
-let newUnfetchedHeaders, newLoadingHeaders, peerIdx, newMemoryPool;
+let newUnfetchedHeaders, newLoadingHeaders, peerIdx, newMemoryPool, tempMempool;
 
 const nodeCoin = (state = initialState, action) => {
   switch(action.type) {
@@ -102,7 +102,8 @@ const nodeCoin = (state = initialState, action) => {
     case 'START_MINING':
       return { ...state, isMining: true };
     case 'STOP_MINING':
-      return { ...state, isMining: false };
+      tempMempool = state.memoryPool;
+      return { ...state, isMining: false, memoryPool: [], pendingBlockTxs: tempMempool };
     default:
       return state;
   }

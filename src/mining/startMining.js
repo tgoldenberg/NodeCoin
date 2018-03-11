@@ -35,9 +35,9 @@ export async function startMining() {
 
   // ensure that transaction size > MIN_TX_PER_BLOCK
   if (numTxs < 0 || numTxs < MIN_TX_PER_BLOCK) {
-    console.log('> Waiting for txs to mine...');
+    console.log('> Waiting for txs to mine... checking in 20 seconds');
 
-    setTimeout(startMining, 10 * 1000); // check back in 10 seconds
+    setTimeout(startMining, 20 * 1000); // check back in 10 seconds
     return false;
   }
 

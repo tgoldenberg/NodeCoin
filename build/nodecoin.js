@@ -2819,9 +2819,9 @@ var startMining = exports.startMining = function () {
               break;
             }
 
-            console.log('> Waiting for txs to mine...');
+            console.log('> Waiting for txs to mine... checking in 20 seconds');
 
-            setTimeout(startMining, 10 * 1000); // check back in 10 seconds
+            setTimeout(startMining, 20 * 1000); // check back in 10 seconds
             return _context.abrupt('return', false);
 
           case 13:
@@ -3118,9 +3118,13 @@ var _address = __webpack_require__(61);
 
 var _getWalletData = __webpack_require__(159);
 
-var _Block = __webpack_require__(2);
+var _Block = __webpack_require__(19);
 
 var _Block2 = _interopRequireDefault(_Block);
+
+var _Block3 = __webpack_require__(2);
+
+var _Block4 = _interopRequireDefault(_Block3);
 
 var _pusherJs = __webpack_require__(160);
 
@@ -3238,7 +3242,7 @@ function handleConnection(conn) {
 
               // Check if we have the last block header transmitted
               _context.next = 15;
-              return _Block2.default.findOne({ hash: lastBlockHash });
+              return _Block4.default.findOne({ hash: lastBlockHash });
 
             case 15:
               peerLastBlock = _context.sent;
@@ -3263,7 +3267,7 @@ function handleConnection(conn) {
             case 23:
               blockHeaderHash = args[0];
               _context.next = 26;
-              return _Block2.default.findOne({ hash: blockHeaderHash });
+              return _Block4.default.findOne({ hash: blockHeaderHash });
 
             case 26:
               lastBlock = _context.sent;
@@ -3274,7 +3278,7 @@ function handleConnection(conn) {
               }
 
               _context.next = 30;
-              return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+              return _Block4.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
 
             case 30:
               blocksToSend = _context.sent;
@@ -3331,7 +3335,7 @@ function handleConnection(conn) {
               // find the requested block and send as a JSON-serialized string
               header = args[0];
               _context.next = 53;
-              return _Block2.default.findOne({ hash: header });
+              return _Block4.default.findOne({ hash: header });
 
             case 53:
               block = _context.sent;
@@ -3345,7 +3349,7 @@ function handleConnection(conn) {
               block = JSON.parse(args[0]);
               // check if already have
               _context.next = 59;
-              return _Block2.default.findOne({ hash: block.hash });
+              return _Block4.default.findOne({ hash: block.hash });
 
             case 59:
               savedBlock = _context.sent;
@@ -3375,7 +3379,7 @@ function handleConnection(conn) {
               }
 
               // add block to blockchain
-              newBlock = new _Block2.default(block);
+              newBlock = new _Block4.default(block);
               _context.next = 69;
               return newBlock.save();
 
@@ -3665,9 +3669,9 @@ function startup() {
               _req$body2 = req.body, hash = _req$body2.hash, version = _req$body2.version, previousHash = _req$body2.previousHash, merkleHash = _req$body2.merkleHash, timestamp = _req$body2.timestamp, difficulty = _req$body2.difficulty, nonce = _req$body2.nonce, txs = _req$body2.txs, blocksize = _req$body2.blocksize;
               // validate block format
 
-              newBlock = new _Block2.default(req.body);
+              newBlock = new _Block4.default(req.body);
               _context6.next = 5;
-              return _Block2.default.findOne({}).sort({ timestamp: -1 }).limit(1);
+              return _Block4.default.findOne({}).sort({ timestamp: -1 }).limit(1);
 
             case 5:
               prevBlock = _context6.sent;
@@ -3969,12 +3973,12 @@ function startup() {
                       case 3:
                         isSynced = _context11.sent;
                         _context11.next = 6;
-                        return _Block2.default.findOne({}).sort({ timestamp: -1 }).limit(1);
+                        return _Block4.default.find({}).sort({ timestamp: -1 }).limit(1);
 
                       case 6:
                         lastBlock = _context11.sent;
                         _context11.next = 9;
-                        return (0, _syncBlocksWithStore.isValidBlock)(data.block, lastBlock);
+                        return (0, _syncBlocksWithStore.isValidBlock)(data.block, new _Block2.default(lastBlock, lastBlock.txs));
 
                       case 9:
                         isValid = _context11.sent;
@@ -4068,7 +4072,8 @@ var initialState = {
 var newUnfetchedHeaders = void 0,
     newLoadingHeaders = void 0,
     peerIdx = void 0,
-    newMemoryPool = void 0;
+    newMemoryPool = void 0,
+    tempMempool = void 0;
 
 var nodeCoin = function nodeCoin() {
   var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
@@ -4134,7 +4139,8 @@ var nodeCoin = function nodeCoin() {
     case 'START_MINING':
       return _extends({}, state, { isMining: true });
     case 'STOP_MINING':
-      return _extends({}, state, { isMining: false });
+      tempMempool = state.memoryPool;
+      return _extends({}, state, { isMining: false, memoryPool: [], pendingBlockTxs: tempMempool });
     default:
       return state;
   }
