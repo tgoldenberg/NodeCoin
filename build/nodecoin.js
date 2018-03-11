@@ -6605,7 +6605,7 @@ var isNodeSynced = exports.isNodeSynced = function () {
             }
 
             _context.next = 7;
-            return startMining();
+            return (0, _startMining.startMining)();
 
           case 7:
             return _context.abrupt('return', isSynced);
@@ -6891,6 +6891,8 @@ var _syncBlocksWithStore = __webpack_require__(25);
 var _net = __webpack_require__(56);
 
 var _net2 = _interopRequireDefault(_net);
+
+var _startMining = __webpack_require__(156);
 
 var _store = __webpack_require__(7);
 

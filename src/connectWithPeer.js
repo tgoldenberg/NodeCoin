@@ -3,6 +3,7 @@ import 'colors';
 import BlockModel from 'models/Block';
 import { formatBlock } from 'db/syncBlocksWithStore';
 import net from 'net';
+import { startMining } from 'mining/startMining';
 import store from 'store/store';
 import uniq from 'lodash/uniq';
 import { wait } from 'utils';
