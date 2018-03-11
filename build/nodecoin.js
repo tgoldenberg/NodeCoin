@@ -1506,234 +1506,238 @@ var connectWithPeer = exports.connectWithPeer = function () {
           case 0:
             IS_VERSION_COMPATIBLE = false;
             HAS_MORE_BLOCKS = false;
+            port = DEFAULT_PORT;
             // console.log('> Connecting with peer: ', peer, lastBlockHash, version);
 
-            port = DEFAULT_PORT;
-            client = new _net2.default.Socket();
-            // PEER CONNECTED
+            try {
+              client = new _net2.default.Socket();
+              // PEER CONNECTED
 
-            client.connect(port, peer.ip, function () {
-              console.log('> Connected to peer: ', peer);
-              var type = 'VERSION';
-              client.write([type, version, lastBlockHash].join(DELIMITER));
-              _store2.default.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client: client });
-            });
+              client.connect(port, peer.ip, function () {
+                console.log('> Connected to peer: ', peer);
+                var type = 'VERSION';
+                client.write([type, version, lastBlockHash].join(DELIMITER));
+                _store2.default.dispatch({ type: 'CONNECT_PEER', ip: peer.ip, client: client });
+              });
 
-            client.on('data', function () {
-              var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(data) {
-                var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, allPeers, unfetchedHeaders, headers, peerIdx, header, block, savedBlock, newBlock, numBlocksToFetch, _store$getState2, _allPeers, _unfetchedHeaders, _peer, msg;
+              client.on('data', function () {
+                var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(data) {
+                  var _data$toString$split, _data$toString$split2, type, args, version, blockHeaderHash, lastBlock, savedLastBlock, savedLastBlockHash, blocksToSend, message, allPeers, unfetchedHeaders, headers, peerIdx, header, block, savedBlock, newBlock, numBlocksToFetch, _store$getState2, _allPeers, _unfetchedHeaders, _peer, msg;
 
-                return regeneratorRuntime.wrap(function _callee2$(_context2) {
-                  while (1) {
-                    switch (_context2.prev = _context2.next) {
-                      case 0:
-                        _data$toString$split = data.toString().split(DELIMITER), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
+                  return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                    while (1) {
+                      switch (_context2.prev = _context2.next) {
+                        case 0:
+                          _data$toString$split = data.toString().split(DELIMITER), _data$toString$split2 = _toArray(_data$toString$split), type = _data$toString$split2[0], args = _data$toString$split2.slice(1);
 
-                        console.log('> Received: '.yellow, data.toString().replace(reg, ' '));
-                        version = void 0, blockHeaderHash = void 0, lastBlock = void 0, savedLastBlock = void 0, savedLastBlockHash = void 0;
-                        blocksToSend = void 0, message = void 0, allPeers = void 0, unfetchedHeaders = void 0;
-                        headers = void 0, peerIdx = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
-                        numBlocksToFetch = 0;
-                        _context2.t0 = type;
-                        _context2.next = _context2.t0 === 'VERSION' ? 9 : _context2.t0 === 'GETBLOCKS' ? 27 : _context2.t0 === 'BLOCKHEADERS' ? 38 : _context2.t0 === 'REQUESTBLOCK' ? 55 : _context2.t0 === 'SENDBLOCK' ? 61 : 79;
-                        break;
-
-                      case 9:
-                        version = args[0];
-                        blockHeaderHash = args[1];
-
-                        if (!(version !== '1')) {
-                          _context2.next = 13;
+                          console.log('> Received: '.yellow, data.toString().replace(reg, ' '));
+                          version = void 0, blockHeaderHash = void 0, lastBlock = void 0, savedLastBlock = void 0, savedLastBlockHash = void 0;
+                          blocksToSend = void 0, message = void 0, allPeers = void 0, unfetchedHeaders = void 0;
+                          headers = void 0, peerIdx = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
+                          numBlocksToFetch = 0;
+                          _context2.t0 = type;
+                          _context2.next = _context2.t0 === 'VERSION' ? 9 : _context2.t0 === 'GETBLOCKS' ? 27 : _context2.t0 === 'BLOCKHEADERS' ? 38 : _context2.t0 === 'REQUESTBLOCK' ? 55 : _context2.t0 === 'SENDBLOCK' ? 61 : 79;
                           break;
-                        }
 
-                        return _context2.abrupt('break', 79);
+                        case 9:
+                          version = args[0];
+                          blockHeaderHash = args[1];
 
-                      case 13:
-                        IS_VERSION_COMPATIBLE = true;
-                        // check db for what block height received block hash is
-                        _context2.next = 16;
-                        return _Block2.default.findOne({ hash: blockHeaderHash });
+                          if (!(version !== '1')) {
+                            _context2.next = 13;
+                            break;
+                          }
 
-                      case 16:
-                        lastBlock = _context2.sent;
+                          return _context2.abrupt('break', 79);
 
-                        if (lastBlock) {
-                          _context2.next = 22;
+                        case 13:
+                          IS_VERSION_COMPATIBLE = true;
+                          // check db for what block height received block hash is
+                          _context2.next = 16;
+                          return _Block2.default.findOne({ hash: blockHeaderHash });
+
+                        case 16:
+                          lastBlock = _context2.sent;
+
+                          if (lastBlock) {
+                            _context2.next = 22;
+                            break;
+                          }
+
+                          // send getblocks message
+                          savedLastBlock = _store2.default.getState().lastBlock;
+                          savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
+                          client.write(['GETBLOCKS', savedLastBlockHash].join(DELIMITER));
+                          return _context2.abrupt('break', 79);
+
+                        case 22:
+                          _store2.default.dispatch({ type: 'SYNC_PEER', ip: peer.ip });
+                          _context2.next = 25;
+                          return isNodeSynced();
+
+                        case 25:
+                          return _context2.abrupt('return', true);
+
+                        case 27:
+                          blockHeaderHash = args[0];
+                          _context2.next = 30;
+                          return _Block2.default.findOne({ hash: blockHeaderHash });
+
+                        case 30:
+                          lastBlock = _context2.sent;
+
+                          if (!lastBlock) {
+                            _context2.next = 37;
+                            break;
+                          }
+
+                          _context2.next = 34;
+                          return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+
+                        case 34:
+                          blocksToSend = _context2.sent;
+
+                          message = ['BLOCKHEADERS'].concat(_toConsumableArray(blocksToSend.map(function (blk) {
+                            return blk.hash;
+                          }))).join(DELIMITER);
+                          client.write(message);
+
+                        case 37:
+                          return _context2.abrupt('break', 79);
+
+                        case 38:
+                          // add to unfetchedHeaders
+                          _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
+                          numBlocksToFetch = args.length;
+                          _store$getState2 = _store2.default.getState(), _allPeers = _store$getState2.allPeers, _unfetchedHeaders = _store$getState2.unfetchedHeaders;
+
+                          headers = Array.from(_unfetchedHeaders);
+                          peerIdx = 0;
+
+                        case 43:
+                          if (!headers.length) {
+                            _context2.next = 54;
+                            break;
+                          }
+
+                          // assign header to peer
+                          _peer = _allPeers[peerIdx];
+                          // connect with peer if no connection
+
+                          if (!_peer.client) {
+                            // await connectWithPeer(peer, lastBlockHash, version);
+                          }
+                          header = headers.shift(); // dequeue a header
+                          client.write('REQUESTBLOCK' + DELIMITER + header);
+                          _context2.next = 50;
+                          return (0, _utils.wait)(1);
+
+                        case 50:
+                          // wait 1 second
+                          // if peer doesn't respond within a period or doesn't have the block, move to next peer
+                          // if peer gives block, verify the block (if possible) and add to MongoDB
+                          // move from unfetched => loading
+                          _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
+                          peerIdx = _allPeers.length % (peerIdx + 1);
+                          _context2.next = 43;
                           break;
-                        }
 
-                        // send getblocks message
-                        savedLastBlock = _store2.default.getState().lastBlock;
-                        savedLastBlockHash = savedLastBlock.getBlockHeaderHash();
-                        client.write(['GETBLOCKS', savedLastBlockHash].join(DELIMITER));
-                        return _context2.abrupt('break', 79);
+                        case 54:
+                          return _context2.abrupt('break', 79);
 
-                      case 22:
-                        _store2.default.dispatch({ type: 'SYNC_PEER', ip: peer.ip });
-                        _context2.next = 25;
-                        return isNodeSynced();
+                        case 55:
+                          // find the requested block and send as a JSON-serialized string
+                          header = args[0];
+                          _context2.next = 58;
+                          return _Block2.default.findOne({ hash: header });
 
-                      case 25:
-                        return _context2.abrupt('return', true);
+                        case 58:
+                          block = _context2.sent;
 
-                      case 27:
-                        blockHeaderHash = args[0];
-                        _context2.next = 30;
-                        return _Block2.default.findOne({ hash: blockHeaderHash });
+                          if (block) {
+                            msg = JSON.stringify(block);
 
-                      case 30:
-                        lastBlock = _context2.sent;
+                            client.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
+                          }
+                          return _context2.abrupt('break', 79);
 
-                        if (!lastBlock) {
-                          _context2.next = 37;
-                          break;
-                        }
+                        case 61:
+                          block = JSON.parse(args[0]);
+                          // check if already have
+                          _context2.next = 64;
+                          return _Block2.default.findOne({ hash: block.hash });
 
-                        _context2.next = 34;
-                        return _Block2.default.find({ timestamp: { $gte: lastBlock.timestamp } }).limit(50);
+                        case 64:
+                          savedBlock = _context2.sent;
 
-                      case 34:
-                        blocksToSend = _context2.sent;
+                          if (!savedBlock) {
+                            _context2.next = 67;
+                            break;
+                          }
 
-                        message = ['BLOCKHEADERS'].concat(_toConsumableArray(blocksToSend.map(function (blk) {
-                          return blk.hash;
-                        }))).join(DELIMITER);
-                        client.write(message);
+                          return _context2.abrupt('break', 79);
 
-                      case 37:
-                        return _context2.abrupt('break', 79);
+                        case 67:
+                          // if don't have, does the previousHash match our lastBlock.hash?
+                          lastBlock = _store2.default.getState().lastBlock;
 
-                      case 38:
-                        // add to unfetchedHeaders
-                        _store2.default.dispatch({ type: 'ADD_UNFETCHED_HEADERS', headers: args });
-                        numBlocksToFetch = args.length;
-                        _store$getState2 = _store2.default.getState(), _allPeers = _store$getState2.allPeers, _unfetchedHeaders = _store$getState2.unfetchedHeaders;
+                          if (lastBlock) {
+                            _context2.next = 70;
+                            break;
+                          }
 
-                        headers = Array.from(_unfetchedHeaders);
-                        peerIdx = 0;
+                          return _context2.abrupt('break', 79);
 
-                      case 43:
-                        if (!headers.length) {
-                          _context2.next = 54;
-                          break;
-                        }
+                        case 70:
+                          if (!(block.previousHash === lastBlock.getBlockHeaderHash())) {
+                            _context2.next = 79;
+                            break;
+                          }
 
-                        // assign header to peer
-                        _peer = _allPeers[peerIdx];
-                        // connect with peer if no connection
+                          // add block to blockchain
+                          newBlock = new _Block2.default(block);
+                          _context2.next = 74;
+                          return newBlock.save();
 
-                        if (!_peer.client) {
-                          // await connectWithPeer(peer, lastBlockHash, version);
-                        }
-                        header = headers.shift(); // dequeue a header
-                        client.write('REQUESTBLOCK' + DELIMITER + header);
-                        _context2.next = 50;
-                        return (0, _utils.wait)(1);
-
-                      case 50:
-                        // wait 1 second
-                        // if peer doesn't respond within a period or doesn't have the block, move to next peer
-                        // if peer gives block, verify the block (if possible) and add to MongoDB
-                        // move from unfetched => loading
-                        _store2.default.dispatch({ type: 'LOADING_BLOCK', header: header });
-                        peerIdx = _allPeers.length % (peerIdx + 1);
-                        _context2.next = 43;
-                        break;
-
-                      case 54:
-                        return _context2.abrupt('break', 79);
-
-                      case 55:
-                        // find the requested block and send as a JSON-serialized string
-                        header = args[0];
-                        _context2.next = 58;
-                        return _Block2.default.findOne({ hash: header });
-
-                      case 58:
-                        block = _context2.sent;
-
-                        if (block) {
-                          msg = JSON.stringify(block);
-
-                          client.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
-                        }
-                        return _context2.abrupt('break', 79);
-
-                      case 61:
-                        block = JSON.parse(args[0]);
-                        // check if already have
-                        _context2.next = 64;
-                        return _Block2.default.findOne({ hash: block.hash });
-
-                      case 64:
-                        savedBlock = _context2.sent;
-
-                        if (!savedBlock) {
-                          _context2.next = 67;
-                          break;
-                        }
-
-                        return _context2.abrupt('break', 79);
-
-                      case 67:
-                        // if don't have, does the previousHash match our lastBlock.hash?
-                        lastBlock = _store2.default.getState().lastBlock;
-
-                        if (lastBlock) {
-                          _context2.next = 70;
-                          break;
-                        }
-
-                        return _context2.abrupt('break', 79);
-
-                      case 70:
-                        if (!(block.previousHash === lastBlock.getBlockHeaderHash())) {
+                        case 74:
+                          // remove from orphan and unfetched / loading pools
+                          _store2.default.dispatch({ type: 'NEW_BLOCK', block: (0, _syncBlocksWithStore.formatBlock)(newBlock) });
+                          numBlocksToFetch -= 1;
+                          if (numBlocksToFetch === 0) {
+                            // RESTART
+                          }
                           _context2.next = 79;
                           break;
-                        }
 
-                        // add block to blockchain
-                        newBlock = new _Block2.default(block);
-                        _context2.next = 74;
-                        return newBlock.save();
-
-                      case 74:
-                        // remove from orphan and unfetched / loading pools
-                        _store2.default.dispatch({ type: 'NEW_BLOCK', block: (0, _syncBlocksWithStore.formatBlock)(newBlock) });
-                        numBlocksToFetch -= 1;
-                        if (numBlocksToFetch === 0) {
-                          // RESTART
-                        }
-                        _context2.next = 79;
-                        break;
-
-                      case 79:
-                      case 'end':
-                        return _context2.stop();
+                        case 79:
+                        case 'end':
+                          return _context2.stop();
+                      }
                     }
-                  }
-                }, _callee2, _this);
-              }));
+                  }, _callee2, _this);
+                }));
 
-              return function (_x4) {
-                return _ref4.apply(this, arguments);
-              };
-            }()
-            // if not, add to orphan transactions
-            );
+                return function (_x4) {
+                  return _ref4.apply(this, arguments);
+                };
+              }()
+              // if not, add to orphan transactions
+              );
 
-            client.on('close', function () {
-              console.log('> Connection closed');
-            });
-            client.on('timeout', function () {
-              console.log('> Connection timed out ');
-            });
-            client.on('error', function (err) {
-              console.error(err);
-            });
+              client.on('close', function () {
+                console.log('> Connection closed');
+              });
+              client.on('timeout', function () {
+                console.log('> Connection timed out ');
+              });
+              client.on('error', function (err) {
+                console.error(err);
+              });
+            } catch (e) {
+              console.warn(e);
+            }
 
-          case 9:
+          case 4:
           case 'end':
             return _context3.stop();
         }
@@ -3208,7 +3212,7 @@ var reg = new RegExp(DELIMITER, 'gi');
 function handleConnection(conn) {
   var onConnData = function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(d) {
-      var _d$split, _d$split2, type, args, version, lastBlockHash, state, lastBlock, peerLastBlock, blockHeaderHash, blocksToSend, message, allPeers, unfetchedHeaders, peerIdx, headers, header, block, _args, _store$getState, _allPeers, _unfetchedHeaders, peer, _header;
+      var _d$split, _d$split2, type, args, version, lastBlockHash, state, lastBlock, peerLastBlock, blockHeaderHash, blocksToSend, message, allPeers, unfetchedHeaders, peerIdx, headers, header, block, savedBlock, newBlock, _args, _store$getState, _allPeers, _unfetchedHeaders, peer, _header, numBlocksToFetch;
 
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -3219,9 +3223,9 @@ function handleConnection(conn) {
               console.log(('> Received from: ' + remoteAddr + ' ').yellow, d.replace(reg, ' '));
               version = void 0, lastBlockHash = void 0, state = void 0, lastBlock = void 0, peerLastBlock = void 0;
               blockHeaderHash = void 0, blocksToSend = void 0, message = void 0;
-              allPeers = void 0, unfetchedHeaders = void 0, peerIdx = void 0, headers = void 0, header = void 0, block = void 0;
+              allPeers = void 0, unfetchedHeaders = void 0, peerIdx = void 0, headers = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : 56;
+              _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 74;
               break;
 
             case 8:
@@ -3246,7 +3250,7 @@ function handleConnection(conn) {
 
               // send getblocks message
               conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(DELIMITER));
-              return _context.abrupt('break', 56);
+              return _context.abrupt('break', 74);
 
             case 19:
               _store2.default.dispatch({ type: 'SYNC_PEER', ip: ip });
@@ -3254,7 +3258,7 @@ function handleConnection(conn) {
               return (0, _connectWithPeer.isNodeSynced)();
 
             case 22:
-              return _context.abrupt('break', 56);
+              return _context.abrupt('break', 74);
 
             case 23:
               blockHeaderHash = args[0];
@@ -3281,7 +3285,7 @@ function handleConnection(conn) {
               conn.write(message);
 
             case 33:
-              return _context.abrupt('break', 56);
+              return _context.abrupt('break', 74);
 
             case 34:
               // add to unfetchedHeaders
@@ -3321,7 +3325,7 @@ function handleConnection(conn) {
               break;
 
             case 49:
-              return _context.abrupt('break', 56);
+              return _context.abrupt('break', 74);
 
             case 50:
               // find the requested block and send as a JSON-serialized string
@@ -3335,9 +3339,60 @@ function handleConnection(conn) {
               if (block) {
                 conn.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
               }
-              return _context.abrupt('break', 56);
+              return _context.abrupt('break', 74);
 
             case 56:
+              block = JSON.parse(args[0]);
+              // check if already have
+              _context.next = 59;
+              return _Block2.default.findOne({ hash: block.hash });
+
+            case 59:
+              savedBlock = _context.sent;
+
+              if (!savedBlock) {
+                _context.next = 62;
+                break;
+              }
+
+              return _context.abrupt('break', 74);
+
+            case 62:
+              // if don't have, does the previousHash match our lastBlock.hash?
+              lastBlock = _store2.default.getState().lastBlock;
+
+              if (lastBlock) {
+                _context.next = 65;
+                break;
+              }
+
+              return _context.abrupt('break', 74);
+
+            case 65:
+              if (!(block.previousHash === lastBlock.getBlockHeaderHash())) {
+                _context.next = 74;
+                break;
+              }
+
+              // add block to blockchain
+              newBlock = new _Block2.default(block);
+              _context.next = 69;
+              return newBlock.save();
+
+            case 69:
+              // remove from orphan and unfetched / loading pools
+              _store2.default.dispatch({ type: 'NEW_BLOCK', block: formatBlock(newBlock) });
+              numBlocksToFetch = _store2.default.getState().unfetchedHeaders.size;
+
+              if (numBlocksToFetch === 0) {
+                // RESTART
+                // set "isSynced" => true
+                // start mining
+              } else {}
+              _context.next = 74;
+              break;
+
+            case 74:
             case 'end':
               return _context.stop();
           }

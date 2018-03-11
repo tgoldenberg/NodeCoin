@@ -69,7 +69,7 @@ function handleConnection(conn) {
     console.log(`> Received from: ${remoteAddr} `.yellow, d.replace(reg, ' '));
     let version, lastBlockHash, state, lastBlock, peerLastBlock;
     let blockHeaderHash, blocksToSend, message;
-    let allPeers, unfetchedHeaders, peerIdx, headers, header, block;
+    let allPeers, unfetchedHeaders, peerIdx, headers, header, block, savedBlock, newBlock;
     switch(type) {
       // Initial message swapping version numbers and last block header hash
       case 'VERSION':
@@ -128,6 +128,35 @@ function handleConnection(conn) {
           conn.write(`SENDBLOCK${DELIMITER}` + JSON.stringify(block));
         }
         break;
+      case 'SENDBLOCK':
+        block = JSON.parse(args[0]);
+        // check if already have
+        savedBlock = await BlockModel.findOne({ hash: block.hash });
+        if (savedBlock) {
+          break;
+        }
+        // if don't have, does the previousHash match our lastBlock.hash?
+        lastBlock = store.getState().lastBlock;
+        if (!lastBlock) {
+          break;
+        }
+        if (block.previousHash === lastBlock.getBlockHeaderHash()) {
+          // add block to blockchain
+          newBlock = new BlockModel(block);
+          await newBlock.save();
+          // remove from orphan and unfetched / loading pools
+          store.dispatch({ type: 'NEW_BLOCK', block: formatBlock(newBlock) });
+          let numBlocksToFetch = store.getState().unfetchedHeaders.size;
+          if (numBlocksToFetch === 0) {
+            // RESTART
+            // set "isSynced" => true
+            // start mining
+          } else {
+            
+          }
+        } else {
+          // if not, add to orphan transactions
+        }
     }
   }
   function onConnClose() {
