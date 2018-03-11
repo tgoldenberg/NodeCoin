@@ -3523,15 +3523,17 @@ function startup() {
                 amount = parseInt(amount);
               }
               amount *= COIN;
+              console.log('> Amount to send: ', amount);
               address = (0, _address.getAddress)(publicKey);
-              _context3.next = 8;
+              _context3.next = 9;
               return (0, _getWalletData.getWalletData)(address);
 
-            case 8:
+            case 9:
               walletData = _context3.sent;
               utxo = walletData.utxo, balance = walletData.balance;
 
               balance *= COIN;
+              console.log('> Current balance: ', balance);
               utxo = utxo.sort(function (a, b) {
                 return a.nValue < b.nValue;
               });
@@ -3539,13 +3541,13 @@ function startup() {
               isLessThanBalance = balance > amount;
 
               if (isLessThanBalance) {
-                _context3.next = 15;
+                _context3.next = 17;
                 break;
               }
 
               return _context3.abrupt('return', res.status(500).send({ error: 'Balance must be above amount to send.' }));
 
-            case 15:
+            case 17:
               remaining = amount;
               vin = [];
               vout = [];
@@ -3554,9 +3556,9 @@ function startup() {
 
               i = 0;
 
-            case 20:
+            case 22:
               if (!(i < utxo.length)) {
-                _context3.next = 34;
+                _context3.next = 39;
                 break;
               }
 
@@ -3564,6 +3566,7 @@ function startup() {
               remainder = tx.nValue - remaining;
               spent = Math.min(remaining, tx.nValue);
 
+              console.log('> Remainder: ', remainder, spent, remaining);
               remaining -= spent;
               spentTxs.push(tx);
               vin.push({
@@ -3572,28 +3575,36 @@ function startup() {
                 scriptSig: (0, _validateSignature.unlockTransaction)(tx.msg, publicKey, privateKey)
               });
               vout.push({
-                scriptPubKey: tx.msg + ' ' + toAddress,
+                scriptPubKey: tx.txid + ' ' + toAddress,
                 nValue: spent
               });
 
-              if (!(remainder > 0)) {
-                _context3.next = 31;
+              if (!(tx.nValue - spent > 0)) {
+                _context3.next = 34;
                 break;
               }
 
               // add vout to self of remaining
               vout.push({
-                scriptPubKey: tx.msg + ' ' + publicKey,
-                nValue: remainder
+                scriptPubKey: tx.txid + ' ' + publicKey,
+                nValue: tx.nValue - spent
               });
-              return _context3.abrupt('break', 34);
-
-            case 31:
-              i++;
-              _context3.next = 20;
-              break;
+              return _context3.abrupt('break', 39);
 
             case 34:
+              if (!(remaining <= 0)) {
+                _context3.next = 36;
+                break;
+              }
+
+              return _context3.abrupt('break', 39);
+
+            case 36:
+              i++;
+              _context3.next = 22;
+              break;
+
+            case 39:
               transaction = {
                 hash: (0, _jsSha2.default)(JSON.stringify(vin) + JSON.stringify(vout)),
                 vin: vin,
@@ -3607,16 +3618,16 @@ function startup() {
                 tx: transaction,
                 timestamp: Date.now()
               };
-              _context3.next = 39;
+              _context3.next = 44;
               return request.post(url, body);
 
-            case 39:
+            case 44:
               response = _context3.sent;
 
               console.log('> Send transaction response: '.yellow, response.data);
               res.status(200).send(response.data);
 
-            case 42:
+            case 47:
             case 'end':
               return _context3.stop();
           }
@@ -7394,7 +7405,7 @@ var getWalletData = exports.getWalletData = function () {
                 balance += txout.nValue / COIN;
                 msg = txout.scriptPubKey.split(' ')[0];
 
-                utxoMap[tx.hash] = { nValue: txout.nValue / COIN, n: k, msg: msg };
+                utxoMap[tx.hash] = { nValue: txout.nValue, n: k, msg: msg };
               }
             }
 

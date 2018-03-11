@@ -189,10 +189,12 @@ function startup() {
       amount = parseInt(amount);
     }
     amount *= COIN;
+    console.log('> Amount to send: ', amount);
     let address = getAddress(publicKey);
     let walletData = await getWalletData(address);
     let { utxo, balance } = walletData;
     balance *= COIN;
+    console.log('> Current balance: ', balance);
     utxo = utxo.sort((a, b) => a.nValue < b.nValue);
     // is transaction less than balance?
     let isLessThanBalance = balance > amount;
@@ -209,6 +211,7 @@ function startup() {
 
       let remainder = tx.nValue - remaining;
       let spent = Math.min(remaining, tx.nValue);
+      console.log('> Remainder: ', remainder, spent, remaining);
       remaining -= spent;
       spentTxs.push(tx);
       vin.push({
@@ -217,15 +220,18 @@ function startup() {
         scriptSig: unlockTransaction(tx.msg, publicKey, privateKey),
       });
       vout.push({
-        scriptPubKey: `${tx.msg} ${toAddress}`,
+        scriptPubKey: `${tx.txid} ${toAddress}`,
         nValue: spent,
       });
-      if (remainder > 0) {
+      if (tx.nValue - spent > 0) {
         // add vout to self of remaining
         vout.push({
-          scriptPubKey: `${tx.msg} ${publicKey}`,
-          nValue: remainder,
+          scriptPubKey: `${tx.txid} ${publicKey}`,
+          nValue: tx.nValue - spent,
         });
+        break;
+      }
+      if (remaining <= 0) {
         break;
       }
     }

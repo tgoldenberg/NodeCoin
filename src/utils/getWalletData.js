@@ -82,7 +82,7 @@ export async function getWalletData(address) {
         if (txAddress == address) {
           balance += txout.nValue / COIN;
           let msg = txout.scriptPubKey.split(' ')[0];
-          utxoMap[tx.hash] = { nValue: txout.nValue / COIN, n: k, msg };
+          utxoMap[tx.hash] = { nValue: txout.nValue, n: k, msg };
         }
       }
     }
