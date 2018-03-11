@@ -6593,7 +6593,7 @@ var isNodeSynced = exports.isNodeSynced = function () {
             validPeers = allPeers.filter(function (peer) {
               return !peer.unreachable && !peer.wrongVersion;
             });
-            allPeersSynced = uniq(validPeers.map(function (_ref2) {
+            allPeersSynced = (0, _uniq2.default)(validPeers.map(function (_ref2) {
               var synced = _ref2.synced;
               return synced;
             }));
@@ -6895,6 +6895,10 @@ var _net2 = _interopRequireDefault(_net);
 var _store = __webpack_require__(7);
 
 var _store2 = _interopRequireDefault(_store);
+
+var _uniq = __webpack_require__(157);
+
+var _uniq2 = _interopRequireDefault(_uniq);
 
 var _utils = __webpack_require__(57);
 
