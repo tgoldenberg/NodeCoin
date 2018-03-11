@@ -3254,7 +3254,7 @@ function handleConnection(conn) {
               blockHeaderHash = void 0, blocksToSend = void 0, message = void 0;
               allPeers = void 0, unfetchedHeaders = void 0, peerIdx = void 0, headers = void 0, header = void 0, block = void 0, savedBlock = void 0, newBlock = void 0;
               _context.t0 = type;
-              _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 74;
+              _context.next = _context.t0 === 'VERSION' ? 8 : _context.t0 === 'GETBLOCKS' ? 23 : _context.t0 === 'BLOCKHEADERS' ? 34 : _context.t0 === 'REQUESTBLOCK' ? 50 : _context.t0 === 'SENDBLOCK' ? 56 : 75;
               break;
 
             case 8:
@@ -3279,7 +3279,7 @@ function handleConnection(conn) {
 
               // send getblocks message
               conn.write(['GETBLOCKS', lastBlock.getBlockHeaderHash()].join(DELIMITER));
-              return _context.abrupt('break', 74);
+              return _context.abrupt('break', 75);
 
             case 19:
               _store2.default.dispatch({ type: 'SYNC_PEER', ip: ip });
@@ -3287,7 +3287,7 @@ function handleConnection(conn) {
               return (0, _connectWithPeer.isNodeSynced)();
 
             case 22:
-              return _context.abrupt('break', 74);
+              return _context.abrupt('break', 75);
 
             case 23:
               blockHeaderHash = args[0];
@@ -3314,7 +3314,7 @@ function handleConnection(conn) {
               conn.write(message);
 
             case 33:
-              return _context.abrupt('break', 74);
+              return _context.abrupt('break', 75);
 
             case 34:
               // add to unfetchedHeaders
@@ -3354,7 +3354,7 @@ function handleConnection(conn) {
               break;
 
             case 49:
-              return _context.abrupt('break', 74);
+              return _context.abrupt('break', 75);
 
             case 50:
               // find the requested block and send as a JSON-serialized string
@@ -3368,47 +3368,48 @@ function handleConnection(conn) {
               if (block) {
                 conn.write('SENDBLOCK' + DELIMITER + JSON.stringify(block));
               }
-              return _context.abrupt('break', 74);
+              return _context.abrupt('break', 75);
 
             case 56:
+              console.log('> JSON block: ', args[0]);
               block = JSON.parse(args[0]);
               // check if already have
-              _context.next = 59;
+              _context.next = 60;
               return _Block4.default.findOne({ hash: block.hash });
 
-            case 59:
+            case 60:
               savedBlock = _context.sent;
 
               if (!savedBlock) {
-                _context.next = 62;
+                _context.next = 63;
                 break;
               }
 
-              return _context.abrupt('break', 74);
+              return _context.abrupt('break', 75);
 
-            case 62:
+            case 63:
               // if don't have, does the previousHash match our lastBlock.hash?
               lastBlock = _store2.default.getState().lastBlock;
 
               if (lastBlock) {
-                _context.next = 65;
+                _context.next = 66;
                 break;
               }
 
-              return _context.abrupt('break', 74);
+              return _context.abrupt('break', 75);
 
-            case 65:
+            case 66:
               if (!(block.previousHash === lastBlock.getBlockHeaderHash())) {
-                _context.next = 74;
+                _context.next = 75;
                 break;
               }
 
               // add block to blockchain
               newBlock = new _Block4.default(block);
-              _context.next = 69;
+              _context.next = 70;
               return newBlock.save();
 
-            case 69:
+            case 70:
               // remove from orphan and unfetched / loading pools
               _store2.default.dispatch({ type: 'NEW_BLOCK', block: (0, _syncBlocksWithStore.formatBlock)(newBlock) });
               numBlocksToFetch = _store2.default.getState().unfetchedHeaders.size;
@@ -3418,10 +3419,10 @@ function handleConnection(conn) {
                 // set "isSynced" => true
                 // start mining
               } else {}
-              _context.next = 74;
+              _context.next = 75;
               break;
 
-            case 74:
+            case 75:
             case 'end':
               return _context.stop();
           }

@@ -130,6 +130,7 @@ function handleConnection(conn) {
         }
         break;
       case 'SENDBLOCK':
+        console.log('> JSON block: ', args[0]);
         block = JSON.parse(args[0]);
         // check if already have
         savedBlock = await BlockModel.findOne({ hash: block.hash });
