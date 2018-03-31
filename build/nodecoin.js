@@ -2837,8 +2837,9 @@ var startMining = exports.startMining = function () {
 
             for (i = 0; i < numTxs; i++) {
               tx = txs[i];
+              // if (isValidTransaction(tx)) {
 
-              if ((0, _syncBlocksWithStore.isValidTransaction)(tx)) {
+              if (true) {
                 finalizedTxs.push(tx);
                 // add to pendingBlockTxs
               } else {
@@ -3503,112 +3504,68 @@ function startup() {
   // curl -XPOST localhost:3000/send -d publicKey=044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba -d amount=10 -d privateKey=0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347 -d toAddress=0482a39675cdc06766af5192a551b703c5090fc67f6e403dfdb42b60d34f5e3539ad44de9197e7ac09d1db5a60f79552ce5c7984a3fc4643fb1911f3857d6dd34c | python -m json.tool
   app.post('/send', function () {
     var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(req, res) {
-      var _req$body, amount, privateKey, publicKey, toAddress, address, walletData, utxo, balance, isLessThanBalance, remaining, vin, vout, spentTxs, i, tx, remainder, spent, transaction, url, body, response;
-
+      var transaction, url, body, response;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
-              _req$body = req.body, amount = _req$body.amount, privateKey = _req$body.privateKey, publicKey = _req$body.publicKey, toAddress = _req$body.toAddress;
-
-              if (!(!amount || !privateKey || !publicKey || !toAddress)) {
-                _context3.next = 3;
-                break;
-              }
-
-              return _context3.abrupt('return', res.status(500).send({ error: 'Missing parameters [amount|privateKey|publicKey|toAddress]' }));
-
-            case 3:
-              if (typeof amount === 'string') {
-                amount = parseInt(amount);
-              }
-              amount *= COIN;
-              console.log('> Amount to send: ', amount);
-              address = (0, _address.getAddress)(publicKey);
-              _context3.next = 9;
-              return (0, _getWalletData.getWalletData)(address);
-
-            case 9:
-              walletData = _context3.sent;
-              utxo = walletData.utxo, balance = walletData.balance;
-
-              balance *= COIN;
-              console.log('> Current balance: ', balance);
-              utxo = utxo.sort(function (a, b) {
-                return a.nValue < b.nValue;
-              });
-              // is transaction less than balance?
-              isLessThanBalance = balance > amount;
-
-              if (isLessThanBalance) {
-                _context3.next = 17;
-                break;
-              }
-
-              return _context3.abrupt('return', res.status(500).send({ error: 'Balance must be above amount to send.' }));
-
-            case 17:
-              remaining = amount;
-              vin = [];
-              vout = [];
-              spentTxs = [];
-              // get rid of spare change
-
-              i = 0;
-
-            case 22:
-              if (!(i < utxo.length)) {
-                _context3.next = 39;
-                break;
-              }
-
-              tx = utxo[i];
-              remainder = tx.nValue - remaining;
-              spent = Math.min(remaining, tx.nValue);
-
-              console.log('> Remainder: ', remainder, spent, remaining);
-              remaining -= spent;
-              spentTxs.push(tx);
-              vin.push({
-                prevout: tx.txid,
-                n: tx.n,
-                scriptSig: (0, _validateSignature.unlockTransaction)(tx.msg, publicKey, privateKey)
-              });
-              vout.push({
-                scriptPubKey: tx.txid + ' ' + toAddress,
-                nValue: spent
-              });
-
-              if (!(tx.nValue - spent > 0)) {
-                _context3.next = 34;
-                break;
-              }
-
-              // add vout to self of remaining
-              vout.push({
-                scriptPubKey: tx.txid + ' ' + publicKey,
-                nValue: tx.nValue - spent
-              });
-              return _context3.abrupt('break', 39);
-
-            case 34:
-              if (!(remaining <= 0)) {
-                _context3.next = 36;
-                break;
-              }
-
-              return _context3.abrupt('break', 39);
-
-            case 36:
-              i++;
-              _context3.next = 22;
-              break;
-
-            case 39:
+              // let { amount, privateKey, publicKey, toAddress } = req.body;
+              // if (!amount || !privateKey || !publicKey || !toAddress) {
+              //   return res.status(500).send({ error: 'Missing parameters [amount|privateKey|publicKey|toAddress]'});
+              // }
+              // if (typeof amount === 'string') {
+              //   amount = parseInt(amount);
+              // }
+              // amount *= COIN;
+              // console.log('> Amount to send: ', amount);
+              // let address = getAddress(publicKey);
+              // let walletData = await getWalletData(address);
+              // let { utxo, balance } = walletData;
+              // balance *= COIN;
+              // console.log('> Current balance: ', balance);
+              // utxo = utxo.sort((a, b) => a.nValue < b.nValue);
+              // // is transaction less than balance?
+              // let isLessThanBalance = balance > amount;
+              // if (!isLessThanBalance) {
+              //   return res.status(500).send({ error: 'Balance must be above amount to send.' });
+              // }
+              // let remaining = amount;
+              // let vin = [ ];
+              // let vout = [ ];
+              // let spentTxs = [ ];
+              // // get rid of spare change
+              // for (let i = 0; i < utxo.length; i++) {
+              //   let tx = utxo[i];
+              //
+              //   let remainder = tx.nValue - remaining;
+              //   let spent = Math.min(remaining, tx.nValue);
+              //   console.log('> Remainder: ', remainder, spent, remaining);
+              //   remaining -= spent;
+              //   spentTxs.push(tx);
+              //   vin.push({
+              //     prevout: tx.txid,
+              //     n: tx.n,
+              //     scriptSig: unlockTransaction(tx.msg, publicKey, privateKey),
+              //   });
+              //   vout.push({
+              //     scriptPubKey: `${tx.txid} ${toAddress}`,
+              //     nValue: spent,
+              //   });
+              //   if (tx.nValue - spent > 0) {
+              //     // add vout to self of remaining
+              //     vout.push({
+              //       scriptPubKey: `${tx.txid} ${publicKey}`,
+              //       nValue: tx.nValue - spent,
+              //     });
+              //     break;
+              //   }
+              //   if (remaining <= 0) {
+              //     break;
+              //   }
+              // }
               transaction = {
-                hash: (0, _jsSha2.default)(JSON.stringify(vin) + JSON.stringify(vout)),
-                vin: vin,
-                vout: vout
+                hash: (0, _jsSha2.default)(JSON.stringify(req.body.tx)),
+                tx: req.body.tx
               };
               // broadcast to network
               // let url = 'http://localhost:3001/transaction';
@@ -3618,16 +3575,16 @@ function startup() {
                 tx: transaction,
                 timestamp: Date.now()
               };
-              _context3.next = 44;
+              _context3.next = 5;
               return request.post(url, body);
 
-            case 44:
+            case 5:
               response = _context3.sent;
 
               console.log('> Send transaction response: '.yellow, response.data);
               res.status(200).send(response.data);
 
-            case 47:
+            case 8:
             case 'end':
               return _context3.stop();
           }
@@ -3701,14 +3658,14 @@ function startup() {
 
   app.post('/blocks/new', function () {
     var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(req, res) {
-      var _req$body2, hash, version, previousHash, merkleHash, timestamp, difficulty, nonce, txs, blocksize, newBlock, prevBlock, isValid;
+      var _req$body, hash, version, previousHash, merkleHash, timestamp, difficulty, nonce, txs, blocksize, newBlock, prevBlock, isValid;
 
       return regeneratorRuntime.wrap(function _callee6$(_context6) {
         while (1) {
           switch (_context6.prev = _context6.next) {
             case 0:
               console.log('> New block: ', req.body);
-              _req$body2 = req.body, hash = _req$body2.hash, version = _req$body2.version, previousHash = _req$body2.previousHash, merkleHash = _req$body2.merkleHash, timestamp = _req$body2.timestamp, difficulty = _req$body2.difficulty, nonce = _req$body2.nonce, txs = _req$body2.txs, blocksize = _req$body2.blocksize;
+              _req$body = req.body, hash = _req$body.hash, version = _req$body.version, previousHash = _req$body.previousHash, merkleHash = _req$body.merkleHash, timestamp = _req$body.timestamp, difficulty = _req$body.difficulty, nonce = _req$body.nonce, txs = _req$body.txs, blocksize = _req$body.blocksize;
               // validate block format
 
               newBlock = new _Block4.default(req.body);
@@ -3717,11 +3674,9 @@ function startup() {
 
             case 5:
               prevBlock = _context6.sent;
-              _context6.next = 8;
-              return (0, _syncBlocksWithStore.isValidBlock)(newBlock, prevBlock);
 
-            case 8:
-              isValid = _context6.sent;
+              // const isValid = await isValidBlock(newBlock, prevBlock);
+              isValid = true;
 
               if (isValid) {
                 // broadcast to network
@@ -3730,7 +3685,7 @@ function startup() {
                 res.status(500).send({ error: 'Block is not valid.' });
               }
 
-            case 10:
+            case 8:
             case 'end':
               return _context6.stop();
           }
@@ -3963,31 +3918,30 @@ function startup() {
                     switch (_context10.prev = _context10.next) {
                       case 0:
                         console.log('> transaction:new: ', data.tx.hash);
+                        /*
+                         */
                         // validate transaction
-                        _context10.next = 3;
-                        return (0, _syncBlocksWithStore.isValidTransaction)(data.tx);
-
-                      case 3:
-                        isValid = _context10.sent;
+                        // const isValid = await isValidTransaction(data.tx);
+                        isValid = true;
 
                         if (!isValid) {
-                          _context10.next = 10;
+                          _context10.next = 8;
                           break;
                         }
 
                         // add to memory pool of valid transactions
                         _store2.default.dispatch({ type: 'NEW_TX', tx: data.tx });
-                        _context10.next = 8;
+                        _context10.next = 6;
                         return (0, _connectWithPeer.isNodeSynced)();
 
-                      case 8:
-                        _context10.next = 11;
+                      case 6:
+                        _context10.next = 9;
                         break;
 
-                      case 10:
+                      case 8:
                         console.log('> Invalid tx: ', data.tx.hash);
 
-                      case 11:
+                      case 9:
                       case 'end':
                         return _context10.stop();
                     }
@@ -4019,18 +3973,20 @@ function startup() {
 
                       case 6:
                         lastBlock = _context11.sent;
-                        _context11.next = 9;
-                        return (0, _syncBlocksWithStore.isValidBlock)(new _Block2.default(data.block, data.block.txs), new _Block2.default(lastBlock, lastBlock.txs));
 
-                      case 9:
-                        isValid = _context11.sent;
+
+                        // const isValid = await isValidBlock(
+                        //   new BlockClass(data.block, data.block.txs),
+                        //   new BlockClass(lastBlock, lastBlock.txs),
+                        // );
+                        isValid = true;
 
 
                         console.log('> Is valid block: ', isValid);
                         // add block to MongoDB and local state as "lastBlock"
 
                         if (!isValid) {
-                          _context11.next = 20;
+                          _context11.next = 18;
                           break;
                         }
 
@@ -4038,20 +3994,20 @@ function startup() {
                         _store2.default.dispatch({ type: 'STOP_MINING' });
 
                         newBlock = new _Block4.default(data.block);
-                        _context11.next = 16;
+                        _context11.next = 14;
                         return newBlock.save();
 
-                      case 16:
+                      case 14:
 
                         // set as new "lastBlock"
                         formattedLastBlock = new _Block2.default(newBlock, newBlock.txs);
 
                         _store2.default.dispatch({ type: 'ADD_BLOCK', block: formattedLastBlock });
                         // start operating for next block
-                        _context11.next = 20;
+                        _context11.next = 18;
                         return (0, _startMining.startMining)();
 
-                      case 20:
+                      case 18:
                       case 'end':
                         return _context11.stop();
                     }
@@ -7491,7 +7447,7 @@ var connectToDB = function () {
         switch (_context.prev = _context.next) {
           case 0:
             return _context.abrupt('return', new Promise(function (resolve, reject) {
-              _mongoose2.default.connect('mongodb://localhost:27017/nodecoin', function (err) {
+              _mongoose2.default.connect(process.env.MONGO_URL, function (err) {
                 if (err) {
                   throw new Error('Error connecting to mongo. ' + err);
                   reject(err);
