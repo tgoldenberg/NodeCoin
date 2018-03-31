@@ -735,59 +735,57 @@ var syncBlocksWithStore = exports.syncBlocksWithStore = function () {
 
           case 8:
             if (!(i < blocks.length)) {
-              _context4.next = 25;
+              _context4.next = 23;
               break;
             }
 
             block = blocks[i];
             prevBlock = i === 0 ? null : formatBlock(blocks[i - 1]);
-            _context4.next = 13;
-            return isValidBlock(formatBlock(block), prevBlock);
+            // let isValid = await isValidBlock(formatBlock(block), prevBlock);
 
-          case 13:
-            isValid = _context4.sent;
+            isValid = true;
 
             if (isValid) {
-              _context4.next = 22;
+              _context4.next = 20;
               break;
             }
 
             areBlocksValid = false;
-            _context4.next = 18;
+            _context4.next = 16;
             return _Block4.default.find({}).remove({});
 
-          case 18:
+          case 16:
             // remove corrupted blocks
             numBlocks = 0;
             lastBlock = null;
             blocks = [];
-            return _context4.abrupt('break', 25);
+            return _context4.abrupt('break', 23);
 
-          case 22:
+          case 20:
             i++;
             _context4.next = 8;
             break;
 
-          case 25:
+          case 23:
 
             console.log('> Blocks verified: '.blue, areBlocksValid, numBlocks);
 
             // if invalid blocks or no local blocks, initialize genesis block
 
             if (!(numBlocks <= 0)) {
-              _context4.next = 32;
+              _context4.next = 30;
               break;
             }
 
             _block = new _Block2.default({}, [], true);
             newBlock = new _Block4.default(_block.getDBFormat());
-            _context4.next = 31;
+            _context4.next = 29;
             return newBlock.save();
 
-          case 31:
+          case 29:
             lastBlock = newBlock;
 
-          case 32:
+          case 30:
             _lastBlock = lastBlock, difficulty = _lastBlock.difficulty, nonce = _lastBlock.nonce;
 
             // update Redux store
@@ -796,7 +794,7 @@ var syncBlocksWithStore = exports.syncBlocksWithStore = function () {
             _store2.default.dispatch({ type: 'SET_INITIAL_BLOCK_COUNT', lastBlock: formatBlock(lastBlock), numBlocks: numBlocks });
             return _context4.abrupt('return', { numBlocks: numBlocks, lastBlock: lastBlock });
 
-          case 36:
+          case 34:
           case 'end':
             return _context4.stop();
         }
