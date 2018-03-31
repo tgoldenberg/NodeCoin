@@ -46,7 +46,9 @@ export async function startMining() {
   let finalizedTxs = [ ];
   for (let i = 0; i < numTxs; i++) {
     let tx = txs[i];
-    if (isValidTransaction(tx)) {
+    // if (isValidTransaction(tx)) {
+
+    if (true) {
       finalizedTxs.push(tx);
       // add to pendingBlockTxs
     } else {
@@ -78,6 +80,7 @@ export async function startMining() {
     header.nonce++;
     blockHeaderHash = SHA256(header.version + header.previousHash + header.merkleHash + header.timestamp + header.difficulty + header.nonce);
   }
+
   let finalBlock = new BlockClass(header, finalizedTxs);
   console.log('> Finalized block: ', finalBlock);
   // set "isMining" => false

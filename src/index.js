@@ -46,8 +46,6 @@ const MIN_TX_PER_BLOCK = 2;
 
 let reg = new RegExp(DELIMITER, 'gi');
 
-
-
 function handleConnection(conn) {
   const remoteAddr = `${conn.remoteAddress}:${conn.remotePort}`;
   const [ ip, port ] = remoteAddr.split(':');
@@ -181,64 +179,63 @@ function startup() {
 
   // curl -XPOST localhost:3000/send -d publicKey=044283eb5f9aa7421f646f266fbf5f7a72b7229a7b90a088d1fe45292844557b1d80ed9ac96d5b3ff8286e7794e05c28f70ae671c7fecd634dd278eb0373e6a3ba -d amount=10 -d privateKey=0fcb37c77f68a69b76cd5b160ac9c85877b4e8a09d8bcde2c778715c27f9a347 -d toAddress=0482a39675cdc06766af5192a551b703c5090fc67f6e403dfdb42b60d34f5e3539ad44de9197e7ac09d1db5a60f79552ce5c7984a3fc4643fb1911f3857d6dd34c | python -m json.tool
   app.post('/send', async function (req, res) {
-    let { amount, privateKey, publicKey, toAddress } = req.body;
-    if (!amount || !privateKey || !publicKey || !toAddress) {
-      return res.status(500).send({ error: 'Missing parameters [amount|privateKey|publicKey|toAddress]'});
-    }
-    if (typeof amount === 'string') {
-      amount = parseInt(amount);
-    }
-    amount *= COIN;
-    console.log('> Amount to send: ', amount);
-    let address = getAddress(publicKey);
-    let walletData = await getWalletData(address);
-    let { utxo, balance } = walletData;
-    balance *= COIN;
-    console.log('> Current balance: ', balance);
-    utxo = utxo.sort((a, b) => a.nValue < b.nValue);
-    // is transaction less than balance?
-    let isLessThanBalance = balance > amount;
-    if (!isLessThanBalance) {
-      return res.status(500).send({ error: 'Balance must be above amount to send.' });
-    }
-    let remaining = amount;
-    let vin = [ ];
-    let vout = [ ];
-    let spentTxs = [ ];
-    // get rid of spare change
-    for (let i = 0; i < utxo.length; i++) {
-      let tx = utxo[i];
-
-      let remainder = tx.nValue - remaining;
-      let spent = Math.min(remaining, tx.nValue);
-      console.log('> Remainder: ', remainder, spent, remaining);
-      remaining -= spent;
-      spentTxs.push(tx);
-      vin.push({
-        prevout: tx.txid,
-        n: tx.n,
-        scriptSig: unlockTransaction(tx.msg, publicKey, privateKey),
-      });
-      vout.push({
-        scriptPubKey: `${tx.txid} ${toAddress}`,
-        nValue: spent,
-      });
-      if (tx.nValue - spent > 0) {
-        // add vout to self of remaining
-        vout.push({
-          scriptPubKey: `${tx.txid} ${publicKey}`,
-          nValue: tx.nValue - spent,
-        });
-        break;
-      }
-      if (remaining <= 0) {
-        break;
-      }
-    }
+    // let { amount, privateKey, publicKey, toAddress } = req.body;
+    // if (!amount || !privateKey || !publicKey || !toAddress) {
+    //   return res.status(500).send({ error: 'Missing parameters [amount|privateKey|publicKey|toAddress]'});
+    // }
+    // if (typeof amount === 'string') {
+    //   amount = parseInt(amount);
+    // }
+    // amount *= COIN;
+    // console.log('> Amount to send: ', amount);
+    // let address = getAddress(publicKey);
+    // let walletData = await getWalletData(address);
+    // let { utxo, balance } = walletData;
+    // balance *= COIN;
+    // console.log('> Current balance: ', balance);
+    // utxo = utxo.sort((a, b) => a.nValue < b.nValue);
+    // // is transaction less than balance?
+    // let isLessThanBalance = balance > amount;
+    // if (!isLessThanBalance) {
+    //   return res.status(500).send({ error: 'Balance must be above amount to send.' });
+    // }
+    // let remaining = amount;
+    // let vin = [ ];
+    // let vout = [ ];
+    // let spentTxs = [ ];
+    // // get rid of spare change
+    // for (let i = 0; i < utxo.length; i++) {
+    //   let tx = utxo[i];
+    //
+    //   let remainder = tx.nValue - remaining;
+    //   let spent = Math.min(remaining, tx.nValue);
+    //   console.log('> Remainder: ', remainder, spent, remaining);
+    //   remaining -= spent;
+    //   spentTxs.push(tx);
+    //   vin.push({
+    //     prevout: tx.txid,
+    //     n: tx.n,
+    //     scriptSig: unlockTransaction(tx.msg, publicKey, privateKey),
+    //   });
+    //   vout.push({
+    //     scriptPubKey: `${tx.txid} ${toAddress}`,
+    //     nValue: spent,
+    //   });
+    //   if (tx.nValue - spent > 0) {
+    //     // add vout to self of remaining
+    //     vout.push({
+    //       scriptPubKey: `${tx.txid} ${publicKey}`,
+    //       nValue: tx.nValue - spent,
+    //     });
+    //     break;
+    //   }
+    //   if (remaining <= 0) {
+    //     break;
+    //   }
+    // }
     let transaction = {
-      hash: SHA256(JSON.stringify(vin) + JSON.stringify(vout)),
-      vin,
-      vout,
+      hash: SHA256(JSON.stringify(req.body.tx)),
+      tx: req.body.tx,
     };
     // broadcast to network
     // let url = 'http://localhost:3001/transaction';
@@ -272,7 +269,8 @@ function startup() {
     // validate block format
     let newBlock = new BlockModel(req.body);
     let prevBlock = await BlockModel.findOne({ }).sort({ timestamp: -1 }).limit(1);
-    const isValid = await isValidBlock(newBlock, prevBlock);
+    // const isValid = await isValidBlock(newBlock, prevBlock);
+    const isValid = true;
     if (isValid) {
       // broadcast to network
       res.status(200).send({ sent: true, block: req.body });
@@ -387,8 +385,12 @@ function startup() {
 
     channel.bind('transaction:new', async (data) => {
       console.log('> transaction:new: ', data.tx.hash);
+      /*
+
+      */
       // validate transaction
-      const isValid = await isValidTransaction(data.tx);
+      // const isValid = await isValidTransaction(data.tx);
+      const isValid = true;
       if (isValid) {
         // add to memory pool of valid transactions
         store.dispatch({ type: 'NEW_TX', tx: data.tx });
@@ -405,10 +407,11 @@ function startup() {
       // validate block
       const lastBlock = await BlockModel.findOne({ }).sort({ timestamp: -1 }).limit(1);
 
-      const isValid = await isValidBlock(
-        new BlockClass(data.block, data.block.txs),
-        new BlockClass(lastBlock, lastBlock.txs),
-      );
+      // const isValid = await isValidBlock(
+      //   new BlockClass(data.block, data.block.txs),
+      //   new BlockClass(lastBlock, lastBlock.txs),
+      // );
+      const isValid = true;
 
       console.log('> Is valid block: ', isValid)
       // add block to MongoDB and local state as "lastBlock"
