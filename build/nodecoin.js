@@ -3208,6 +3208,10 @@ var _uniq2 = _interopRequireDefault(_uniq);
 
 var _validateSignature = __webpack_require__(5);
 
+var _uuid = __webpack_require__(20);
+
+var _uuid2 = _interopRequireDefault(_uuid);
+
 var _utils = __webpack_require__(60);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -3562,7 +3566,7 @@ function startup() {
               //   }
               // }
               transaction = {
-                hash: (0, _jsSha2.default)(JSON.stringify(req.body.tx)),
+                hash: (0, _jsSha2.default)((0, _uuid2.default)()),
                 tx: req.body.tx
               };
               // broadcast to network

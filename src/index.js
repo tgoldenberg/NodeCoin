@@ -23,6 +23,7 @@ import { startMining } from 'mining/startMining';
 import store from 'store/store';
 import uniq from 'lodash/uniq';
 import { unlockTransaction } from 'utils/validateSignature';
+import uuid from 'uuid';
 import { wait } from 'utils';
 
 const request = axios.create({
@@ -234,7 +235,7 @@ function startup() {
     //   }
     // }
     let transaction = {
-      hash: SHA256(JSON.stringify(req.body.tx)),
+      hash: SHA256(uuid()),
       tx: req.body.tx,
     };
     // broadcast to network
