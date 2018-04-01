@@ -3919,7 +3919,7 @@ function startup() {
                   while (1) {
                     switch (_context10.prev = _context10.next) {
                       case 0:
-                        console.log('> transaction:new: ', data.tx.hash);
+                        console.log('> transaction:new: ', data.tx.hash, data.tx);
                         /*
                          */
                         // validate transaction

@@ -385,7 +385,7 @@ function startup() {
     });
 
     channel.bind('transaction:new', async (data) => {
-      console.log('> transaction:new: ', data.tx.hash);
+      console.log('> transaction:new: ', data.tx.hash, data.tx);
       /*
 
       */
