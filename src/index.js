@@ -396,6 +396,7 @@ function startup() {
         // add to memory pool of valid transactions
         store.dispatch({ type: 'NEW_TX', tx: data.tx });
         await isNodeSynced();
+        await startMining();
       } else {
         console.log('> Invalid tx: ', data.tx.hash);
       }

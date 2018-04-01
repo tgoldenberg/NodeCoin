@@ -3927,7 +3927,7 @@ function startup() {
                         isValid = true;
 
                         if (!isValid) {
-                          _context10.next = 8;
+                          _context10.next = 10;
                           break;
                         }
 
@@ -3937,13 +3937,17 @@ function startup() {
                         return (0, _connectWithPeer.isNodeSynced)();
 
                       case 6:
-                        _context10.next = 9;
-                        break;
+                        _context10.next = 8;
+                        return (0, _startMining.startMining)();
 
                       case 8:
+                        _context10.next = 11;
+                        break;
+
+                      case 10:
                         console.log('> Invalid tx: ', data.tx.hash);
 
-                      case 9:
+                      case 11:
                       case 'end':
                         return _context10.stop();
                     }
